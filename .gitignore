@@ -1,6 +1,8 @@
 /Data
 /Test
 *.xef
+*.avi
+*.mp4
 led / optimized / DLL files
 __pycache__/
 *.py[cod]
