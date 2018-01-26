@@ -39,14 +39,11 @@ class Annotate(object):
 		if event == cv2.EVENT_LBUTTONUP:
 			print self.image_counter, 
 			self.annot_file_id.write(str(self.image_counter)+'\n')
-		pass
 
 	def annotate_and_save(self):
-
 		spin = True
 		cv2.namedWindow('RGB_Video')
 		cv2.setMouseCallback('RGB_Video', self.mouse_callback)
-
 		while True:
 			try:
 				# Refreshing Frames
@@ -54,11 +51,11 @@ class Annotate(object):
 				self.kr.update_depth()
 				self.kr.update_body(display_skel=False)
 				self.kr.update_skeleton()
+				print '\n All modules connected !!'
 				break
 			except Exception as exp:
 				time.sleep(0.1)
 				print '. ', 
-
 		try:
 			while spin:
 				self.image_counter += 1
@@ -84,7 +81,6 @@ class Annotate(object):
 		except Exception as exp:
 			print exp
 		print '\n', 'Total No. of frames: ', self.image_counter
-		print '--------------------------9999999999999999999999'
 
 		## Closing Kinect, RGB, Depth, and annotation file streams
 		self.kr.sensor.close()
