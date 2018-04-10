@@ -1,5 +1,9 @@
-/Data
-/Test
+Backup
+Garbage
+Data
+Test
+XEF_Files
+openpose
 *.xef
 *.avi
 *.mp4

@@ -1,0 +1,37 @@
+
+#Normal Runninng on webcam (only pose)
+C:\Users\Rahul\OpenPose_demo> bin\OpenPoseDemo.exe
+
+#run only hands on cpu 
+C:\Users\Rahul\OpenPose_demo> bin\OpenPoseDemo.exe --render_pose 0 --face --face_render 0 --hand --hand_render 1
+
+#run only hands on gpu( replace 1 with 2)
+C:\Users\Rahul\OpenPose_demo> bin\OpenPoseDemo.exe --render_pose 0 --face --face_render 0 --hand --hand_render 2
+
+#best results according to site
+C:\Users\Rahul\OpenPose_demo> bin\OpenPoseDemo.exe --hand --hand_scale_number 6 --hand_scale_range 0.4 
+
+# for more fps
+C:\Users\Rahul\OpenPose_demo> bin\OpenPoseDemo.exe --hand  --hand_tracking --hand_render 2
+
+#best hand on GPU
+C:\Users\Rahul\OpenPose_demo> bin\OpenPoseDemo.exe --hand --hand_scale_number 6 --hand_scale_range 0.4 --hand_render 2
+
+
+######################################for library
+C:\openpose>windows\x64\Release\OpenPoseDemo.exe 
+
+
+###only hands  - maximum accuracy
+F:\Rahul\openpose>windows\x64\Release\OpenPoseDemo.exe --render_pose 0 --hand --hand_scale_number 6 --hand_scale_range 0.4 --hand_render 1
+
+
+---------------------------------------------------------------Video--------------------------------------
+F:\Rahul\openpose\Open Pose Demo>bin\OpenPoseDemo.exe --video AHRQ\Naveen_L6_OpenPalm_Close_rgb.webm --write_keypoint_format "xml" --write_keypoint AHRQ/
+
+F:\Rahul\openpose\Open Pose Demo>bin\OpenPoseDemo.exe --video AHRQ\Naveen_L6_OpenPalm_Close_rgb.webm --write_keypoint_format "json" --write_keypoint AHRQ/ --keypoint_scale 3
+
+
+---------------------------------------------------------------Video without display--------------------------------------
+
+F:\Rahul\openpose\Open Pose Demo>bin\OpenPoseDemo.exe --video AHRQ\Naveen_L6_OpenPalm_Close_rgb.webm --write_keypoint_format "xml" --write_keypoint AHRQ/ --no_display --render_pose 1
