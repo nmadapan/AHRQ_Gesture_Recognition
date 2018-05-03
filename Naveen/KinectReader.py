@@ -2,9 +2,28 @@ from pykinect2 import PyKinectV2 as pk
 from pykinect2 import PyKinectRuntime
 import cv2, numpy as np, os, time, math, ctypes
 
-class KinectReader(object):
+#####################
+# A kinect v2 wrapper to read RGB, Depth and Skeleton data in real-time or from an XEF file.
+#
+# How to use it:
+#
+# 	kr = kinect_reader()
+#
+# 	kr.update_rgb(); # returns True if there is color image
+# 	kr.color_image #(contains the latest color image)
+#
+# 	kr.update_depth(); # returns True if there is depth image
+# 	kr.depth_image #(contains the latest depth image)
+#
+# 	kr.update_body(); # returns True if there is skeleton
+# 	kr.skel_pts #(x, y, z positions of the 25 joints)
+# 	kr.color_skel_pts #(pixel coordinates in RGB image of the 25 joints)
+# 	kr.depth_skel_pts #(pixel coordinates in Depth image of the 25 joints)
+#
+#####################
+
+class kinect_reader(object):
 	def __init__(self):
-		# Kinect runtime object, we want only color and body frames 
 		self.sensor = PyKinectRuntime.PyKinectRuntime(pk.FrameSourceTypes_Color | pk.FrameSourceTypes_Body | pk.FrameSourceTypes_Depth)
 
 		self.body_frame = None

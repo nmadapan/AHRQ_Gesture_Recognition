@@ -1,0 +1,11 @@
+GroupID_ModifierID_SubjectID_LexiconID_GroupName_ModifierName
+
+Example:
+1. Scroll up and scroll down. They do not have  context
+Scroll up: 1_1_S*_L*_Scroll_Up
+Scroll down: 1_2_S*_L*_Scroll_Down
+
+2. Scroll up and scroll down. There is a common context.
+Scroll context: 1_0_S*_L*_Scroll_X
+Scroll up: 1_1_S*_L*_X_Up
+Scroll down: 1_2_S*_L*_X_Down

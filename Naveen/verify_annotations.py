@@ -1,24 +1,24 @@
-import cv2 as cv, numpy as np, os, shutil
+import cv2 as cv, numpy as np, os, shutil,sys
 
-xef_file_name = 'Naveen_L6_OpenPalm_Close' # Don't add the extension
-read_folder = os.path.join('..', 'Data', '_'.join(xef_file_name.split('_')[:2]))
+file_name='2_1_S2_L6_X_Horizontal_rgb' #without extension
+
+base_path='F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Data\S2_L6'
+
+avi_path=os.path.join(base_path,(file_name+str('.avi')))
+annotations_path=os.path.join(base_path,'Annotations',(file_name[:-4]+str('_annot2.txt')))
+
 write_folder = '..\\Test'
 
 if os.path.isdir(write_folder): shutil.rmtree(write_folder)
 if not os.path.isdir(write_folder): os.mkdir(write_folder)
 
-annot_filename = xef_file_name+'_annot.txt'
-video_filename = xef_file_name+'_rgb.avi'
-
-print('-------')
-
-with open( os.path.join(read_folder, annot_filename) ) as fid:
+with open(annotations_path, 'r') as fid:
 	annot = fid.readlines()
 	annot = map(int, annot)
 	annot = np.reshape(annot, (-1, 2))
 	
-print os.path.join(read_folder, video_filename)
-cap = cv.VideoCapture(os.path.join(read_folder, video_filename))
+print avi_path
+cap = cv.VideoCapture(avi_path)
 image_count = 0
 gest_count = 0
 gest_flag = False
@@ -32,19 +32,18 @@ while True and gest_count < annot.shape[0]:
 		# cv.imshow('Frame', cv.resize(frame, None, fx = 0.5, fy = 0.5))
 		image_count += 1
 		if annot[gest_count, 0] == image_count:
-			write_path = os.path.join(write_folder, video_filename.split('.')[0]+'_'+str(gest_count)+'.avi')
+			write_path = os.path.join(write_folder, os.path.basename(avi_path).split('.')[0]+'_'+str(gest_count)+'.avi')
 			rgb_vr = cv.VideoWriter(write_path, rgb_fourcc, 30.0, (1920, 1080), isColor = True)
-			gest_count += 1
 			print gest_count, 
 			gest_flag = True
 		elif annot[gest_count, 1] == image_count:
 			rgb_vr.write(np.uint8(frame))
 			rgb_vr.release()
 			gest_flag = False
+			gest_count += 1
+		
 		if gest_flag:
 			rgb_vr.write(np.uint8(frame))
-
-		# if cv.waitKey(1) == ord('q'): break
 
 print '\nTotal Images: ', image_count
 cap.release()

@@ -1,30 +1,44 @@
-import cv2, numpy as np, os, sys, time
-import glob
+import cv2
+import numpy as np
+import os, sys, time
 
-vid_file_name = 'Naveen_L6_OpenPalm_Close_rgb.avi' # Add the extension
-base_data_folder = os.path.join('..', 'Data')
-desired_fps = 30
+#####################
+#
+# Description:
+# 	This file displays the RGB video. You are expected to annotate (by left clicking) both the start and 
+#		the end point of each gesture instance. 
+#	It automatically saves the start and end frame numbers into a text file.
+#
+# How to use:
+#
+#	video_file_path: It contains the absolute path of the .avi file. Change this path. 
+#	desired_fps: At what fps do you want to wach the video at
+#	Thats it. Run this file. 
+#
+#####################
 
-video_path = glob.glob(os.path.join(base_data_folder,'*', vid_file_name))
+# Initialization
+video_file_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\S2_L6\\4_1_S2_L6_Zoom_In_rgb.avi'
+desired_fps = 8
 
-write_file = vid_file_name[:-8] + '_annot.txt'
-write_path = glob.glob(os.path.join(base_data_folder, '_'.join(vid_file_name.split('_')[:2])))[0]
-write_path = os.path.join(write_path, write_file)
+# Initialize the file pointers
+write_file = os.path.basename(video_file_path)[:-8] + '_annot.txt'
+write_foler_path = os.path.join(os.path.dirname(video_file_path), 'Annotations')
+if not os.path.isdir(write_foler_path): os.mkdir(write_foler_path)
+write_file_path = os.path.join(write_foler_path, write_file)
 
-if len(video_path) != 1: 
-	print 'More than one or no vidoes with the filename'; 
+if not os.path.isfile(video_file_path): 
+	print 'Video file does not exists'; 
 	sys.exit()
-else:
-	video_path = video_path[0]
 
 class Annotate(object):
 	def __init__(self):
 		# Flags
 		self.image_counter = 0
 		# Video stream
-		self.stream = cv2.VideoCapture(video_path)
+		self.stream = cv2.VideoCapture(video_file_path)
 		# File Pointers
-		self.annot_file_id = open(write_path, 'w')
+		self.annot_file_id = open(write_file_path, 'w')
 
 	def mouse_callback(self, event, x, y, flags, param):
 		if event == cv2.EVENT_LBUTTONUP:
