@@ -14,34 +14,46 @@ from KinectReader import kinect_reader
 #
 # How to use:
 #
-#	parser = Parser(filename, path_to_folder_to_write, True/False, thresh_empty_cycles)
-#		# filename can be with or without extension
+#	from XefParser import Parser
+#	parser = Parser(filename, path_to_folder_to_write, True/False, thresh_empty_cycles, in_format_flag)
+#		# filename can be with or without extension. It works both with filenames and absolute paths.
 #		# filename format: GroupID_ModifierID_SubjectID_LexiconID_GroupName_ModifierName.xef
 #	 	# True if you want to compress the videos, False otherwise.
 #		# thresh_empty_cycles: No. of empty cycles to wait for the arrival of first RGB frame, quit otherwise 
+#		# in_format_flag: True if the filename is in the right format, False otherwise. 
 #	parser.parse()
-#		# It creates path_to_folder_to_write\\SubjectID_LexiconID folder and creates five files 
-#		# 1. filename_rgb.avi #(RGB video)
-#		# 2. filename_depth.avi #(Depth video)
-#		# 3. filename_skel.txt #(x, y, z of 25 joints concatenated into one row. No. of rows = No. of frames)
-#		# 4. filename_color.txt #(x, y pixel coordinates of RGB image of 25 joints concatenated into one row)
-#		# 5. filename_depth.txt #(x, y pixel coordinates of Depth image of 25 joints concatenated into one row)
+#		# It creates path_to_folder_to_write\\SubjectID_LexiconID folder and creates five files if in_format_flag is True
+#		# It creates path_to_folder_to_write folder and creates five files if in_format_flag is False
+#			# 1. filename_rgb.avi #(RGB video)
+#			# 2. filename_depth.avi #(Depth video)
+#			# 3. filename_skel.txt #(x, y, z of 25 joints concatenated into one row. No. of rows = No. of frames)
+#			# 4. filename_color.txt #(x, y pixel coordinates of RGB image of 25 joints concatenated into one row)
+#			# 5. filename_depth.txt #(x, y pixel coordinates of Depth image of 25 joints concatenated into one row)
 #
 #	For example:
-#	 	parser = Parser('2_1_S2_L6_X_Horizontal', '..\\Data', False, 200)
+#	 	parser = Parser('2_1_S2_L6_X_Horizontal', base_write_folder = '..\\Data', compress_flag = False, \
+#					thresh_empty_cycles = 200, in_format_flag = True)
 #		parser.parse()
 #
 #####################
 
 class Parser(object):
-	def __init__(self, xef_file_name, base_write_folder = '..\\Data', compress_flag = False, thresh_empty_cycles = 200):
-		self.xef_file_name = xef_file_name
+	def __init__(self, xef_file_name, base_write_folder = '..\\Data', compress_flag = False, \
+				thresh_empty_cycles = 200, in_format_flag = True):
+
+		self.xef_file_name = os.path.basename(xef_file_name)
 		self.base_write_folder = base_write_folder
 		self.compress_flag = compress_flag # Compresses the rgb and depth videos if True
 		self.thresh_empty_cycles = thresh_empty_cycles # No. of empty cycles to wait for the arrival of first RGB frame, quit otherwise
 
-		# Make write directories if absent
-		self.write_folder = os.path.join(self.base_write_folder, '_'.join(self.xef_file_name.split('_')[2:4]))
+		# Remove the file extension if existed
+		if(self.xef_file_name[-4:] == '.xef'): self.xef_file_name = self.xef_file_name[:-4]
+
+		# Make and write directories if absent
+		if(in_format_flag):
+			self.write_folder = os.path.join(self.base_write_folder, '_'.join(self.xef_file_name.split('_')[2:4]))
+		else:
+			self.write_folder = self.base_write_folder
 		if not os.path.isdir(self.base_write_folder): os.mkdir(self.base_write_folder)
 		if not os.path.isdir(self.write_folder): os.mkdir(self.write_folder)
 
@@ -49,9 +61,9 @@ class Parser(object):
 		self.image_counter = 0
 
 		# File Pointers
-		self.skel_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_skel.txt'),'w')
-		self.color_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_color.txt'),'w')
-		self.depth_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_depth.txt'),'w')
+		self.skel_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_skel.txt'), 'w')
+		self.color_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_color.txt'), 'w')
+		self.depth_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_depth.txt'), 'w')
 		self.rgb_vid_addr = os.path.join(os.path.join(self.write_folder, self.xef_file_name+'_rgb.avi'))
 		self.depth_vid_addr = os.path.join(os.path.join(self.write_folder, self.xef_file_name+'_depth.avi'))
 

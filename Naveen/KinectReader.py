@@ -7,6 +7,7 @@ import cv2, numpy as np, os, time, math, ctypes
 #
 # How to use it:
 #
+#	from KinectReader import kinect_reader
 # 	kr = kinect_reader()
 #
 # 	kr.update_rgb(); # returns True if there is color image
