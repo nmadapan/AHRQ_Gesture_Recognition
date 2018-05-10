@@ -1,16 +1,30 @@
 import cv2 as cv, numpy as np, os, shutil,sys
 
-file_name='2_1_S2_L6_X_Horizontal_rgb' #without extension
+#####################
+#
+# Description:
+#	base_path: Absolute path of the folder in which the video is present.
+#	file_name: Name of the video WITH EXTENSION
+#	annotations_path: The text file that has annotations, i.e. the start and end frames of each gesture instance.
+#	write_folder: Absolute path of the directory where you want to write the gesture instances. 
+#
+# How to use:
+#	Change base_path, file_name, annotations_path, and write_folder
+#	Thats it. Run the script.
+#####################
 
-base_path='F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Data\S2_L6'
-
-avi_path=os.path.join(base_path,(file_name+str('.avi')))
-annotations_path=os.path.join(base_path,'Annotations',(file_name[:-4]+str('_annot2.txt')))
-
+## Initialization
+base_path = 'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Data\S2_L6'
+file_name ='10_4_S2_L6_X_FourPanels_rgb.avi' # WITH EXTENSION
+annotations_path = os.path.join(base_path, 'Annotations', (file_name.split('.')[0][:-4]+str('_annot2.txt')) )
 write_folder = '..\\Test'
 
+# Remove the write_folder if it existed
 if os.path.isdir(write_folder): shutil.rmtree(write_folder)
+# Create the write_folder
 if not os.path.isdir(write_folder): os.mkdir(write_folder)
+
+avi_path = os.path.join(base_path, file_name) # Full path to the video file
 
 with open(annotations_path, 'r') as fid:
 	annot = fid.readlines()
@@ -29,6 +43,7 @@ print 'Writing Gesture: ',
 while True and gest_count < annot.shape[0]:
 	if cap.isOpened():
 		ret, frame = cap.read()
+		if(frame is None): break
 		# cv.imshow('Frame', cv.resize(frame, None, fx = 0.5, fy = 0.5))
 		image_count += 1
 		if annot[gest_count, 0] == image_count:

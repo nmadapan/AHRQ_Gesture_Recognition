@@ -36,6 +36,8 @@ if(in_format_flag):
 else:
 	skel_file_paths = glob.glob(os.path.join(base_skel_folder, '*.txt'))
 
+if(not os.path.isdir(base_write_folder)): os.makedirs(base_write_folder)
+
 for skel_path in skel_file_paths:
 	# print '. ', 
 	count_gestures = 0

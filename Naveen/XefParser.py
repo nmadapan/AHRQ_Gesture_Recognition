@@ -109,7 +109,7 @@ class Parser(object):
 				return (-1, -1, -1)
 		
 		print '\nAll modules connected !!\n'
-		print 'Reading and Saving ', 
+		print 'Parsing XEF ', 
 
 		# Initialize flags to stop accordingly
 		quit_count = 0 # Count no. of empty cycles (iterations with no RGB frame) between two RGB frames

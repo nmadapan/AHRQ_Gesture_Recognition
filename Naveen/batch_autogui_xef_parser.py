@@ -8,7 +8,7 @@ from XefParser import Parser
 #
 # Description:
 # 	This file AUTOMATICALLY BATCH parses .xef files into RGB video, depth video, and skeletal data.
-#	You DO NOT need to manually open any .xef file. In fact, close Kinect Studio if it is opened. 
+#	You DO NOT need to manually open any .xef file. 
 #	Give the full path to the folder containing .xef files, it AUTOMATICALLY opens each .xef file, 
 #		do auto clicking and parses the data. 
 # 	This file does BATCH PROCESSING.
@@ -16,6 +16,7 @@ from XefParser import Parser
 # How to use:
 #
 #	xef_folder_path: The path to the folder containing more than one XEF files. Change this path accordingly.
+#	error_log_filename: This script writes the status to this file. It will make it easy to back track.
 #	Thats it. Run this file. 
 #
 #####################
