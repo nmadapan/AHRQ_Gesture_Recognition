@@ -1,4 +1,4 @@
 import sys, os
-from XefParser import Parser
-
-print(os.path.basename('hello'))
+# from XefParser import Parser
+a = 12.34546
+print('%.2f'%a + '\n')

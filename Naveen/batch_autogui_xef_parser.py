@@ -44,12 +44,12 @@ class XEF(Thread):
 		except Exception as exp:
 			print(exp)
 			with open(error_log_filename, 'a') as fp:
-				fp.write(self.xef_file_name); fp.write('\n')			
+				fp.write(' [Error in os.system] ' + '\n')
 
 class GUI():
 	def __init__(self, xef_file_name):
-		auto.FAILSAFE = True
-		auto.PAUSE = 2
+		auto.FAILSAFE = True # Drag the mouse to top left to stop autogui
+		auto.PAUSE = 2 # Pause for 2 seconds after every autogui operation
 		self.width, self.height = auto.size()
 		self.xef_file_name = os.path.basename(xef_file_name) # convert absolute path to just the filename
 
@@ -93,7 +93,7 @@ class GUI():
 		else:
 			print('Play button not found')
 			with open(error_log_filename, 'a') as fp:
-				fp.write(self.xef_file_name); fp.write('\n')
+				fp.write(' [No play button] ')
 
 		while True:
 			## Closing condition
@@ -107,10 +107,18 @@ class GUI():
 				# print '. ',
 				time.sleep( 0.1)
 
+def parse(parser):
+	num_images, video_time, fps = parser.parse()
+	with open(error_log_filename, 'a') as fp: 
+		fp.write(' [num_images: {}, video_time: {}, FPS: {}] '.format(num_images, video_time, fps))
+
 for file_path in xef_files_paths:
+	# Logging it to a file
+	with open(error_log_filename, 'a') as fp: fp.write(os.path.basename(file_path) + ' : ')
+
 	## Initialize XEF Parser
 	parser = Parser(os.path.basename(file_path), base_write_folder, compress_flag, thresh_empty_cycles, in_format_flag = in_format_flag)
-	parse_thread = Thread(name = 'parse_thread', target = parser.parse)
+	parse_thread = Thread(name = 'parse_thread', target = parse, args = (parser, ))
 
 	# Initialize auto clicking thread
 	gui = GUI(os.path.basename(file_path))

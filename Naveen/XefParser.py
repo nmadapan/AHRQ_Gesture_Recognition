@@ -152,8 +152,10 @@ class Parser(object):
 			print exp
 		
 		print '\n', 'Total No. of frames: ', self.image_counter
-		print 'Video time: ', '%.02f'%(time.time() - start_time), 'seconds'
-		print 'FPS: ', int(self.image_counter / (time.time() - start_time))
+		video_time = float('%.02f'%(time.time() - start_time))
+		print 'Video time: ', video_time, 'seconds'
+		fps = int(self.image_counter / (time.time() - start_time))
+		print 'FPS: ', fps
 
 		## Closing Kinect, RGB, Depth, and annotation file streams
 		self.kr.sensor.close()
@@ -164,6 +166,7 @@ class Parser(object):
 		self.rgb_vr.release()
 		self.depth_vr.release()	
 		if self.compress_flag: self.compress_videos()
+		return (self.image_counter, video_time, fps)
 
 	def compress_videos(self):
 		from moviepy.editor import VideoFileClip
