@@ -114,7 +114,7 @@ parse_thread.start()
 time.sleep(1)
 
 xef_thread.start()
-time.sleep(3)
+time.sleep(6)
 
 gui_thread.start()	
 

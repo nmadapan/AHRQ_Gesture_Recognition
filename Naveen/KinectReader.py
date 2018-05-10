@@ -24,8 +24,12 @@ import cv2, numpy as np, os, time, math, ctypes
 #####################
 
 class kinect_reader(object):
-	def __init__(self):
-		self.sensor = PyKinectRuntime.PyKinectRuntime(pk.FrameSourceTypes_Color | pk.FrameSourceTypes_Body | pk.FrameSourceTypes_Depth)
+	def __init__(self, types = pk.FrameSourceTypes_Color | pk.FrameSourceTypes_Body | pk.FrameSourceTypes_Depth):
+		self.sensor = PyKinectRuntime.PyKinectRuntime(types)
+
+		self.color_type = pk.FrameSourceTypes_Color
+		self.depth_type = pk.FrameSourceTypes_Body
+		self.body_type = pk.FrameSourceTypes_Depth
 
 		self.body_frame = None
 

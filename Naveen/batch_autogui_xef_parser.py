@@ -26,12 +26,21 @@ error_log_filename = 'error_log.txt'
 
 # Default settings
 base_write_folder = '..\\Data' # Where to write the files
+kinect_studio_open_time = 8 # in seconds
 compress_flag = False # Do not compress the RGB and Depth videos
 thresh_empty_cycles = 200 # No. of cycles to wait before obtaining the RGB image. Quit after 200 cycles. 
 in_format_flag = True # True since the filename is in the correct format
 
+## Flags
+global parse_flag, xef_flag, gui_flag, file_active
+xef_flag = False
+gui_flag = False
+parse_flag = False
+file_active = False
+
 # Get all xef files paths
 xef_files_paths = glob(os.path.join(xef_folder_path, '*.xef'))
+xef_rex = re.compile('xef - Microsoft\\xae Kinect Studio', re.IGNORECASE)
 
 class XEF(Thread):
 	def __init__(self, xef_file_path):
@@ -39,12 +48,18 @@ class XEF(Thread):
 		self.xef_file_path = xef_file_path
 
 	def run(self): 
+		global parse_flag, xef_flag, gui_flag, file_active
+		xef_flag = True
 		try:
 			os.system(self.xef_file_path)
+			xef_flag = False
 		except Exception as exp:
 			print(exp)
+			while(file_active): continue
+			file_active = True
 			with open(error_log_filename, 'a') as fp:
 				fp.write(' [Error in os.system] ' + '\n')
+			file_active = False
 
 class GUI():
 	def __init__(self, xef_file_name):
@@ -57,14 +72,18 @@ class GUI():
 		if(self.xef_file_name[-4:] != '.xef'): self.xef_file_name = self.xef_file_name + '.xef'
 
 	def run_gui(self):
-		window_names = auto.getWindows().keys()
+		global parse_flag, xef_flag, gui_flag, file_active
 		rex = re.compile(self.xef_file_name + ' - Microsoft\\xae Kinect Studio', re.IGNORECASE)
 
+		## Waiting for Kinect Studio to open
+		window_names = auto.getWindows().keys()
 		matched_keys = [window_name for window_name in window_names if rex.search(window_name) is not None]
 		xef_window_name = matched_keys[0]
 
 		xef_window = auto.getWindow(xef_window_name)
 		xef_window.maximize()
+
+		gui_flag = True
 
 		## Connect Kinect Studio
 		res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'connect.PNG'))
@@ -72,8 +91,8 @@ class GUI():
 			cx, cy = res
 			auto.click(cx, cy)
 			auto.moveTo(self.width/2, self.height/2)
-		else:
-			print('Kinect Studio already connected')
+		# else:
+		# 	print('Kinect Studio already connected')
 
 		## Enable color stream
 		res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'activate.PNG'))
@@ -81,8 +100,8 @@ class GUI():
 			cx, cy = res
 			auto.click(cx, cy)
 			auto.moveTo(self.width/2, self.height/2)
-		else:
-			print('Color stream already connected')
+		# else:
+		# 	print('Color stream already connected')
 
 		## Play video
 		res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'play.PNG'))
@@ -92,29 +111,34 @@ class GUI():
 			auto.moveTo(self.width/2, self.height/2)
 		else:
 			print('Play button not found')
+			while(file_active): continue
+			file_active = True
 			with open(error_log_filename, 'a') as fp:
 				fp.write(' [No play button] ')
+			file_active = False
 
-		while True:
-			## Closing condition
-			_res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'stop_cond.PNG'))
-			if _res is None:
-				cx, cy = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'close_button.PNG'))
-				auto.click(cx, cy)
-				auto.moveTo(self.width/2, self.height/2)
-				break
-			else:
-				# print '. ',
-				time.sleep( 0.1)
+		xef_window.close()
+		while not parse_flag: continue
+		gui_flag = False
 
 def parse(parser):
+	global parse_flag, xef_flag, gui_flag, file_active
+	parse_flag = True
 	num_images, video_time, fps = parser.parse()
+
+	while(file_active): continue
+	file_active = True
 	with open(error_log_filename, 'a') as fp: 
-		fp.write(' [num_images: {}, video_time: {}, FPS: {}] '.format(num_images, video_time, fps))
+		fp.write(' [num_images: {}, video_time: {}, FPS: {}]\n'.format(num_images, video_time, fps))
+	file_active = False
+	parse_flag = False
 
 for file_path in xef_files_paths:
 	# Logging it to a file
+	while(file_active): continue
+	file_active = True
 	with open(error_log_filename, 'a') as fp: fp.write(os.path.basename(file_path) + ' : ')
+	file_active = False
 
 	## Initialize XEF Parser
 	parser = Parser(os.path.basename(file_path), base_write_folder, compress_flag, thresh_empty_cycles, in_format_flag = in_format_flag)
@@ -127,14 +151,23 @@ for file_path in xef_files_paths:
 	# Initialize the function that opens and holds the XEF File
 	xef_thread = XEF(file_path)
 
+	# Close kinect studio if they are open
+	matched_keys = [window_name for window_name in auto.getWindows().keys() if xef_rex.search(window_name) is not None]
+	if(len(matched_keys) != 0): os.system('taskkill /f /im kstudio.exe') # Works only on windows
+
 	# Run the threads in parallel
 	parse_thread.start(); 
 	time.sleep(1)
 
+	while(not parse_flag): continue 
 	xef_thread.start()
-	time.sleep(3)
+	time.sleep(kinect_studio_open_time)
 
+	while(not xef_flag): continue
 	gui_thread.start()	
+
+	while(parse_thread.isAlive()): continue
+	os.system('taskkill /f /im kstudio.exe') # Works only on windows
 
 	# Wait for all threads to join
 	parse_thread.join()

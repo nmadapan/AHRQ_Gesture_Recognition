@@ -106,7 +106,7 @@ class Parser(object):
 				print '. ', 
 			if(time.time()-init_start_time > 30): 
 				print('Waited for more than 30 seconds. Exiting')
-				sys.exit(0)
+				return (-1, -1, -1)
 		
 		print '\nAll modules connected !!\n'
 		print 'Reading and Saving ', 

@@ -1,7 +1,0 @@
-10_1_S2_L6_X_OnePanel.xef : parse_time=0.00  xef_time=0.00  gui_time=0.00
-
- [num_images: 149, video_time: 10.07, FPS: 14 ]10_2_S2_L6_X_TwoPanels.xef : parse_time=0.00  xef_time=0.00  gui_time=0.00
-
- [num_images: 162, video_time: 10.68, FPS: 15 ]10_3_S2_L6_X_ThreePanels.xef : parse_time=0.00  xef_time=0.00  gui_time=0.00
-
- [num_images: 144, video_time: 10.11, FPS: 14 ]
