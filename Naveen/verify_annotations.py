@@ -31,7 +31,7 @@ with open(annotations_path, 'r') as fid:
 	annot = map(int, annot)
 	annot = np.reshape(annot, (-1, 2))
 	
-print avi_path
+print 'Splitting:', os.path.basename(avi_path)
 cap = cv.VideoCapture(avi_path)
 image_count = 0
 gest_count = 0

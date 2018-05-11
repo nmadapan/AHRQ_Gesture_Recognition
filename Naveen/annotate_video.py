@@ -7,7 +7,7 @@ import os, sys, time
 # Description:
 # 	This file displays the RGB video. You are expected to annotate (by left clicking) both the start and 
 #		the end point of each gesture instance. 
-#	It automatically saves the start and end frame numbers into a text file.
+#	It saves the start and end frame numbers into a text file.
 #
 # How to use:
 #
@@ -18,18 +18,18 @@ import os, sys, time
 #####################
 
 # Initialization
-video_file_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\S2_L6\\4_1_S2_L6_Zoom_In_rgb.avi'
+video_file_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\S2_L6\\10_1_S2_L6_X_OnePanel_rgb.avi'
 desired_fps = 8
 
 # Initialize the file pointers
-write_file = os.path.basename(video_file_path)[:-8] + '_annot.txt'
+write_file = os.path.basename(video_file_path).split('.')[0][:-4] + '_annot.txt'
 write_foler_path = os.path.join(os.path.dirname(video_file_path), 'Annotations')
-if not os.path.isdir(write_foler_path): os.mkdir(write_foler_path)
+if(not os.path.isdir(write_foler_path)): os.mkdir(write_foler_path)
 write_file_path = os.path.join(write_foler_path, write_file)
 
-if not os.path.isfile(video_file_path): 
-	print 'Video file does not exists'; 
-	sys.exit()
+if(not os.path.isfile(video_file_path)): 
+	print('Video file does not exists')
+	sys.exit(0)
 
 class Annotate(object):
 	def __init__(self):
