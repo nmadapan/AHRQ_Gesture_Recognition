@@ -108,7 +108,7 @@ class Parser(object):
 				print('Waited for more than 30 seconds. Exiting')
 				return (-1, -1, -1)
 		
-		print '\nAll modules connected !!\n'
+		print '\nAll modules connected !!'
 		print 'Parsing XEF ', 
 
 		# Initialize flags to stop accordingly

@@ -1,6 +1,0 @@
-10_1_S2_L6_X_OnePanel.xef :  [num_images: 919, video_time: 90.98, FPS: 10]
-10_2_S2_L6_X_TwoPanels.xef :  [num_images: 823, video_time: 85.41, FPS: 9]
-10_3_S2_L6_X_ThreePanels.xef :  [num_images: 930, video_time: 91.78, FPS: 10]
-10_4_S2_L6_X_FourPanels.xef :  [num_images: 1018, video_time: 104.64, FPS: 9]
-11_1_S2_L6_X_StdOne.xef :  [num_images: 994, video_time: 100.54, FPS: 9]
-11_2_S2_L6_X_StdTwo.xef : 10_1_S2_L6_X_OnePanel.xef : 

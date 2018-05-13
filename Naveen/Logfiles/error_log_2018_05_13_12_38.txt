@@ -1,0 +1,5 @@
+2018-05-13 12:38:59.737000
+
+10_1_S2_L6_X_OnePanel.xef :  [num_images: 923, video_time: 91.37, FPS: 10]
+10_2_S2_L6_X_TwoPanels.xef :  [num_images: 822, video_time: 84.47, FPS: 9]
+10_3_S2_L6_X_ThreePanels.xef : 

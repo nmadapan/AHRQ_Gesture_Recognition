@@ -1,5 +1,13 @@
 import sys, os
-# from XefParser import Parser
-a = 12.34546
 
-print( (1|8|32) & 8)
+class Dog:
+
+    __name = 'canine'         # class variable shared by all instances
+
+    def __init__(self, name):
+        self.name = name    # instance variable unique to each instance
+
+a = Dog('Hello')
+b = Dog('World')
+
+print _Dog__name

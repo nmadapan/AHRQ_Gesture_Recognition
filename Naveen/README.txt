@@ -28,3 +28,6 @@ verify_annotations.py
 
 annotate_video.py
 	* This SCRIPT allows you to create the annotations MANUALLY by clicking the RGB video
+
+Logfiles
+	* This folder contains the log files containing num_images, fps, video_time of each xef file. This will help debug later on.
