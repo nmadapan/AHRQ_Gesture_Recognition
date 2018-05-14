@@ -3,14 +3,18 @@ import pickle
 import sys
 from FeatureExtractor import FeatureExtractor
 
-skel_filepath = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\S2_L6\\3_1_S2_L6_Rotate_CW_skel.txt'
-annot_filepath = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\S2_L6\\Annotations\\3_1_S2_L6_Rotate_CW_annot2.txt'
+skel_filepath = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\3_1_S2_L6_Rotate_CW_skel.txt'
+annot_filepath = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\Annotations\\3_1_S2_L6_Rotate_CW_annot2.txt'
+skel_folder_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6'
+annot_folder_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\Annotations'
 num_points = 60
 
-feat_extractor = FeatureExtractor(num_points = num_points)
-xf = feat_extractor.extract_raw_features(skel_filepath, annot_filepath)
+feat_extractor = FeatureExtractor(feature_types = ['right'], all_flag = False, num_joints = 1)
+# features = feat_extractor.generate_features(skel_filepath, annot_filepath)
 
-features = feat_extractor.generate_all_features(skel_filepath, annot_filepath)
+# all_features = feat_extractor.batch_generate_features(skel_folder_path, annot_folder_path)
+
+out = feat_extractor.generate_io(skel_folder_path, annot_folder_path)
 
 # with open('raw_features.pickle', 'wb') as fp:
 # 	pickle.dump(features, fp)

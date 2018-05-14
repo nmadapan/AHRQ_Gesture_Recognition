@@ -51,7 +51,7 @@ class Parser(object):
 
 		# Make and write directories if absent
 		if(in_format_flag):
-			self.write_folder = os.path.join(self.base_write_folder, '_'.join(self.xef_file_name.split('_')[2:4]))
+			self.write_folder = os.path.join(self.base_write_folder, '_'.join(self.xef_file_name.split('_')[3:4]))
 		else:
 			self.write_folder = self.base_write_folder
 		if not os.path.isdir(self.base_write_folder): os.mkdir(self.base_write_folder)

@@ -54,19 +54,21 @@ for skel_path in skel_file_paths:
 	else:
 		write_filename = os.path.basename(skel_path)[:-4] + 'annot2.txt'
 	write_file_id = open(os.path.join(base_write_folder, write_filename), 'w')
+	prev_idx = -1
 	for idx, line in enumerate(lines):
 		left_y = line[3*left_hand_id+1] - line[3*torso_id+1]
 		right_y = line[3*right_hand_id+1] - line[3*torso_id+1]
 		if (left_y >= start_y_coo or right_y >= start_y_coo) and (not start_flag): 
-			count_gestures += 1
 			start_flag = True
-			write_file_id.write(str(idx))
-			write_file_id.write('\n')
+			prev_idx = idx
 		if (left_y < start_y_coo and right_y < start_y_coo) and start_flag: 
-			count_gestures += 1
+			count_gestures += 2
 			start_flag = False
-			write_file_id.write(str(idx))
-			write_file_id.write('\n')
+			if(abs(prev_idx-idx) >= 20):
+				write_file_id.write(str(prev_idx))
+				write_file_id.write('\n')			
+				write_file_id.write(str(idx))
+				write_file_id.write('\n')
 	if(count_gestures%2 != 0):
 		print 'Manual verification needed for: ', 
 		print write_filename + ' ',
@@ -74,5 +76,5 @@ for skel_path in skel_file_paths:
 	if(count_gestures < 40):
 		print 'Manual verification needed for: ', 
 		print write_filename + ' ',
-		print 'no. of entries less than 20'
+		print 'no. of gesture instances less than 20'
 

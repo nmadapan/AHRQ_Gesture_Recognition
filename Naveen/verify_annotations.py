@@ -15,7 +15,7 @@ import cv2 as cv, numpy as np, os, shutil,sys
 
 ## Initialization
 base_path = 'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Data\S2_L6'
-file_name ='10_4_S2_L6_X_FourPanels_rgb.avi' # WITH EXTENSION
+file_name ='4_1_S2_L6_Zoom_In_rgb.avi' # WITH EXTENSION
 annotations_path = os.path.join(base_path, 'Annotations', (file_name.split('.')[0][:-4]+str('_annot2.txt')) )
 write_folder = '..\\Test'
 
