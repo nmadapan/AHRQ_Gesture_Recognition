@@ -3,8 +3,9 @@ from scipy.io import savemat
 from scipy.interpolate import interp1d	
 from random import shuffle
 
-a = np.eye(9)
-print np.argmax(a, axis = 1)
+a = set(['a', 'b', 'c'])
+b = set(['a', 'c', 'd'])
+print b.difference(b.intersection(a))
 
 # print np.random.randint(0, 10, (2, 5))
 # print np.random.randint(0, 10, (2, 5))

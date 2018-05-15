@@ -7,25 +7,45 @@ from copy import deepcopy
 from random import shuffle 
 from sklearn import svm
 
+#####################
+#
+# Description:
+#
+# How to use:
+#
+#####################
+
 class FeatureExtractor():
-	def __init__(self, feature_types = ['right'], all_flag = False, num_joints = 1):
-		## Global variables
+	def __init__(self, feature_types = ['left', 'right'], all_flag = False, num_joints = 1, dim_per_joint = 3):
+		## Private variables
 		self.__types = ['right', 'd_right', 'dd_right', 'theta_right', 'd_theta_right', 'dd_theta_right',\
 							 'left', 'd_left', 'dd_left', 'theta_left', 'd_theta_left', 'dd_theta_left']
 		self.__num_types = len(self.__types)
 		self.__id_to_type = {idx: feat_type for idx, feat_type in zip(range(self.__num_types), self.__types)}
 
-		## Initialization
-		self.num_joints = num_joints
+		## Declare variables
+		self.num_joints = num_joints # 1 - only hand, 2 - both hand and the shoulder
+		self.dim_per_joint = dim_per_joint
 		self.type_flags = {feat_type: False for feat_type in self.__types}
+		self.num_feature_types = None
+		self.feature_types = None
+
+		## Check if input arguments take right values
+		if(not (self.num_joints == 1 or self.num_joints == 2)):
+			sys.exit('Warning: Number of joints should be either 1 or 2\n')
+		if(not (self.dim_per_joint == 2 or self.dim_per_joint == 3)):
+			sys.exit('Warning: Dimension per joint should be either 2 or 3\n')
+		if(not set(feature_types).issubset(set(self.__types))):
+			miss = list(set(feature_types).difference(set(feature_types).intersection(set(self.__types))))
+			sys.exit('Warning: Some feature types: \'' + ', '.join(miss) + '\' do not exist\n')			
+
+		# Initialize variables
 		if(not all_flag):
 			self.feature_types = feature_types
 			self.num_feature_types = len(self.feature_types)
 			for feat_type in self.feature_types: 
 				if feat_type in self.__types: 
 					self.type_flags[feat_type] = True
-				else:
-					print(feat_type, ' does not exist')
 		else:
 			self.feature_types = deepcopy(self.__types)
 			self.num_feature_types = len(self.feature_types)
@@ -54,14 +74,14 @@ class FeatureExtractor():
 		# Extract the required joints: Only right hand if both_hands is False, both the hands otherwise.
 		# Column reduction . . 
 		if(self.num_joints == 2):
-			left = [[line[3*left_hand_id:3*left_hand_id+3], line[3*left_elbow_id:3*left_elbow_id+3], \
-				 line[3*left_shoulder_id:3*left_shoulder_id+3]] for line in lines]
-			right = [[line[3*right_hand_id:3*right_hand_id+3], line[3*right_elbow_id:3*right_elbow_id+3], \
-					 line[3*right_shoulder_id:3*right_shoulder_id+3]] for line in lines]
+			left = [[line[self.dim_per_joint*left_hand_id:self.dim_per_joint*left_hand_id+self.dim_per_joint], line[self.dim_per_joint*left_elbow_id:self.dim_per_joint*left_elbow_id+self.dim_per_joint], \
+				 line[self.dim_per_joint*left_shoulder_id:self.dim_per_joint*left_shoulder_id+self.dim_per_joint]] for line in lines]
+			right = [[line[self.dim_per_joint*right_hand_id:self.dim_per_joint*right_hand_id+self.dim_per_joint], line[self.dim_per_joint*right_elbow_id:self.dim_per_joint*right_elbow_id+self.dim_per_joint], \
+					 line[self.dim_per_joint*right_shoulder_id:self.dim_per_joint*right_shoulder_id+self.dim_per_joint]] for line in lines]
 		else:
-			left = [[line[3*left_hand_id:3*left_hand_id+3], line[3*left_shoulder_id:3*left_shoulder_id+3]] \
+			left = [[line[self.dim_per_joint*left_hand_id:self.dim_per_joint*left_hand_id+self.dim_per_joint], line[self.dim_per_joint*left_shoulder_id:self.dim_per_joint*left_shoulder_id+self.dim_per_joint]] \
 					for line in lines]
-			right = [[line[3*right_hand_id:3*right_hand_id+3], line[3*right_shoulder_id:3*right_shoulder_id+3]] \
+			right = [[line[self.dim_per_joint*right_hand_id:self.dim_per_joint*right_hand_id+self.dim_per_joint], line[self.dim_per_joint*right_shoulder_id:self.dim_per_joint*right_shoulder_id+self.dim_per_joint]] \
 					for line in lines]
 
 		left = np.array([np.array(line).flatten().tolist() for line in left])				 
@@ -78,24 +98,26 @@ class FeatureExtractor():
 	def generate_features(self, skel_filepath, annot_filepath):
 		result = []
 
+		## Obtain raw features
 		xf = self.extract_raw_features(skel_filepath, annot_filepath)
 
 		for inst_id in range(len(xf['right'])):
+			## Initialize the feature instance. Also, put a label
 			features = {feat_type: None for feat_type in self.__types}
-						## Put a label
 			features['label'] = '_'.join(os.path.basename(skel_filepath).split('_')[:2])
 
-			## Preprocess
-			right = xf['right'][inst_id]
-			left = xf['left'][inst_id]
-			right = right.reshape(3*(self.num_joints+1), -1).transpose()
-			left = left.reshape(3*(self.num_joints+1), -1).transpose()			
-			d_reps = np.ones(right.shape[0]-2).tolist(); d_reps.append(2)
-			dd_reps = np.ones(right.shape[0]-3).tolist(); dd_reps.append(3)
+			## Preprocess: 
+			right = xf['right'][inst_id] # get right arm raw feature
+			left = xf['left'][inst_id] # get left arm feature
+			right = right.reshape(self.dim_per_joint*(self.num_joints+1), -1).transpose()
+			left = left.reshape(self.dim_per_joint*(self.num_joints+1), -1).transpose()			
+			d_reps = np.ones(right.shape[0]-2).tolist(); d_reps.append(2) # diff() reduced length by one. Using this we can fix it.
+			dd_reps = np.ones(right.shape[0]-3).tolist(); dd_reps.append(3) # This is similar to above but for double diff
 
+			## Right arm
 			## Position
 			if(self.type_flags['right']):
-				right = right[:,0:3*self.num_joints] - np.tile(right[:,3*self.num_joints:], (1, self.num_joints))
+				right = right[:,0:self.dim_per_joint*self.num_joints] - np.tile(right[:,self.dim_per_joint*self.num_joints:], (1, self.num_joints))
 				features['right'] = right.transpose().flatten()
 			## Velocity
 			if(self.type_flags['d_right']):
@@ -122,9 +144,10 @@ class FeatureExtractor():
 				dd_theta_right = np.repeat(dd_theta_right, dd_reps, axis = 0)
 				features['dd_theta_right'] = dd_theta_right.transpose().flatten()
 
+			## Left arm
 			## Position
 			if(self.type_flags['left']):
-				left = left[:,0:3*self.num_joints] - np.tile(left[:,3*self.num_joints:], (1, self.num_joints))
+				left = left[:,0:self.dim_per_joint*self.num_joints] - np.tile(left[:,self.dim_per_joint*self.num_joints:], (1, self.num_joints))
 				features['left'] = left.transpose().flatten()
 			## Velocity
 			if(self.type_flags['d_left']):			
@@ -200,7 +223,7 @@ class FeatureExtractor():
 			for feat_id, feat_type in self.__id_to_type.items():
 				if(feature[feat_type] is not None):
 					if(equate_dim):
-						mod_feat = feature[feat_type].reshape(3*self.num_joints, -1).transpose()
+						mod_feat = feature[feat_type].reshape(self.dim_per_joint*self.num_joints, -1).transpose()
 						mod_feat = self.__interpn(mod_feat, kwargs['num_points'])
 						mod_feat = mod_feat.transpose().flatten()
 					else:
@@ -231,7 +254,7 @@ class FeatureExtractor():
 			y[:, dim] = f(x)
 		return y
 
-	def check_svm(self, data_input, data_output, train_per = 0.8, kernel = 'linear'):
+	def run_svm(self, data_input, data_output, train_per = 0.8, kernel = 'linear'):
 		num_inst = data_input.shape[0]
 		feat_dim = data_input.shape[1]
 
@@ -251,8 +274,10 @@ class FeatureExtractor():
 		pred_train_output = clf.predict(train_input)
 		train_acc = float(np.sum(pred_train_output == np.argmax(train_output, axis = 1))) / pred_train_output.size
 		print 'Train Acc: ', train_acc
-				
+
 		# Test Predict
-		pred_output = clf.predict(test_input)
-		test_acc = float(np.sum(pred_output == np.argmax(test_output, axis = 1))) / pred_output.size
+		pred_test_output = clf.predict(test_input)
+		test_acc = float(np.sum(pred_test_output == np.argmax(test_output, axis = 1))) / pred_test_output.size
 		print 'Test Acc: ', test_acc
+
+		return train_acc, test_acc

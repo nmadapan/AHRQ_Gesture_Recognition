@@ -9,14 +9,15 @@ skel_folder_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6'
 annot_folder_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\Annotations'
 num_points = 60
 
-feat_extractor = FeatureExtractor(feature_types = ['left', 'right'], num_joints = 1)
-# features = feat_extractor.generate_features(skel_filepath, annot_filepath)
+fe = FeatureExtractor(feature_types = ['left', 'right'], num_joints = 1)
 
-# all_features = feat_extractor.batch_generate_features(skel_folder_path, annot_folder_path)
+# features = fe.generate_features(skel_filepath, annot_filepath)
 
-out = feat_extractor.generate_io(skel_folder_path, annot_folder_path, equate_dim = True, num_points = 40)
+# all_features = fe.batch_generate_features(skel_folder_path, annot_folder_path)
 
-feat_extractor.check_svm(out['data_input'], out['data_output'], train_per = 0.60)
+out = fe.generate_io(skel_folder_path, annot_folder_path, equate_dim = True, num_points = 40)
+
+fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60)
 
 # for feat in out['data_input']:
 # 	print feat.shape
