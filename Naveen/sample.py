@@ -1,20 +1,32 @@
 import numpy as np
 from scipy.io import savemat
+from scipy.interpolate import interp1d	
+from random import shuffle
 
-a = 5
-b = 6
+a = np.eye(9)
+print np.argmax(a, axis = 1)
 
-x = np.random.rand(a)
-y = np.random.rand(b)
+# print np.random.randint(0, 10, (2, 5))
+# print np.random.randint(0, 10, (2, 5))
 
-# savemat('test.mat', dict(x=[x, y]))
+# def func(**kwargs):
+# 	print kwargs.values()
 
-# # Create a list of numpy arrays (_ x Fixed)
-# # Create a list of numpy arrays (_ x num_classes) # One hot vector 
-# # savemat('', dict(data_input = _, data_output = _))
+# func(a=1, b= 2)
 
-# print x, y
-# print np.concatenate((x, y), axis = 0)
+# def interpn(xp, yp, x):
+# 	y = np.zeros((x.size, yp.shape[1]))
+# 	for dim in range(yp.shape[1]):
+# 		f = interp1d(xp, yp[:, dim], kind='linear')
+# 		y[:, dim] = f(x)
+# 	return y
 
-a = set([1, 1, 2, 2, 3])
-print list(a)
+# xp = np.linspace(0, 1, 10)
+# yp = np.random.rand(10, 2)
+
+# x = np.linspace(0, 1, 20)
+
+# y = interpn(xp, yp, x)
+
+# print yp
+# print y

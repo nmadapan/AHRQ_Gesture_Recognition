@@ -9,12 +9,17 @@ skel_folder_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6'
 annot_folder_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\Annotations'
 num_points = 60
 
-feat_extractor = FeatureExtractor(feature_types = ['right'], all_flag = False, num_joints = 1)
+feat_extractor = FeatureExtractor(feature_types = ['left', 'right'], num_joints = 1)
 # features = feat_extractor.generate_features(skel_filepath, annot_filepath)
 
 # all_features = feat_extractor.batch_generate_features(skel_folder_path, annot_folder_path)
 
-out = feat_extractor.generate_io(skel_folder_path, annot_folder_path)
+out = feat_extractor.generate_io(skel_folder_path, annot_folder_path, equate_dim = True, num_points = 40)
+
+feat_extractor.check_svm(out['data_input'], out['data_output'], train_per = 0.60)
+
+# for feat in out['data_input']:
+# 	print feat.shape
 
 # with open('raw_features.pickle', 'wb') as fp:
 # 	pickle.dump(features, fp)
