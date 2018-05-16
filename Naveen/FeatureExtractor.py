@@ -7,51 +7,81 @@ from copy import deepcopy
 from random import shuffle 
 from sklearn import svm
 
+
 #####################
+# BASE class for creating features from skeleton files and annotation files
 #
-# Description:
+# How to use it:
 #
-# How to use:
+#	from FeatureExtractor import FeatureExtractor
+#	fe = FeatureExtractor(all_flag = False, feature_types = ['left', 'right'], num_joints = 1)
+#		* If all_flag = True, all features types are considered. 
+#			In this case, there is no need to have 'feature_types' argument. For instance
+#			fe = FeatureExtractor(all_flag = True, num_joints = 1)
+#		* num_joints = 1 --> only hand, num_joints = 2 --> both hand and the elbow
 #
+#	fe = FeatureExtractor(all_flag = True, num_joints = 1)
+#	fe.extract_raw_features(skel_filepath, annot_filepath) # See the comments inside function
+#	fe.generate_features(skel_filepath, annot_filepath) # See the comments inside function
+#	fe.batch_generate_features(skel_folder_path, annot_folder_path, ignore_missing_files = False)
+#	fe.generate_io(skel_folder_path, annot_folder_path, randomize = True, equate_dim = False)
 #####################
 
 class FeatureExtractor():
-	def __init__(self, feature_types = ['left', 'right'], all_flag = False, num_joints = 1, dim_per_joint = 3):
+	def __init__(self, all_flag = False, num_joints = 1, dim_per_joint = 3, **kwargs):
+		# kwargs['feature_types'] = ['left', 'right']
 		## Private variables
-		self.__types = ['right', 'd_right', 'dd_right', 'theta_right', 'd_theta_right', 'dd_theta_right',\
+		self.__available_types = ['right', 'd_right', 'dd_right', 'theta_right', 'd_theta_right', 'dd_theta_right',\
 							 'left', 'd_left', 'dd_left', 'theta_left', 'd_theta_left', 'dd_theta_left']
-		self.__num_types = len(self.__types)
-		self.__id_to_type = {idx: feat_type for idx, feat_type in zip(range(self.__num_types), self.__types)}
+		self.__num_available_types = len(self.__available_types)
+		self.__id_to_available_type = {idx: feat_type for idx, feat_type in zip(range(self.__num_available_types), self.__available_types)}
 
-		## Declare variables
+		## Declaring instance variables
 		self.num_joints = num_joints # 1 - only hand, 2 - both hand and the shoulder
 		self.dim_per_joint = dim_per_joint
-		self.type_flags = {feat_type: False for feat_type in self.__types}
+		self.type_flags = {feat_type: False for feat_type in self.__available_types}
 		self.num_feature_types = None
 		self.feature_types = None
 
 		## Check if input arguments take right values
+		# If all_flag is False, then kwargs['feature_types'] should exist
+		if((not all_flag) and ('feature_types' not in kwargs.keys())):
+			sys.exit('Error! \'feature_types\' input argument is mandatory when \'all_flag\' is False \n')		
+		# num_joints can either be 1 or 2
 		if(not (self.num_joints == 1 or self.num_joints == 2)):
-			sys.exit('Warning: Number of joints should be either 1 or 2\n')
+			sys.exit('Error: Number of joints should be either 1 or 2\n')
+		# dim_per_joint can either be 2 or 3
 		if(not (self.dim_per_joint == 2 or self.dim_per_joint == 3)):
-			sys.exit('Warning: Dimension per joint should be either 2 or 3\n')
-		if(not set(feature_types).issubset(set(self.__types))):
-			miss = list(set(feature_types).difference(set(feature_types).intersection(set(self.__types))))
-			sys.exit('Warning: Some feature types: \'' + ', '.join(miss) + '\' do not exist\n')			
+			sys.exit('Error: Dimension per joint should be either 2 or 3\n')
+		# If kwargs['feature_types'] exists, the feature types should exist in the availabe types
+		if((not all_flag) and (not set(kwargs['feature_types']).issubset(set(self.__available_types)))):
+			miss = list(set(feature_types).difference(set(feature_types).intersection(set(self.__available_types))))
+			sys.exit('Error: Some feature types: \'' + ', '.join(miss) + '\' do not exist\n')			
 
-		# Initialize variables
+		# Updating the feature type flags
 		if(not all_flag):
-			self.feature_types = feature_types
+			self.feature_types = kwargs['feature_types']
 			self.num_feature_types = len(self.feature_types)
 			for feat_type in self.feature_types: 
-				if feat_type in self.__types: 
+				if feat_type in self.__available_types: 
 					self.type_flags[feat_type] = True
 		else:
-			self.feature_types = deepcopy(self.__types)
+			self.feature_types = deepcopy(self.__available_types)
 			self.num_feature_types = len(self.feature_types)
-			self.type_flags = {feat_type: True for feat_type in self.__types}
+			self.type_flags = {feat_type: True for feat_type in self.__available_types}
 
 	def extract_raw_features(self, skel_filepath, annot_filepath):
+		########################
+		# Input arguments:
+		#	1. skel_filepath: full path of skeleton file
+		#	2. annot_filepath: full path of annotation file
+		# Return:
+		#	xf - dictionary of raw trajectories
+		#	xf['left'] and xf['right'] are lists of 1D numpy arrays
+		#	If there are 20 frames, 2 joints - then, flattened numpy array of size is (3*(2+1)*20) --> 
+		#	[x_hand .., y_hand .., z_hand, x_elbow .., y_elbow .., z_elbow .., x_shoulder .., y_shoulder .., z_shoulder ..]
+		########################
+
 		# Initialize joint IDs
 		left_hand_id = 7
 		left_elbow_id = 5
@@ -73,18 +103,28 @@ class FeatureExtractor():
 
 		# Extract the required joints: Only right hand if both_hands is False, both the hands otherwise.
 		# Column reduction . . 
+		dim = self.dim_per_joint
 		if(self.num_joints == 2):
-			left = [[line[self.dim_per_joint*left_hand_id:self.dim_per_joint*left_hand_id+self.dim_per_joint], line[self.dim_per_joint*left_elbow_id:self.dim_per_joint*left_elbow_id+self.dim_per_joint], \
-				 line[self.dim_per_joint*left_shoulder_id:self.dim_per_joint*left_shoulder_id+self.dim_per_joint]] for line in lines]
-			right = [[line[self.dim_per_joint*right_hand_id:self.dim_per_joint*right_hand_id+self.dim_per_joint], line[self.dim_per_joint*right_elbow_id:self.dim_per_joint*right_elbow_id+self.dim_per_joint], \
-					 line[self.dim_per_joint*right_shoulder_id:self.dim_per_joint*right_shoulder_id+self.dim_per_joint]] for line in lines]
+			left = [[ \
+					line[dim*left_hand_id:dim*left_hand_id+dim], \
+					line[dim*left_elbow_id:dim*left_elbow_id+dim], \
+				 	line[dim*left_shoulder_id:dim*left_shoulder_id+dim]\
+				 	] for line in lines]
+			right = [[\
+					 line[dim*right_hand_id:dim*right_hand_id+dim], \
+					 line[dim*right_elbow_id:dim*right_elbow_id+dim], \
+					 line[dim*right_shoulder_id:dim*right_shoulder_id+dim]\
+					 ] for line in lines]
 		else:
-			left = [[line[self.dim_per_joint*left_hand_id:self.dim_per_joint*left_hand_id+self.dim_per_joint], line[self.dim_per_joint*left_shoulder_id:self.dim_per_joint*left_shoulder_id+self.dim_per_joint]] \
-					for line in lines]
-			right = [[line[self.dim_per_joint*right_hand_id:self.dim_per_joint*right_hand_id+self.dim_per_joint], line[self.dim_per_joint*right_shoulder_id:self.dim_per_joint*right_shoulder_id+self.dim_per_joint]] \
-					for line in lines]
-
-		left = np.array([np.array(line).flatten().tolist() for line in left])				 
+			left = [[\
+					line[dim*left_hand_id:dim*left_hand_id+dim], \
+					line[dim*left_shoulder_id:dim*left_shoulder_id+dim]\
+					] for line in lines]
+			right = [[\
+					 line[dim*right_hand_id:dim*right_hand_id+dim], \
+					 line[dim*right_shoulder_id:dim*right_shoulder_id+dim]\
+					 ] for line in lines]
+		left = np.array([np.array(line).flatten().tolist() for line in left]) # Shape - (num_total_frames x 9) if num_joints = 2
 		right = np.array([np.array(line).flatten().tolist() for line in right])
 
 		# Split the skeleton file based on annotations. start to end of the gesture instacne. 
@@ -96,6 +136,20 @@ class FeatureExtractor():
 		return xf
 
 	def generate_features(self, skel_filepath, annot_filepath):
+		########################
+		# Input arguments:
+		#	1. skel_filepath: full path of skeleton file
+		#	2. annot_filepath: full path of annotation file
+		# Return:
+		#	result - list of elements. Number of elements = no. of gesture instances in the skeleton file.
+		#	Each element is a dictionary where keys are of two kinds: 1. feature types (refer to available types) and 2. class label ('label')
+		#		For feature types, value is the following:
+		#			* None if the flag of that feature type (self.type_flags) is False
+		#			* If there are 20 frames, 2 joints - then, flattened numpy array of size is (3*2*20) --> 
+		#			* [x_hand .., y_hand .., z_hand, x_elbow .., y_elbow .., z_elbow ..]	
+		#		For class label, value is groupID_commandID. For instance, 3_0.
+		########################
+
 		result = []
 
 		## Obtain raw features
@@ -103,7 +157,7 @@ class FeatureExtractor():
 
 		for inst_id in range(len(xf['right'])):
 			## Initialize the feature instance. Also, put a label
-			features = {feat_type: None for feat_type in self.__types}
+			features = {feat_type: None for feat_type in self.__available_types}
 			features['label'] = '_'.join(os.path.basename(skel_filepath).split('_')[:2])
 
 			## Preprocess: 
@@ -178,13 +232,45 @@ class FeatureExtractor():
 
 		return result
 
-	def batch_generate_features(self, skel_folder_path, annot_folder_path):
+	def batch_generate_features(self, skel_folder_path, annot_folder_path, ignore_missing_files = False):
+		########################
+		# Input arguments:
+		#	1. skel_folder_path: full path to folder containing skeleton files
+		#	2. annot_folder_path: full path to folder containing annotation files
+		#	3. ignore_missing_files: if False, skip when annotation file for a skeleton file is missing, otherwise exit
+		# 	There should be one to one association between files in skel_folder_path and annot_folder_path
+		#		If skeleton file name is 1_1_S2_L6_Scroll_Up_skel.txt, then the name of annotation file is 1_1_S2_L6_Scroll_Up_annot2.txt
+		# Return:
+		#	result - list of elements. Number of elements = no. of gesture instances in all skeleton files.
+		#	Each element is a dictionary where keys are of two kinds: 1. feature types (refer to available types) and 2. class label ('label')
+		#		For feature types, value is the following:
+		#			* None if the flag of that feature type (self.type_flags) is False
+		#			* If there are 20 frames, 2 joints - then, flattened numpy array of size is (3*2*20) --> 
+		#			* [x_hand .., y_hand .., z_hand, x_elbow .., y_elbow .., z_elbow ..]	
+		#		For class label, value is groupID_commandID. For instance, 3_0.
+		########################
+
+		# Error checks
+		if(not os.path.isdir(skel_folder_path)):
+			sys.exit('Error: '+ skel_folder_path + ' does not exists\n')
+		if(not os.path.isdir(annot_folder_path)):
+			sys.exit('Error: '+ annot_folder_path + ' does not exists\n')
+
 		skel_filepaths = glob(os.path.join(skel_folder_path, '*_skel.txt'))
+
+		if(len(skel_filepaths) == 0): 
+			sys.exit('No skeleton files in ' + skel_folder_path + '\n')
+
 		combos = []
 		for skel_filepath in skel_filepaths:
 			annot_filepath = os.path.join(annot_folder_path, os.path.basename(skel_filepath)[:-8]+'annot2.txt')
 			flag = os.path.isfile(annot_filepath)
-			if flag: combos.append((skel_filepath, annot_filepath))
+			if flag: 
+				combos.append((skel_filepath, annot_filepath))
+			else: 
+				message = 'Annotation file of {} --> {}: does not exist'.format(skel_filepath, annot_filepath)
+				if(not ignore_missing_files): sys.exit(message)
+				else: print message
 
 		features = []
 		for skel_filepath, annot_filepath in combos:
@@ -192,9 +278,39 @@ class FeatureExtractor():
 			for feat in temp_features: features.append(feat)
 		return features
 
-	def generate_io(self, skel_folder_path, annot_folder_path, randomize = True, equate_dim = True, **kwargs):
+	def generate_io(self, skel_folder_path, annot_folder_path, randomize = True, equate_dim = False, **kwargs):
+		########################
+		# Input arguments:
+		#	1. skel_folder_path: full path to folder containing skeleton files
+		#	2. annot_folder_path: full path to folder containing annotation files
+		#	3. randomize: If True, features are randomized, otherwise, order is maintained
+		#	4. equate_dim: If True, Each gesture instance is interpolated/extrapolated to 
+		#		a fixed number of frames given by the next argument
+		#	5. num_points: How many frames each gesture instance should contain. 
+		#		If equate_dim is True, num_points variable is mandatory
+		# Return:
+		#	out - A dictionary containing the following keys:
+		#		1. num_classes - No. of classes
+		#		2. class_labels - Lis of labels of each class
+		#		3. id_to_labels - dictionary where keys are class IDs and values are class labels
+		#		4. label_to_ids	- dictionary where kyes are class labels and values are class IDs
+		#		5. num_instances - Total number of instances 
+		#		6. data_input - List of flattened numpy arrays. Each numpy array is the final feature vector
+		#			All feature vectors will be of same length if 'equate_dim' is True
+		#			Each feature vector is a result of concatenation of flattened numpy arrays corresponding to each feature type. 
+		#			If 'equate_dim' is True, this is a numpy array of shape (num_instances x fixed_num_of_features)
+		#		7. data_output - One hot representation of corresponding class the feature vector
+		#		8. num_joints - Number of joints considered
+		#		9. num_feature_types - Number of actual feature types considered. 
+		########################
+
+		if(equate_dim and ('num_points' not in kwargs.keys())):
+			sys.exit('Error! \'num_points\' input argument is mandatory when \'equate_dim\' is True \n')
+
+		## Obtain all features
 		features = self.batch_generate_features(skel_folder_path, annot_folder_path)
 
+		## Initialize the return variable
 		out = {'num_classes': -1, 'class_labels': None, 'id_to_labels':None, 'label_to_ids':None, \
 				'num_instances': None, 'data_input': [], 'data_output': [], 'num_joints': -1, \
 				'num_feature_types': -1}
@@ -203,11 +319,16 @@ class FeatureExtractor():
 		id_to_labels = {}
 		label_to_ids = {}
 
+		## Obtain class labels
 		for feature in features: class_labels.append(feature['label'])
 		class_labels = list(set(class_labels))
+
+		## Generate class IDs
 		for class_id, label in zip(range(len(class_labels)), class_labels): 
 			id_to_labels[class_id] = label
 			label_to_ids[label] = class_id
+
+		## Overwrite the keys in the return variable
 		out['num_classes'] = len(class_labels)
 		out['class_labels'] = class_labels
 		out['id_to_labels'] = id_to_labels
@@ -220,19 +341,20 @@ class FeatureExtractor():
 
 		for feature in features:
 			inst = []
-			for feat_id, feat_type in self.__id_to_type.items():
+			for feat_id, feat_type in self.__id_to_available_type.items():
 				if(feature[feat_type] is not None):
 					if(equate_dim):
+						# Interpolate or Extrapolate to fixed dimension
 						mod_feat = feature[feat_type].reshape(self.dim_per_joint*self.num_joints, -1).transpose()
 						mod_feat = self.__interpn(mod_feat, kwargs['num_points'])
 						mod_feat = mod_feat.transpose().flatten()
 					else:
 						mod_feat = feature[feat_type]
-						pass
 					inst = inst + mod_feat.tolist()
 			out['data_input'].append(np.array(inst))
 			out['data_output'].append(I[label_to_ids[feature['label']], :])
 		if(randomize):
+			# Randomize data input and output
 			temp = zip(out['data_input'], out['data_output'])
 			shuffle(temp)
 			out['data_input'], out['data_output'] = zip(*temp)
@@ -242,15 +364,15 @@ class FeatureExtractor():
 			out['data_output'] = np.array(out['data_output'])
 		return out
 
-	def __interpn(self, yp, num_points, kind='linear'):
+	def __interpn(self, yp, num_points, kind = 'linear'):
 		# yp is a gesture instance
-		# yp is 2D numpy array of size num_frames x _
+		# yp is 2D numpy array of size num_frames x 3 if num_joints = 1
 		# No. of frames will be increased/reduced to num_points
 		xp = np.linspace(0, 1, num = yp.shape[0])
 		x = np.linspace(0, 1, num = num_points)
 		y = np.zeros((x.size, yp.shape[1]))
 		for dim in range(yp.shape[1]):
-			f = interp1d(xp, yp[:, dim], kind=kind)
+			f = interp1d(xp, yp[:, dim], kind = kind)
 			y[:, dim] = f(x)
 		return y
 

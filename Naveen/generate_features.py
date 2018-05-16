@@ -9,7 +9,7 @@ skel_folder_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6'
 annot_folder_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\Annotations'
 num_points = 60
 
-fe = FeatureExtractor(feature_types = ['left', 'right'], num_joints = 1)
+fe = FeatureExtractor(all_flag = False, feature_types = ['left', 'right'], num_joints = 1) # 
 
 # features = fe.generate_features(skel_filepath, annot_filepath)
 

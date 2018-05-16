@@ -3,9 +3,15 @@ from scipy.io import savemat
 from scipy.interpolate import interp1d	
 from random import shuffle
 
-a = set(['a', 'b', 'c'])
-b = set(['a', 'c', 'd'])
-print b.difference(b.intersection(a))
+x = 'a'
+y = 'b'
+a = '%s, %s'%(x, y)
+b = '{}, {}'.format(x, y)
+print a, b
+
+# a = set(['a', 'b', 'c'])
+# b = set(['a', 'c', 'd'])
+# print b.difference(b.intersection(a))
 
 # print np.random.randint(0, 10, (2, 5))
 # print np.random.randint(0, 10, (2, 5))
