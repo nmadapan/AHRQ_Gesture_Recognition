@@ -3,3 +3,4 @@ KinectReader:
 	* Code should be modified that will work with only color, only depth, only skeleton, or combinations of these. 
 
 After opening Kinect studio, it becomes active immediately but it takes 3seconds to 10 seconds to open. There is no way yet found to detect if this application is fully open. 
+	As of now, appropriate delays were put in place to account for these delays.

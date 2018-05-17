@@ -6,7 +6,9 @@ from scipy.interpolate import interp1d
 from copy import deepcopy
 from random import shuffle 
 from sklearn import svm
-
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+import itertools
 
 #####################
 # BASE class for creating features from skeleton files and annotation files
@@ -376,9 +378,41 @@ class FeatureExtractor():
 			y[:, dim] = f(x)
 		return y
 
+	def __plot_confusion_matrix(self, cm, classes, normalize=False, title='Confusion matrix',cmap=plt.cm.Blues):
+		"""
+		This function prints and plots the confusion matrix.
+		Normalization can be applied by setting `normalize=True`.
+		"""
+		if normalize:
+			cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+			print("Normalized confusion matrix")
+		else:
+			print('Confusion matrix, without normalization')
+
+		# print(cm)
+
+		plt.imshow(cm, interpolation='nearest', cmap=cmap)
+		plt.title(title)
+		plt.colorbar()
+		tick_marks = np.arange(len(classes))
+		plt.xticks(tick_marks, classes, rotation=45)
+		plt.yticks(tick_marks, classes)
+
+		fmt = '.2f' if normalize else 'd'
+		thresh = cm.max() / 2.
+		for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+			plt.text(j, i, format(cm[i, j], fmt), horizontalalignment="center", \
+				color="white" if cm[i, j] > thresh else "black")
+
+		plt.tight_layout()
+		plt.ylabel('True label')
+		plt.xlabel('Predicted label')
+		plt.show()
+
 	def run_svm(self, data_input, data_output, train_per = 0.8, kernel = 'linear'):
 		num_inst = data_input.shape[0]
 		feat_dim = data_input.shape[1]
+		num_classes = data_output.shape[1]
 
 		## Randomize
 		perm = list(range(data_input.shape[0]))
@@ -401,5 +435,8 @@ class FeatureExtractor():
 		pred_test_output = clf.predict(test_input)
 		test_acc = float(np.sum(pred_test_output == np.argmax(test_output, axis = 1))) / pred_test_output.size
 		print 'Test Acc: ', test_acc
+
+		conf_mat = confusion_matrix(np.argmax(test_output, axis = 1), pred_test_output)
+		self.__plot_confusion_matrix(conf_mat, list(range(num_classes)), normalize = True)
 
 		return train_acc, test_acc

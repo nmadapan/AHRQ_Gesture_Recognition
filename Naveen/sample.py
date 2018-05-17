@@ -3,11 +3,19 @@ from scipy.io import savemat
 from scipy.interpolate import interp1d	
 from random import shuffle
 
-x = 'a'
-y = 'b'
-a = '%s, %s'%(x, y)
-b = '{}, {}'.format(x, y)
-print a, b
+a = np.random.randint(0, 10, (1, 4))
+b = np.random.randint(0, 10, (4,1))
+print a
+print b
+print np.sum(b == a)
+
+
+
+# x = 'a'
+# y = 'b'
+# a = '%s, %s'%(x, y)
+# b = '{}, {}'.format(x, y)
+# print a, b
 
 # a = set(['a', 'b', 'c'])
 # b = set(['a', 'c', 'd'])
