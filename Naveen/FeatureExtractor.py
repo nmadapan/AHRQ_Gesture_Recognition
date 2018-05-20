@@ -57,7 +57,7 @@ class FeatureExtractor():
 			sys.exit('Error: Dimension per joint should be either 2 or 3\n')
 		# If kwargs['feature_types'] exists, the feature types should exist in the availabe types
 		if((not all_flag) and (not set(kwargs['feature_types']).issubset(set(self.__available_types)))):
-			miss = list(set(feature_types).difference(set(feature_types).intersection(set(self.__available_types))))
+			miss = list(set(kwargs['feature_types']).difference(set(kwargs['feature_types']).intersection(set(self.__available_types))))
 			sys.exit('Error: Some feature types: \'' + ', '.join(miss) + '\' do not exist\n')			
 
 		# Updating the feature type flags
@@ -171,14 +171,20 @@ class FeatureExtractor():
 			dd_reps = np.ones(right.shape[0]-3).tolist(); dd_reps.append(3) # This is similar to above but for double diff
 
 			## Right arm
+			# Change reference frame to shoulder
+			# Precompute position, velocity and angles
+			right = right[:,0:self.dim_per_joint*self.num_joints] - np.tile(right[:,self.dim_per_joint*self.num_joints:], (1, self.num_joints))
+			d_right = np.repeat(np.diff(right, axis = 0), d_reps, axis = 0)				
+			theta_right = np.zeros(right.shape)
+			for jnt_idx in range(self.num_joints):
+				temp = d_right[:, 3*jnt_idx:3*(jnt_idx+1)]
+				theta_right[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
+
 			## Position
 			if(self.type_flags['right']):
-				right = right[:,0:self.dim_per_joint*self.num_joints] - np.tile(right[:,self.dim_per_joint*self.num_joints:], (1, self.num_joints))
 				features['right'] = right.transpose().flatten()
 			## Velocity
 			if(self.type_flags['d_right']):
-				d_right = np.diff(right, axis = 0);
-				d_right = np.repeat(d_right, d_reps, axis = 0)
 				features['d_right'] = d_right.transpose().flatten()
 			## Acceleration
 			if(self.type_flags['dd_right']):
@@ -187,7 +193,6 @@ class FeatureExtractor():
 				features['dd_right'] = dd_right.transpose().flatten()
 			## Angle
 			if(self.type_flags['theta_right']):
-				theta_right = np.arctan2(d_right, np.roll(d_right, 1, axis = 1))
 				features['theta_right'] = theta_right.transpose().flatten()
 			## Angular velocity
 			if(self.type_flags['d_theta_right']):
@@ -201,14 +206,19 @@ class FeatureExtractor():
 				features['dd_theta_right'] = dd_theta_right.transpose().flatten()
 
 			## Left arm
+			# Change reference frame to shoulder
+			# Precompute position, velocity and angles
+			left = left[:,0:self.dim_per_joint*self.num_joints] - np.tile(left[:,self.dim_per_joint*self.num_joints:], (1, self.num_joints))			
+			d_left = np.repeat(np.diff(left, axis = 0), d_reps, axis = 0)
+			theta_left = np.zeros(left.shape)
+			for jnt_idx in range(self.num_joints):
+				temp = d_left[:, 3*jnt_idx:3*(jnt_idx+1)]
+				theta_left[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 			## Position
 			if(self.type_flags['left']):
-				left = left[:,0:self.dim_per_joint*self.num_joints] - np.tile(left[:,self.dim_per_joint*self.num_joints:], (1, self.num_joints))
 				features['left'] = left.transpose().flatten()
 			## Velocity
 			if(self.type_flags['d_left']):			
-				d_left = np.diff(left, axis = 0);
-				d_left = np.repeat(d_left, d_reps, axis = 0)
 				features['d_left'] = d_left.transpose().flatten()				
 			## Acceleration
 			if(self.type_flags['dd_left']):
@@ -217,7 +227,6 @@ class FeatureExtractor():
 				features['dd_left'] = dd_left.transpose().flatten()				
 			## Angle
 			if(self.type_flags['theta_left']):
-				theta_left = np.arctan2(d_left, np.roll(d_left, 1, axis = 1))
 				features['theta_left'] = theta_left.transpose().flatten()
 			## Angular velocity
 			if(self.type_flags['d_theta_left']):
