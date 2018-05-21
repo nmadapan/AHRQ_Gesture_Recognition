@@ -20,8 +20,8 @@ import glob
 #####################
 
 ## Initialization
-base_skel_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\S2_L6'
-base_write_folder = 'F:\\AHRQ\Study_IV\\AHRQ_Gesture_Recognition\Data\\S2_L6\\Annotations'
+base_skel_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6'
+base_write_folder = 'F:\\AHRQ\Study_IV\\AHRQ_Gesture_Recognition\Data\\L6\\Annotations'
 in_format_flag = True
 
 ## Global parameters

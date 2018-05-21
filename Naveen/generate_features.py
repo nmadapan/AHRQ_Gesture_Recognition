@@ -2,6 +2,8 @@ import numpy as np
 import pickle
 import sys
 from FeatureExtractor import FeatureExtractor
+import matplotlib.pyplot as plt
+plt.rcdefaults()
 
 skel_filepath = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\3_1_S2_L6_Rotate_CW_skel.txt'
 annot_filepath = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\Annotations\\3_1_S2_L6_Rotate_CW_annot2.txt'
@@ -16,6 +18,17 @@ fe = FeatureExtractor(all_flag = False, feature_types = ['left', 'right'], num_j
 # all_features = fe.batch_generate_features(skel_folder_path, annot_folder_path)
 
 out = fe.generate_io(skel_folder_path, annot_folder_path, equate_dim = True, num_points = 40)
+
+## Plotting histogram - No. of instances per class
+objects = tuple(out['inst_per_class'].keys())
+y_pos = np.arange(len(objects))
+performance = out['inst_per_class'].values()
+plt.bar(y_pos, performance, align='center', alpha=0.5)
+plt.xticks(y_pos, objects)
+plt.ylabel('No. of instances')
+plt.title('No. of instances per class')
+plt.grid(True)
+plt.show()
 
 fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60)
 

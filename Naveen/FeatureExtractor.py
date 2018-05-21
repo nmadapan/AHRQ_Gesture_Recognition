@@ -324,20 +324,23 @@ class FeatureExtractor():
 		## Initialize the return variable
 		out = {'num_classes': -1, 'class_labels': None, 'id_to_labels':None, 'label_to_ids':None, \
 				'num_instances': None, 'data_input': [], 'data_output': [], 'num_joints': -1, \
-				'num_feature_types': -1}
+				'num_feature_types': -1, 'inst_per_class': {}}
 
 		class_labels = []
 		id_to_labels = {}
 		label_to_ids = {}
+		inst_per_class = {}
 
 		## Obtain class labels
 		for feature in features: class_labels.append(feature['label'])
+		raw_class_labels = deepcopy(class_labels)
 		class_labels = list(set(class_labels))
 
 		## Generate class IDs
-		for class_id, label in zip(range(len(class_labels)), class_labels): 
+		for class_id, label in enumerate(class_labels): 
 			id_to_labels[class_id] = label
 			label_to_ids[label] = class_id
+			inst_per_class[label] = raw_class_labels.count(label)
 
 		## Overwrite the keys in the return variable
 		out['num_classes'] = len(class_labels)
@@ -347,6 +350,7 @@ class FeatureExtractor():
 		out['num_instances'] = len(features)
 		out['num_feature_types'] = self.num_feature_types
 		out['num_joints'] = self.num_joints
+		out['inst_per_class'] = inst_per_class
 
 		I = np.eye(out['num_classes'])
 
