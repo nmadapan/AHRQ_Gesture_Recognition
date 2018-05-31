@@ -23,12 +23,14 @@ out = fe.generate_io(skel_folder_path, annot_folder_path, equate_dim = True, num
 objects = tuple(out['inst_per_class'].keys())
 y_pos = np.arange(len(objects))
 performance = out['inst_per_class'].values()
+plt.figure()
 plt.bar(y_pos, performance, align='center', alpha=0.5)
-plt.xticks(y_pos, objects)
+# plt.xticks(y_pos, objects)
+plt.xlabel('Class IDs')
 plt.ylabel('No. of instances')
 plt.title('No. of instances per class')
 plt.grid(True)
-plt.show()
+#plt.show()
 
 fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60)
 
