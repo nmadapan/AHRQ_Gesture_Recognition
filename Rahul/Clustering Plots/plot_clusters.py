@@ -5,6 +5,7 @@ mpl.use('TkAgg')
 import itertools
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
 
 
 def plot_confusion_matrix(cm, classes,
@@ -56,6 +57,7 @@ class_names = ["Class " + str(i) for i in range(1,11)]
 # Compute confusion matrix
 y_test = finger_data[:,0]
 y_pred = finger_data[:,1]
+print("ACCURACY: ", accuracy_score(y_test, y_pred))
 cnf_matrix = confusion_matrix(y_test, y_pred)
 
 # Plot non-normalized confusion matrix
@@ -72,6 +74,7 @@ plt.savefig('fingers_normalized')
 
 y_test = raw_data[:,0]
 y_pred = raw_data[:,1]
+print("ACCURACY: ", accuracy_score(y_test, y_pred))
 cnf_matrix = confusion_matrix(y_test, y_pred)
 # Plot non-normalized confusion matrix
 plt.figure(figsize=(10, 10), dpi=300)
