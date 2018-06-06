@@ -1,0 +1,12 @@
+2018-06-05 17:45:49.316000
+
+10_2_S1_L6_X_TwoPanels.xef :  [num_images: 2018, video_time: 187.92, FPS: 10]
+10_3_S1_L6_X_ThreePanels.xef :  [num_images: 2119, video_time: 195.12, FPS: 10]
+10_4_S1_L6_X_FourPanels.xef :  [num_images: 2120, video_time: 184.02, FPS: 11]
+11_1_S1_L6_X_StdOne.xef :  [num_images: 1980, video_time: 174.8, FPS: 11]
+11_2_S1_L6_X_StdTwo.xef :  [num_images: 2051, video_time: 185.99, FPS: 11]
+1_1_S1_L6_Scroll_Up.xef :  [num_images: -1, video_time: -1, FPS: -1]
+1_2_S1_L6_Scroll_Down.xef :  [No play button]  [num_images: -1, video_time: -1, FPS: -1]
+2_0_S1_L6_Flip_X.xef :  [No play button]  [num_images: -1, video_time: -1, FPS: -1]
+2_1_S1_L6_X_Horizontal.xef :  [No play button]  [num_images: -1, video_time: -1, FPS: -1]
+3_1_S1_L6_Rotate_CW.xef : 

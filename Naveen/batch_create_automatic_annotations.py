@@ -21,7 +21,7 @@ import glob
 
 ## Initialization
 base_skel_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6'
-base_write_folder = 'F:\\AHRQ\Study_IV\\AHRQ_Gesture_Recognition\Data\\L6\\Annotations'
+base_write_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\Annotations'
 in_format_flag = True
 
 ## Global parameters
@@ -30,6 +30,8 @@ neck_id = 2
 left_hand_id = 7
 right_hand_id = 11
 thresh_level = 0.2
+
+base_id = torso_id
 
 if(in_format_flag):
 	skel_file_paths = glob.glob(os.path.join(base_skel_folder, '*_skel.txt'))
@@ -47,7 +49,7 @@ for skel_path in skel_file_paths:
 	if len(lines) == 0: 
 		print os.path.basename(skel_path), ' has 0 lines'
 		continue
-	start_y_coo = thresh_level * (lines[0][3*neck_id+1] - lines[0][3*torso_id+1])
+	start_y_coo = thresh_level * (lines[0][3*neck_id+1] - lines[0][3*base_id+1])
 	start_flag = False
 	if(in_format_flag):
 		write_filename = os.path.basename(skel_path)[:-8] + 'annot2.txt'
@@ -56,8 +58,8 @@ for skel_path in skel_file_paths:
 	write_file_id = open(os.path.join(base_write_folder, write_filename), 'w')
 	prev_idx = -1
 	for idx, line in enumerate(lines):
-		left_y = line[3*left_hand_id+1] - line[3*torso_id+1]
-		right_y = line[3*right_hand_id+1] - line[3*torso_id+1]
+		left_y = line[3*left_hand_id+1] - line[3*base_id+1]
+		right_y = line[3*right_hand_id+1] - line[3*base_id+1]
 		if (left_y >= start_y_coo or right_y >= start_y_coo) and (not start_flag): 
 			start_flag = True
 			prev_idx = idx

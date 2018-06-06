@@ -14,10 +14,12 @@ import cv2 as cv, numpy as np, os, shutil,sys
 #####################
 
 ## Initialization
-base_path = 'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Data\S2_L6'
-file_name ='4_1_S2_L6_Zoom_In_rgb.avi' # WITH EXTENSION
+# base_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data'
+base_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6'
+file_name ='3_1_S2_L6_Rotate_CW_rgb.avi' # WITH EXTENSION
 annotations_path = os.path.join(base_path, 'Annotations', (file_name.split('.')[0][:-4]+str('_annot2.txt')) )
 write_folder = '..\\Test'
+
 
 # Remove the write_folder if it existed
 if os.path.isdir(write_folder): shutil.rmtree(write_folder)
@@ -45,7 +47,6 @@ while True and gest_count < annot.shape[0]:
 		ret, frame = cap.read()
 		if(frame is None): break
 		# cv.imshow('Frame', cv.resize(frame, None, fx = 0.5, fy = 0.5))
-		image_count += 1
 		if annot[gest_count, 0] == image_count:
 			write_path = os.path.join(write_folder, os.path.basename(avi_path).split('.')[0]+'_'+str(gest_count)+'.avi')
 			rgb_vr = cv.VideoWriter(write_path, rgb_fourcc, 30.0, (1920, 1080), isColor = True)
@@ -56,6 +57,7 @@ while True and gest_count < annot.shape[0]:
 			rgb_vr.release()
 			gest_flag = False
 			gest_count += 1
+		image_count += 1
 		
 		if gest_flag:
 			rgb_vr.write(np.uint8(frame))

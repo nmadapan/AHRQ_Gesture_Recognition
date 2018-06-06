@@ -62,9 +62,11 @@ class Parser(object):
 
 		# File Pointers
 		self.skel_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_skel.txt'), 'w')
+		self.skel_timestamp_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_skelts.txt'), 'w')
 		self.color_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_color.txt'), 'w')
 		self.depth_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_depth.txt'), 'w')
 		self.rgb_vid_addr = os.path.join(os.path.join(self.write_folder, self.xef_file_name+'_rgb.avi'))
+		self.rgb_timestamp_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_rgbts.txt'), 'w')
 		self.depth_vid_addr = os.path.join(os.path.join(self.write_folder, self.xef_file_name+'_depth.avi'))
 
 		# Initialize Kinect
@@ -137,10 +139,13 @@ class Parser(object):
 				if quit_count > dynamic_thresh: spin = False
 
 				## Saving RGB and Depth videos
-				if rgb_flag: self.rgb_vr.write(self.kr.color_image)
+				if rgb_flag: 
+					self.rgb_vr.write(self.kr.color_image)
+					self.rgb_timestamp_file_id.write('%0.8f'%(self.kr.last_color_frame_access)+'\n')
 				if depth_flag: self.depth_vr.write(self.kr.depth_image)
 				if body_flag:
 					self.skel_pts_file_id.write(' '.join(map(str,self.kr.skel_pts.tolist()))+'\n')
+					self.skel_timestamp_file_id.write('%0.8f'%(self.kr.last_body_frame_access)+'\n')
 					self.color_pts_file_id.write(' '.join(map(str,self.kr.color_skel_pts.tolist()))+'\n')
 					self.depth_pts_file_id.write(' '.join(map(str,self.kr.depth_skel_pts.tolist()))+'\n')
 
@@ -165,6 +170,11 @@ class Parser(object):
 		self.depth_pts_file_id.close()
 		self.rgb_vr.release()
 		self.depth_vr.release()	
+		self.rgb_timestamp_file_id.flush()
+		self.rgb_timestamp_file_id.close()
+		self.skel_timestamp_file_id.flush()
+		self.skel_timestamp_file_id.close()
+		
 		if self.compress_flag: self.compress_videos()
 		return (self.image_counter, video_time, fps)
 

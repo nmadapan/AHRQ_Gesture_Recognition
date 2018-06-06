@@ -23,7 +23,7 @@ from datetime import datetime
 #####################
 
 # Initialization
-xef_folder_path = 'E:\\AHRQ\\Study_4_Training_Videos\\S2_L6'
+xef_folder_path = 'E:\\AHRQ\\Study_4_Training_Videos\\S21_L6'
 error_log_folder = '.\\Logfiles'
 error_log_filename = os.path.join(error_log_folder, 'error_log_'+datetime.now().strftime("%Y_%m_%d_%H_%M")+'.txt')
 
