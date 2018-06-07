@@ -16,10 +16,9 @@ import cv2 as cv, numpy as np, os, shutil,sys
 ## Initialization
 # base_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data'
 base_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6'
-file_name ='3_1_S2_L6_Rotate_CW_rgb.avi' # WITH EXTENSION
-annotations_path = os.path.join(base_path, 'Annotations', (file_name.split('.')[0][:-4]+str('_annot2.txt')) )
+file_name ='20180605_181202_00_rgb.avi' # WITH EXTENSION
+annotations_path = os.path.join(base_path, 'Annotations', (file_name.split('.')[0][:-4]+str('_rgbannot2.txt')) )
 write_folder = '..\\Test'
-
 
 # Remove the write_folder if it existed
 if os.path.isdir(write_folder): shutil.rmtree(write_folder)

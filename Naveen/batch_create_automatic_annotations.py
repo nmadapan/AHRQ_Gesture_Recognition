@@ -22,6 +22,8 @@ import glob
 ## Initialization
 base_skel_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6'
 base_write_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\Annotations'
+# base_skel_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data'
+# base_write_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\Annotations'
 in_format_flag = True
 
 ## Global parameters
@@ -41,8 +43,29 @@ else:
 if(not os.path.isdir(base_write_folder)): os.makedirs(base_write_folder)
 
 for skel_path in skel_file_paths:
-	# print '. ', 
-	count_gestures = 0
+	## Read timestamps
+	# Read RGB timestamps
+	tbase_path = '_'.join(skel_path.split('_')[:-1])
+	if(not os.path.isfile(tbase_path+'_rgbts.txt')): 
+		sys.exit(os.path.basename(tbase_path)+' - RGB timestamps file doesnt exist')
+	if(not os.path.isfile(tbase_path+'_skelts.txt')): 
+		sys.exit(os.path.basename(tbase_path)+' - Skel timestamps file doesnt exist')
+
+	with open(tbase_path+'_rgbts.txt', 'r') as fp:
+		rgb_ts = map(float, fp.readlines())
+	if(len(rgb_ts) == 0): sys.exit(os.path.basename(tbase_path)+' - rgb timestamps file is empty')
+	rgb_ts = np.array(rgb_ts)
+	rgb_ts = rgb_ts - rgb_ts[0]
+	# Read Skeleton timestamps
+	with open(tbase_path+'_skelts.txt', 'r') as fp:
+		skel_ts = map(float, fp.readlines())
+	if(len(skel_ts) == 0): sys.exit(os.path.basename(tbase_path)+' - skeleton timestamps file is empty')	
+	skel_ts = np.array(skel_ts)
+	skel_ts = skel_ts - skel_ts[0]
+	M = np.abs(skel_ts.reshape(-1, 1) - rgb_ts)
+	skel_to_rgb = np.argmin(M, axis = 1)
+
+	## Read skeleton file
 	with open(skel_path, 'r') as fp:
 		lines = fp.readlines()
 		lines = [map(float, line.split(' ')) for line in lines]
@@ -53,10 +76,16 @@ for skel_path in skel_file_paths:
 	start_flag = False
 	if(in_format_flag):
 		write_filename = os.path.basename(skel_path)[:-8] + 'annot2.txt'
+		rgb_write_filename = os.path.basename(skel_path)[:-8] + 'rgbannot2.txt'
 	else:
 		write_filename = os.path.basename(skel_path)[:-4] + 'annot2.txt'
+		rgb_write_filename = os.path.basename(skel_path)[:-4] + 'rgbannot2.txt'
+	
 	write_file_id = open(os.path.join(base_write_folder, write_filename), 'w')
+	rgb_write_file_id = open(os.path.join(base_write_folder, rgb_write_filename), 'w')
+
 	prev_idx = -1
+	count_gestures = 0
 	for idx, line in enumerate(lines):
 		left_y = line[3*left_hand_id+1] - line[3*base_id+1]
 		right_y = line[3*right_hand_id+1] - line[3*base_id+1]
@@ -71,6 +100,15 @@ for skel_path in skel_file_paths:
 				write_file_id.write('\n')			
 				write_file_id.write(str(idx))
 				write_file_id.write('\n')
+
+				rgb_write_file_id.write(str(skel_to_rgb[prev_idx]))
+				rgb_write_file_id.write('\n')			
+				rgb_write_file_id.write(str(skel_to_rgb[idx]))
+				rgb_write_file_id.write('\n')		
+	write_file_id.flush()		
+	rgb_write_file_id.flush()		
+	write_file_id.close()		
+	rgb_write_file_id.close()		
 	if(count_gestures%2 != 0):
 		print 'Manual verification needed for: ', 
 		print write_filename + ' ',

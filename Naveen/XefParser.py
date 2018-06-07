@@ -118,6 +118,10 @@ class Parser(object):
 		max_quit_count = 0 # Stores maximum no. of empty cycles between subsequent RGB frames
 		dynamic_thresh = self.thresh_empty_cycles # No. of empty cycles to wait before qutting
 		dynamic_thresh_fac = 2 # dynamic_thresh changes with time based on this number
+		
+		video_time = 0.0
+		empty_iter = 0
+		loop_delay = 0.001
 
 		try:
 			start_time = time.time()
@@ -139,9 +143,14 @@ class Parser(object):
 				if quit_count > dynamic_thresh: spin = False
 
 				## Saving RGB and Depth videos
-				if rgb_flag: 
+				if rgb_flag:
+					video_time += (time.time() - start_time - (empty_iter+1)*loop_delay)
+					start_time = time.time()
+					empty_iter = 0
 					self.rgb_vr.write(self.kr.color_image)
 					self.rgb_timestamp_file_id.write('%0.8f'%(self.kr.last_color_frame_access)+'\n')
+				else:
+					empty_iter += 1
 				if depth_flag: self.depth_vr.write(self.kr.depth_image)
 				if body_flag:
 					self.skel_pts_file_id.write(' '.join(map(str,self.kr.skel_pts.tolist()))+'\n')
@@ -151,15 +160,14 @@ class Parser(object):
 
 				# Breaking condition
 				# if cv2.waitKey(1) == ord('q') : spin = False
-				time.sleep(0.01)
+				time.sleep(loop_delay)
 
 		except Exception as exp:
 			print exp
 		
 		print '\n', 'Total No. of frames: ', self.image_counter
-		video_time = float('%.02f'%(time.time() - start_time))
 		print 'Video time: ', video_time, 'seconds'
-		fps = int(self.image_counter / (time.time() - start_time))
+		fps = int(self.image_counter / video_time)
 		print 'FPS: ', fps
 
 		## Closing Kinect, RGB, Depth, and annotation file streams
@@ -174,7 +182,7 @@ class Parser(object):
 		self.rgb_timestamp_file_id.close()
 		self.skel_timestamp_file_id.flush()
 		self.skel_timestamp_file_id.close()
-		
+
 		if self.compress_flag: self.compress_videos()
 		return (self.image_counter, video_time, fps)
 

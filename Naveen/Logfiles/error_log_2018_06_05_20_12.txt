@@ -5,4 +5,5 @@
 10_4_S2_L6_X_FourPanels.xef :  [num_images: 1771, video_time: 188.22, FPS: 9]
 11_1_S2_L6_X_StdOne.xef :  [num_images: 1930, video_time: 205.67, FPS: 9]
 11_2_S2_L6_X_StdTwo.xef :  [num_images: 1724, video_time: 177.42, FPS: 9]
-1_1_S2_L6_Scroll_Up.xef : 
+1_1_S2_L6_Scroll_Up.xef :  [num_images: 1376, video_time: 482.91, FPS: 2]
+1_2_S2_L6_Scroll_Down.xef : 

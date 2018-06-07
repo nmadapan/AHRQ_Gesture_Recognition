@@ -23,7 +23,10 @@ from datetime import datetime
 #####################
 
 # Initialization
-xef_folder_path = 'E:\\AHRQ\\Study_4_Training_Videos\\S21_L6'
+xef_folder_path = 'E:\\AHRQ\\Study_4_Training_Videos\\S11_L6'
+# xef_folder_path = 'G:\\AHRQ\\Study_4_Training_Videos\\S3_L3\\New'
+in_format_flag = True # True since the filename is in the correct format
+
 error_log_folder = '.\\Logfiles'
 error_log_filename = os.path.join(error_log_folder, 'error_log_'+datetime.now().strftime("%Y_%m_%d_%H_%M")+'.txt')
 
@@ -32,7 +35,6 @@ base_write_folder = '..\\Data' # Where to write the files
 kinect_studio_open_time = 3 # in seconds
 compress_flag = False # Do not compress the RGB and Depth videos
 thresh_empty_cycles = 200 # No. of cycles to wait before obtaining the RGB image. Quit after 200 cycles. 
-in_format_flag = True # True since the filename is in the correct format
 
 ## Flags
 global parse_flag, xef_flag, gui_flag, file_active

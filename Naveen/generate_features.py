@@ -5,8 +5,9 @@ from FeatureExtractor import FeatureExtractor
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 
-skel_filepath = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\3_1_S2_L6_Rotate_CW_skel.txt'
-annot_filepath = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\Annotations\\3_1_S2_L6_Rotate_CW_annot2.txt'
+# skel_filepath = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\3_1_S2_L6_Rotate_CW_skel.txt'
+# annot_filepath = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\Annotations\\3_1_S2_L6_Rotate_CW_annot2.txt'
+
 skel_folder_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6'
 annot_folder_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6\\Annotations'
 
