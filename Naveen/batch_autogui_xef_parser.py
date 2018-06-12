@@ -23,7 +23,7 @@ from datetime import datetime
 #####################
 
 # Initialization
-xef_folder_path = 'E:\\AHRQ\\Study_4_Training_Videos\\S11_L6'
+xef_folder_path = 'E:\\AHRQ\\Study_4_Training_Videos\\S1_L3'
 # xef_folder_path = 'G:\\AHRQ\\Study_4_Training_Videos\\S3_L3\\New'
 in_format_flag = True # True since the filename is in the correct format
 

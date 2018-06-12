@@ -14,8 +14,8 @@ import cv2 as cv, numpy as np, os, shutil,sys
 #####################
 
 ## Initialization
-# base_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data'
-base_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6'
+base_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data'
+# base_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L6'
 file_name ='20180605_181202_00_rgb.avi' # WITH EXTENSION
 annotations_path = os.path.join(base_path, 'Annotations', (file_name.split('.')[0][:-4]+str('_rgbannot2.txt')) )
 write_folder = '..\\Test'
