@@ -39,12 +39,13 @@ from KinectReader import kinect_reader
 
 class Parser(object):
 	def __init__(self, xef_file_name, base_write_folder = '..\\Data', compress_flag = False, \
-				thresh_empty_cycles = 200, in_format_flag = True):
+				thresh_empty_cycles = 200, dynamic_thresh_fac = 2, in_format_flag = True):
 
 		self.xef_file_name = os.path.basename(xef_file_name)
 		self.base_write_folder = base_write_folder
 		self.compress_flag = compress_flag # Compresses the rgb and depth videos if True
 		self.thresh_empty_cycles = thresh_empty_cycles # No. of empty cycles to wait for the arrival of first RGB frame, quit otherwise
+		self.dynamic_thresh_fac = dynamic_thresh_fac
 
 		# Remove the file extension if existed
 		if(self.xef_file_name[-4:] == '.xef'): self.xef_file_name = self.xef_file_name[:-4]
@@ -117,7 +118,7 @@ class Parser(object):
 		quit_count = 0 # Count no. of empty cycles (iterations with no RGB frame) between two RGB frames
 		max_quit_count = 0 # Stores maximum no. of empty cycles between subsequent RGB frames
 		dynamic_thresh = self.thresh_empty_cycles # No. of empty cycles to wait before qutting
-		dynamic_thresh_fac = 2 # dynamic_thresh changes with time based on this number
+		# dynamic_thresh_fac = 4 # dynamic_thresh changes with time based on this number
 		
 		video_time = 0.0
 		empty_iter = 0
@@ -133,7 +134,7 @@ class Parser(object):
 				if rgb_flag:
 					max_quit_count = max(max_quit_count, quit_count)
 					# Update dynamic threshold if you witness larger delays in RGB frame arrivals
-					dynamic_thresh = max(dynamic_thresh, dynamic_thresh_fac * max_quit_count) 
+					dynamic_thresh = max(dynamic_thresh, self.dynamic_thresh_fac * max_quit_count) 
 					quit_count = 0
 					# cv2.imshow('RGB_Video', cv2.resize(self.kr.color_image, None, fx=0.5, fy=0.5))
 					self.image_counter += 1

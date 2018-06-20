@@ -23,7 +23,7 @@ from datetime import datetime
 #####################
 
 # Initialization
-xef_folder_path = 'E:\\AHRQ\\Study_4_Training_Videos\\S1_L3'
+xef_folder_path = 'E:\\AHRQ\\Study_IV\\S2_L8\\New'
 # xef_folder_path = 'G:\\AHRQ\\Study_4_Training_Videos\\S3_L3\\New'
 in_format_flag = True # True since the filename is in the correct format
 
@@ -33,8 +33,8 @@ error_log_filename = os.path.join(error_log_folder, 'error_log_'+datetime.now().
 # Default settings
 base_write_folder = '..\\Data' # Where to write the files
 kinect_studio_open_time = 3 # in seconds
-compress_flag = False # Do not compress the RGB and Depth videos
-thresh_empty_cycles = 200 # No. of cycles to wait before obtaining the RGB image. Quit after 200 cycles. 
+thresh_empty_cycles = 200 # No. of cycles to wait before obtaining the first RGB image. Quit after 200 cycles. 
+dynamic_thresh_fac = 2 # How long to wait later for the arrival of RGB frame 
 
 ## Flags
 global parse_flag, xef_flag, gui_flag, file_active
@@ -172,7 +172,8 @@ for file_path in xef_files_paths:
 	time.sleep(kinect_studio_open_time)
 
 	## Initialize XEF Parser
-	parser = Parser(os.path.basename(file_path), base_write_folder, compress_flag, thresh_empty_cycles, in_format_flag = in_format_flag)
+	parser = Parser(os.path.basename(file_path), base_write_folder, compress_flag = False, thresh_empty_cycles,\
+					 dynamic_thresh_fac = dynamic_thresh_fac, in_format_flag = in_format_flag)
 	parse_thread = Thread(name = 'parse_thread', target = parse, args = (parser, ))
 
 	# Initialize auto clicking thread
