@@ -1,0 +1,4 @@
+2018-06-21 15:12:13.539000
+
+1_0_S2_L2_Scroll_X.xef :  [num_images: 114, video_time: 3.75800019836, FPS: 30]
+1_1_S2_L2_X_Up.xef : 
