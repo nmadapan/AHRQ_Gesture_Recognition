@@ -5,8 +5,8 @@ from FeatureExtractor import FeatureExtractor
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 
-skel_folder_path = '..\\Data\\L2'
-annot_folder_path = '..\\Data\\L2\\Annotations'
+skel_folder_path = '..\\Data\\L3'
+annot_folder_path = '..\\Data\\L3\\Annotations'
 
 fe = FeatureExtractor(all_flag = False, feature_types = ['left', 'right'], num_joints = 1) #
 

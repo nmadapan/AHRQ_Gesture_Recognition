@@ -4,6 +4,7 @@ from glob import glob
 from threading import Thread
 from XefParser import Parser
 from datetime import datetime
+from helpers import *
 
 #####################
 #
@@ -23,9 +24,11 @@ from datetime import datetime
 #####################
 
 # Initialization
-xef_folder_path = 'E:\\AHRQ\\Study_IV\\S2_L2'
+xef_folder_path = 'E:\\AHRQ\\Study_IV\\XEF_Files\\*'
 # xef_folder_path = 'G:\\AHRQ\\Study_4_Training_Videos\\S3_L3\\New'
 in_format_flag = True # True since the filename is in the correct format
+enable_repeat = False # If True, all xef files will be executed, Otherwise, only the files that werent read previously or the files that were incompletely read
+xef_rgb_factor = 3.9 # Max is 3.8
 
 error_log_folder = '.\\Logfiles'
 error_log_filename = os.path.join(error_log_folder, 'error_log_'+datetime.now().strftime("%Y_%m_%d_%H_%M")+'.txt')
@@ -43,9 +46,18 @@ gui_flag = False
 parse_flag = False
 file_active = False
 
-# Get all xef files paths
+# Check consistencies in the xef folder path
+flag, error_strs = check_consis(xef_folder_path)
+if(not flag): sys.exit(error_strs)
+
+## Get all xef files paths
 xef_files_paths = glob(os.path.join(xef_folder_path, '*.xef'))
+# Remove the repititions
+if(not enable_repeat):
+	xef_files_paths = file_filter(xef_files_paths, base_write_folder, xef_rgb_factor)
 xef_rex = re.compile('xef - Microsoft\\xae Kinect Studio', re.IGNORECASE)
+
+print 'Processing: ', len(xef_files_paths), ' files.'
 
 class XEF(Thread):
 	def __init__(self, xef_file_path):

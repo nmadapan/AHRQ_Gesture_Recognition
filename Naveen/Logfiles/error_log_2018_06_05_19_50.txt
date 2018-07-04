@@ -1,6 +1,0 @@
-2018-06-05 19:50:13.726000
-
-10_2_S2_L6_X_TwoPanels.xef :  [num_images: 1832, video_time: 193.74, FPS: 9]
-10_3_S2_L6_X_ThreePanels.xef :  [num_images: 1854, video_time: 185.89, FPS: 9]
-10_4_S2_L6_X_FourPanels.xef :  [num_images: 1769, video_time: 187.59, FPS: 9]
-11_1_S2_L6_X_StdOne.xef :  [num_images: -1, video_time: -1, FPS: -1]

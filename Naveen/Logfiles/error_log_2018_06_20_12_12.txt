@@ -1,3 +1,0 @@
-2018-06-20 12:12:43.780000
-
-9_2_S2_L8_ManualContrast_Decrease.xef :  [num_images: 1919, video_time: 96.450999939, FPS: 19]
