@@ -30,7 +30,7 @@ import itertools
 #####################
 
 class FeatureExtractor():
-	def __init__(self, all_flag = False, num_joints = 1, dim_per_joint = 3, **kwargs):
+	def __init__(self, all_flag = False, num_joints = 1, dim_per_joint = 3, dominant_first = True, **kwargs):
 		# kwargs['feature_types'] = ['left', 'right']
 		## Private variables
 		self.__available_types = ['right', 'd_right', 'dd_right', 'theta_right', 'd_theta_right', 'dd_theta_right',\
@@ -41,6 +41,7 @@ class FeatureExtractor():
 		## Declaring instance variables
 		self.num_joints = num_joints # 1 - only hand, 2 - both hand and the shoulder
 		self.dim_per_joint = dim_per_joint
+		self.dominant_first = dominant_first
 		self.type_flags = {feat_type: False for feat_type in self.__available_types}
 		self.num_feature_types = None
 		self.feature_types = None
@@ -71,6 +72,18 @@ class FeatureExtractor():
 			self.feature_types = deepcopy(self.__available_types)
 			self.num_feature_types = len(self.feature_types)
 			self.type_flags = {feat_type: True for feat_type in self.__available_types}
+
+	def find_type_order(self, left, right, thresh_std = 0.08):
+		# thresh_std = 0.08 in meters. It is found by observation. 
+		left_std = np.max(np.std(left, axis = 0))
+		right_std = np.max(np.std(right, axis = 0))
+		assert self.__num_available_types % 2 == 0, 'Error! Total no. of types should be even.'
+		sz = int(self.__num_available_types / 2) # Assumes that actual types ordered as right followed by left
+		right_order = range(0, sz)
+		left_order = range(sz, 2*sz)
+		if((right_std - left_std) >= thresh_std): return right_order+left_order
+		elif((left_std - right_std) >= thresh_std): return left_order+right_order
+		else: return right_order+left_order
 
 	def extract_raw_features(self, skel_filepath, annot_filepath):
 		########################
@@ -239,6 +252,11 @@ class FeatureExtractor():
 				dd_theta_left = np.repeat(dd_theta_left, dd_reps, axis = 0)
 				features['dd_theta_left'] = dd_theta_left.transpose().flatten()
 
+			if(self.dominant_first):
+				features['types_order'] = self.find_type_order(left, right)
+			else:
+				features['types_order'] = list(range(self.__num_available_types))
+				
 			result.append(features)
 
 		return result
@@ -356,7 +374,9 @@ class FeatureExtractor():
 
 		for feature in features:
 			inst = []
-			for feat_id, feat_type in self.__id_to_available_type.items():
+			# for feat_id, feat_type in self.__id_to_available_type.items():
+			for feat_id in feature['types_order']:
+				feat_type = self.__id_to_available_type[feat_id]
 				if(feature[feat_type] is not None):
 					if(equate_dim):
 						# Interpolate or Extrapolate to fixed dimension

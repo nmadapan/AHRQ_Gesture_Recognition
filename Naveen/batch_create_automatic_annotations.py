@@ -20,8 +20,8 @@ import glob
 #####################
 
 ## Initialization
-base_skel_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L2'
-base_write_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L2\\Annotations'
+base_skel_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L8'
+base_write_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L8\\Annotations'
 # base_skel_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data'
 # base_write_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\Annotations'
 in_format_flag = True
@@ -113,8 +113,8 @@ for skel_path in skel_file_paths:
 		print 'Manual verification needed for: ', 
 		print write_filename + ' ',
 		print 'Odd no. of entries'
-	if(count_gestures < 40):
+	if(count_gestures < 30):
 		print 'Manual verification needed for: ', 
 		print write_filename + ' ',
-		print 'no. of gesture instances less than 20'
+		print 'no. of gestures: ', count_gestures/2
 
