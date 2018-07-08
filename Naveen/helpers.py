@@ -1,5 +1,56 @@
 from glob import glob
-import os, sys
+import os, sys, time
+import numpy as np
+
+def wait_for_kinect(kr):
+	spin = True
+	first_rgb, first_depth, first_body = False, False, False
+	init_start_time = time.time()
+	print 'Connecting to Kinect . ', 
+	# Wait for all modules (rgb, depth, skeleton) to connect
+	while True:
+		try:
+			# Refreshing Frames
+			if first_rgb: kr.update_rgb()
+			else: first_rgb = kr.update_rgb()
+			if first_depth: kr.update_depth()
+			else: first_depth = kr.update_depth()
+			if first_body: kr.update_body()
+			else: first_body = kr.update_body()
+			if (first_rgb and first_depth and first_body): break
+			time.sleep(0.5)
+			print '. ', 		
+		except Exception as exp:
+			print exp
+			time.sleep(0.5)
+			print '. ', 
+		if(time.time()-init_start_time > 30): 
+			sys.exit('Waited for more than 30 seconds. Exiting')
+	print '\nAll Kinect modules connected !!'
+
+def skel_col_reduce(line, num_joints = 2):
+	# Initialize joint IDs
+	left_hand_id = 7
+	left_elbow_id = 5
+	left_shoulder_id = 4
+	right_hand_id = 11
+	right_elbow_id = 9
+	right_shoulder_id = 8
+
+	dim = 3
+
+	left_shoulder =  np.array(line[dim*left_shoulder_id:dim*left_shoulder_id+dim])
+	left_hand = np.array(line[dim*left_hand_id:dim*left_hand_id+dim]) - left_shoulder
+	left_elbow = np.array(line[dim*left_elbow_id:dim*left_elbow_id+dim]) - left_shoulder
+
+	right_shoulder =  np.array(line[dim*right_shoulder_id:dim*right_shoulder_id+dim])
+	right_hand = np.array(line[dim*right_hand_id:dim*right_hand_id+dim]) - right_shoulder
+	right_elbow = np.array(line[dim*right_elbow_id:dim*right_elbow_id+dim]) - right_shoulder
+
+	if(num_joints == 2):
+		return np.append(right_hand, right_elbow).tolist(), np.append(left_hand, left_elbow).tolist()
+	else:
+		return right_hand.tolist(), left_hand.tolist()
 
 def check_consis(xef_folder_path):
 	folder_paths = glob(xef_folder_path+'\\') # Get only directories

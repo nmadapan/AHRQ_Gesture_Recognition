@@ -1,14 +1,14 @@
 import numpy as np
 import pickle
-import sys
+import sys, os
 from FeatureExtractor import FeatureExtractor
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 
-skel_folder_path = '..\\Data\\L8'
-annot_folder_path = '..\\Data\\L8\\Annotations'
+skel_folder_path = '..\\Data\\L6'
+annot_folder_path = '..\\Data\\L6\\Annotations'
 
-fe = FeatureExtractor(all_flag = False, feature_types = ['left', 'right'], num_joints = 1) #
+fe = FeatureExtractor(all_flag = False, feature_types = ['left', 'right'], num_joints = 1, dominant_first = True) #
 
 # features = fe.generate_features(skel_filepath, annot_filepath)
 
@@ -31,7 +31,10 @@ plt.title('No. of instances per class')
 plt.grid(True)
 #plt.show()
 
-fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60)
+clf, _, _ = fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60)
+
+pickle_fname = os.path.join('..', 'Test', os.path.basename(skel_folder_path)+'_svm_weights.pickle')
+pickle.dump(clf, open(pickle_fname, 'wb'))
 
 # for feat in out['data_input']:
 # 	print feat.shape

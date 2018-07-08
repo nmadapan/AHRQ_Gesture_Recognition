@@ -14,6 +14,16 @@ import os, sys
 # # 90s - 13.6
 # # 59s - 9.3
 
-A = np.random.rand(3,4)
-print A
-print np.std(A, axis = 0)
+# A = np.random.rand(3,4)
+# print A
+# print np.std(A, axis = 0)
+
+x = np.random.randint(0, 10, 3)
+y = np.random.randint(0, 10, 3)
+print x, y
+
+z = np.append(x, y)
+print z
+
+print(2!=9)
+print(not False)

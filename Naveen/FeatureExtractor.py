@@ -419,7 +419,7 @@ class FeatureExtractor():
 		if normalize:
 			cm = 100 * (cm.astype('float') / cm.sum(axis=1)[:, np.newaxis])
 			cm = cm.astype('int')
-			print("Normalized confusion matrix")
+			# print("Normalized confusion matrix")
 		else:
 			print('Confusion matrix, without normalization')
 
@@ -464,6 +464,7 @@ class FeatureExtractor():
 
 		# Train Predict
 		pred_train_output = clf.predict(train_input)
+		print train_input.shape
 		train_acc = float(np.sum(pred_train_output == np.argmax(train_output, axis = 1))) / pred_train_output.size
 		print 'Train Acc: ', train_acc
 
@@ -475,4 +476,4 @@ class FeatureExtractor():
 		conf_mat = confusion_matrix(np.argmax(test_output, axis = 1), pred_test_output)
 		self.__plot_confusion_matrix(conf_mat, list(range(num_classes)), normalize = True)
 
-		return train_acc, test_acc
+		return clf, train_acc, test_acc
