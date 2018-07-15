@@ -307,7 +307,7 @@ class FeatureExtractor():
 			for feat in temp_features: features.append(feat)
 		return features
 
-	def generate_io(self, skel_folder_path, annot_folder_path, randomize = True, equate_dim = False, **kwargs):
+	def generate_io(self, skel_folder_path, annot_folder_path, randomize = False, equate_dim = False, **kwargs):
 		########################
 		# Input arguments:
 		#	1. skel_folder_path: full path to folder containing skeleton files
@@ -381,7 +381,7 @@ class FeatureExtractor():
 					if(equate_dim):
 						# Interpolate or Extrapolate to fixed dimension
 						mod_feat = feature[feat_type].reshape(self.dim_per_joint*self.num_joints, -1).transpose()
-						mod_feat = self.__interpn(mod_feat, kwargs['num_points'])
+						mod_feat = self.interpn(mod_feat, kwargs['num_points'])
 						mod_feat = mod_feat.transpose().flatten()
 					else:
 						mod_feat = feature[feat_type]
@@ -399,7 +399,7 @@ class FeatureExtractor():
 			out['data_output'] = np.array(out['data_output'])
 		return out
 
-	def __interpn(self, yp, num_points, kind = 'linear'):
+	def interpn(self, yp, num_points, kind = 'linear'):
 		# yp is a gesture instance
 		# yp is 2D numpy array of size num_frames x 3 if num_joints = 1
 		# No. of frames will be increased/reduced to num_points
@@ -411,7 +411,7 @@ class FeatureExtractor():
 			y[:, dim] = f(x)
 		return y
 
-	def __plot_confusion_matrix(self, cm, classes, normalize=False, title='Confusion matrix',cmap=plt.cm.Blues):
+	def plot_confusion_matrix(self, cm, classes, normalize=False, title='Confusion matrix',cmap=plt.cm.Blues):
 		"""
 		This function prints and plots the confusion matrix.
 		Normalization can be applied by setting `normalize=True`.
@@ -419,7 +419,6 @@ class FeatureExtractor():
 		if normalize:
 			cm = 100 * (cm.astype('float') / cm.sum(axis=1)[:, np.newaxis])
 			cm = cm.astype('int')
-			# print("Normalized confusion matrix")
 		else:
 			print('Confusion matrix, without normalization')
 
@@ -464,7 +463,6 @@ class FeatureExtractor():
 
 		# Train Predict
 		pred_train_output = clf.predict(train_input)
-		print train_input.shape
 		train_acc = float(np.sum(pred_train_output == np.argmax(train_output, axis = 1))) / pred_train_output.size
 		print 'Train Acc: ', train_acc
 
@@ -474,6 +472,6 @@ class FeatureExtractor():
 		print 'Test Acc: ', test_acc
 
 		conf_mat = confusion_matrix(np.argmax(test_output, axis = 1), pred_test_output)
-		self.__plot_confusion_matrix(conf_mat, list(range(num_classes)), normalize = True)
+		self.plot_confusion_matrix(conf_mat, list(range(num_classes)), normalize = True)
 
 		return clf, train_acc, test_acc

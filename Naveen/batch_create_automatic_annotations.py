@@ -21,7 +21,8 @@ import glob
 
 ## Initialization
 base_skel_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L8'
-base_write_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\L8\\Annotations'
+base_write_folder = os.path.join(base_skel_folder, 'Annotations')
+
 # base_skel_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data'
 # base_write_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data\\Annotations'
 in_format_flag = True
@@ -64,6 +65,8 @@ for skel_path in skel_file_paths:
 	skel_ts = skel_ts - skel_ts[0]
 	M = np.abs(skel_ts.reshape(-1, 1) - rgb_ts)
 	skel_to_rgb = np.argmin(M, axis = 1)
+	# print M.shape
+	# sys.exit(0)
 
 	## Read skeleton file
 	with open(skel_path, 'r') as fp:

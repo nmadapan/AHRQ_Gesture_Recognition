@@ -76,6 +76,7 @@ try:
 				gest_acq_status = False
 		if(len(out) > prev_out_len):
 			prev_out_len = len(out)
+			print len(out)
 			### Now generate features and recognize the gesture. 
 			### Code in the FeatureExtractor should be changed or new functions should be added to work in the realtime
 

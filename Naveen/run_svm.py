@@ -5,8 +5,8 @@ from FeatureExtractor import FeatureExtractor
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 
-skel_folder_path = '..\\Data\\L6'
-annot_folder_path = '..\\Data\\L6\\Annotations'
+skel_folder_path = '..\\Data\\L2'
+annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
 
 fe = FeatureExtractor(all_flag = False, feature_types = ['left', 'right'], num_joints = 1, dominant_first = True) #
 
@@ -14,9 +14,11 @@ fe = FeatureExtractor(all_flag = False, feature_types = ['left', 'right'], num_j
 
 # all_features = fe.batch_generate_features(skel_folder_path, annot_folder_path)
 
-out = fe.generate_io(skel_folder_path, annot_folder_path, equate_dim = True, num_points = 40)
-# print out.keys()
-# print out['id_to_labels']
+out = fe.generate_io(skel_folder_path, annot_folder_path, randomize = True, equate_dim = True, num_points = 40)
+# print out['data_output'].shape
+# print np.sum(out['data_output'], axis = 0)
+
+# sys.exit(0)
 
 ## Plotting histogram - No. of instances per class
 objects = tuple(out['inst_per_class'].keys())
