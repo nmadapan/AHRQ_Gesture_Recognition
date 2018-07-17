@@ -74,10 +74,19 @@ class GUI():
 		while(True):
 			res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'record.PNG'))
 			res_act = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'record_activated.PNG'))
-			if(res != None or res_act != None): break
-			else: 
+			if(res is None or res_act is None): 
 				time.sleep(0.2)
-				print 'record.PNG not found'
+				# print 'record.PNG not found'
+			if res is not None:
+				cx, cy = res
+				auto.click(cx, cy)
+				auto.moveTo(self.width/2, self.height/2)
+				break
+			if res_act is not None:
+				cx, cy = res_act
+				auto.click(cx, cy)
+				auto.moveTo(self.width/2, self.height/2)			
+				break
 
 		## Connect Kinect Studio
 		res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'record_connect.PNG'))
@@ -147,6 +156,8 @@ def get_gest_count(kr):
 	global record_active, gest_count, xef_flag, gui_flag, gc_flag 
 	start_flag = False
 	frame_count = 0
+	while(not gui_flag): time.sleep(0.1)
+	
 	wait_for_kinect(kr)
 	gc_flag = True
 
