@@ -19,10 +19,9 @@ from KinectReader import kinect_reader
 
 # Default settings
 base_write_folder = '..\\Data' # Where to write the files
-kinect_studio_open_time = 3 # in seconds
-thresh_empty_cycles = 200 # No. of cycles to wait before obtaining the first RGB image. Quit after 200 cycles. 
-dynamic_thresh_fac = 10 # How long to wait later for the arrival of RGB frame 
-fixed_num_gestures = 2
+images_folder = os.path.join('.', 'Images')
+kinect_studio_open_time = 3 # 'in seconds
+fixed_num_gestures = 20
 
 ## Flags
 global record_active, gest_count, xef_flag, gui_flag, gc_flag 
@@ -72,8 +71,8 @@ class GUI():
 
 		## Go to RECORD window
 		while(True):
-			res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'record.PNG'))
-			res_act = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'record_activated.PNG'))
+			res = auto.locateCenterOnScreen(os.path.join(images_folder, 'record.PNG'))
+			res_act = auto.locateCenterOnScreen(os.path.join(images_folder, 'record_activated.PNG'))
 			if(res is None or res_act is None): 
 				time.sleep(0.2)
 				# print 'record.PNG not found'
@@ -89,7 +88,7 @@ class GUI():
 				break
 
 		## Connect Kinect Studio
-		res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'record_connect.PNG'))
+		res = auto.locateCenterOnScreen(os.path.join(images_folder, 'record_connect.PNG'))
 		if res is not None:
 			cx, cy = res
 			auto.click(cx, cy)
@@ -103,7 +102,7 @@ class GUI():
 		while(not gc_flag): time.sleep(0.1)
 
 		## Record
-		res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'record_record.PNG'))
+		res = auto.locateCenterOnScreen(os.path.join(images_folder, 'record_record.PNG'))
 		if res is not None:
 			cx, cy = res
 			auto.click(cx, cy)
@@ -117,7 +116,7 @@ class GUI():
 		while(True):
 			if(gest_count > fixed_num_gestures):
 				xef_window.maximize()
-				res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'record_stop.PNG'))
+				res = auto.locateCenterOnScreen(os.path.join(images_folder, 'record_stop.PNG'))
 				if res is not None:
 					cx, cy = res
 					auto.click(cx, cy)
@@ -131,7 +130,7 @@ class GUI():
 		xef_window.maximize()
 		# XEF shutting condition
 		while(True):
-			res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'buffer.PNG'))
+			res = auto.locateCenterOnScreen(os.path.join(images_folder, 'buffer.PNG'))
 			if res is not None:
 				time.sleep(0.1)
 				continue
