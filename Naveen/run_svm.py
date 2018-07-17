@@ -15,10 +15,6 @@ fe = FeatureExtractor(all_flag = False, feature_types = ['left', 'right'], num_j
 # all_features = fe.batch_generate_features(skel_folder_path, annot_folder_path)
 
 out = fe.generate_io(skel_folder_path, annot_folder_path, randomize = True, equate_dim = True, num_points = 40)
-# print out['data_output'].shape
-# print np.sum(out['data_output'], axis = 0)
-
-# sys.exit(0)
 
 ## Plotting histogram - No. of instances per class
 objects = tuple(out['inst_per_class'].keys())
