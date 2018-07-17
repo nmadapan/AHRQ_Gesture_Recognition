@@ -19,7 +19,7 @@ from KinectReader import kinect_reader
 
 # Default settings
 base_write_folder = '..\\Data' # Where to write the files
-images_folder = os.path.join('.', 'Images')
+images_folder = os.path.join('.', 'Images_AHRQPC')
 kinect_studio_open_time = 3 # 'in seconds
 fixed_num_gestures = 20
 

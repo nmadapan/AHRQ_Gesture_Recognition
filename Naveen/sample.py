@@ -1,10 +1,11 @@
 import numpy as np
+import json
 
-def func(a):
-	global b
-	b = 2
+# with open('param.json', 'r') as fp:
+# 	data = json.load(fp)
 
-global b
-b = 5
-func(3)
-print b
+# print data.keys(), data.values()
+
+a = np.random.randint(0 ,10, (10, ))
+print a.shape
+print a.reshape(2, -1)
