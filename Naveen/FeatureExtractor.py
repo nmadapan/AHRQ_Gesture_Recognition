@@ -9,6 +9,7 @@ from sklearn import svm
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import itertools
+from helpers import skel_col_reduce
 
 #####################
 # BASE class for creating features from skeleton files and annotation files
@@ -150,6 +151,99 @@ class FeatureExtractor():
 
 		return xf
 
+	def process_data_realtime(self, colproc_skel_data):
+		########################
+		# colproc_skel_data is a list of tuples [(a, b), (c, d)] --> a and c belong to left hand and b and d for right hand.
+		# Input arguments:
+		#	
+		# Return:
+		#	
+		########################
+
+		features = {feat_type: None for feat_type in self.__available_types}
+
+		left, right = zip(*colproc_skel_data)
+		left = np.array(list(left))
+		right = np.array(list(right))
+
+		right = right.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
+		left = left.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
+		d_reps = np.ones(right.shape[0]-2).tolist(); d_reps.append(2) # diff() reduced length by one. Using this we can fix it.
+		dd_reps = np.ones(right.shape[0]-3).tolist(); dd_reps.append(3) # This is similar to above but for double diff
+
+		## Right hand
+		# Precompute position, velocity and angles
+		d_right = np.repeat(np.diff(right, axis = 0), d_reps, axis = 0)
+		theta_right = np.zeros(right.shape)
+		for jnt_idx in range(self.num_joints):
+			temp = d_right[:, 3*jnt_idx:3*(jnt_idx+1)]
+			theta_right[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
+
+		## Position
+		if(self.type_flags['right']):
+			features['right'] = right.transpose().flatten()
+		## Velocity
+		if(self.type_flags['d_right']):
+			features['d_right'] = d_right.transpose().flatten()
+		## Acceleration
+		if(self.type_flags['dd_right']):
+			dd_right = np.diff(np.diff(right, axis = 0), axis = 0);
+			dd_right = np.repeat(dd_right, dd_reps, axis = 0)
+			features['dd_right'] = dd_right.transpose().flatten()
+		## Angle
+		if(self.type_flags['theta_right']):
+			features['theta_right'] = theta_right.transpose().flatten()
+		## Angular velocity
+		if(self.type_flags['d_theta_right']):
+			d_theta_right = np.diff(theta_right, axis = 0);
+			d_theta_right = np.repeat(d_theta_right, d_reps, axis = 0)
+			features['d_theta_right'] = d_theta_right.transpose().flatten()
+		## Angular acceleration
+		if(self.type_flags['dd_theta_right']):
+			dd_theta_right = np.diff(np.diff(theta_right, axis = 0), axis = 0);
+			dd_theta_right = np.repeat(dd_theta_right, dd_reps, axis = 0)
+			features['dd_theta_right'] = dd_theta_right.transpose().flatten()
+
+		## Left arm
+		# Precompute position, velocity and angles
+		d_left = np.repeat(np.diff(left, axis = 0), d_reps, axis = 0)
+		theta_left = np.zeros(left.shape)
+		for jnt_idx in range(self.num_joints):
+			temp = d_left[:, 3*jnt_idx:3*(jnt_idx+1)]
+			theta_left[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
+		## Position
+		if(self.type_flags['left']):
+			features['left'] = left.transpose().flatten()
+		## Velocity
+		if(self.type_flags['d_left']):
+			features['d_left'] = d_left.transpose().flatten()
+		## Acceleration
+		if(self.type_flags['dd_left']):
+			dd_left = np.diff(np.diff(left, axis = 0), axis = 0);
+			dd_left = np.repeat(dd_left, dd_reps, axis = 0)
+			features['dd_left'] = dd_left.transpose().flatten()
+		## Angle
+		if(self.type_flags['theta_left']):
+			features['theta_left'] = theta_left.transpose().flatten()
+		## Angular velocity
+		if(self.type_flags['d_theta_left']):
+			d_theta_left = np.diff(theta_left, axis = 0);
+			d_theta_left = np.repeat(d_theta_left, d_reps, axis = 0)
+			features['d_theta_left'] = d_theta_left.transpose().flatten()
+		## Angular acceleration
+		if(self.type_flags['dd_theta_left']):
+			dd_theta_left = np.diff(np.diff(theta_left, axis = 0), axis = 0);
+			dd_theta_left = np.repeat(dd_theta_left, dd_reps, axis = 0)
+			features['dd_theta_left'] = dd_theta_left.transpose().flatten()
+
+		if(self.dominant_first):
+			features['types_order'] = self.find_type_order(left, right)
+		else:
+			features['types_order'] = list(range(self.__num_available_types))
+
+		return features
+
+	
 	def generate_features(self, skel_filepath, annot_filepath):
 		########################
 		# Input arguments:
@@ -306,6 +400,30 @@ class FeatureExtractor():
 			temp_features = self.generate_features(skel_filepath, annot_filepath)
 			for feat in temp_features: features.append(feat)
 		return features
+
+	def generate_features_realtime(self, colproc_skel_data):
+		feature = self.process_data_realtime(colproc_skel_data) 
+		inst = []
+		# for feat_id, feat_type in self.__id_to_available_type.items():
+		for feat_id in feature['types_order']:
+			feat_type = self.__id_to_available_type[feat_id]
+			if(feature[feat_type] is not None):
+				if(True): ####################
+					# Interpolate or Extrapolate to fixed dimension
+					print feature[feat_type].shape
+					mod_feat = feature[feat_type].reshape(self.dim_per_joint*self.num_joints, -1).transpose()
+					mod_feat = self.interpn(mod_feat, 40) ####################
+					mod_feat = mod_feat.transpose().flatten()
+				else:
+					mod_feat = feature[feat_type]
+				inst = inst + mod_feat.tolist()
+		return np.array([inst])
+
+	def pred_output_realtime(self, colproc_skel_data, clf):
+		inst = self.generate_features_realtime(colproc_skel_data)
+		# Test Predict
+		pred_test_output = clf.predict(inst)
+		print pred_test_output
 
 	def generate_io(self, skel_folder_path, annot_folder_path, randomize = False, equate_dim = False, **kwargs):
 		########################

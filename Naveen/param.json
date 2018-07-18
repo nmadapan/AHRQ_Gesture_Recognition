@@ -1,0 +1,12 @@
+{
+	"all_flag": false,
+	"feature_types": ["left", "right"],
+	"num_joints": 1,
+	"dominant_first": true,
+	"dim_per_joint": 3,
+	"randomize": true,
+	"equate_dim": true,
+	"fixed_num_frames": 40,
+	"lengths_per_frame": 10,
+	"openpose_downsample_rate": 7
+}

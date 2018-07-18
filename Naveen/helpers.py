@@ -28,7 +28,7 @@ def wait_for_kinect(kr):
 			sys.exit('Waited for more than 30 seconds. Exiting')
 	print '\nAll Kinect modules connected !!'
 
-def skel_col_reduce(line, num_joints = 2):
+def skel_col_reduce(line, num_joints = 1):
 	# Initialize joint IDs
 	left_hand_id = 7
 	left_elbow_id = 5
