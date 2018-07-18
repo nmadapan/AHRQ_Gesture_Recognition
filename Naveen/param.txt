@@ -1,5 +1,0 @@
-# Parameters for feature extraction
-all_flag = False
-feature_types = ['left', 'right']
-num_joints = 1
-dominant_first = True
