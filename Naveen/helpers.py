@@ -6,7 +6,7 @@ def wait_for_kinect(kr):
 	spin = True
 	first_rgb, first_depth, first_body = False, False, False
 	init_start_time = time.time()
-	print 'Connecting to Kinect . ', 
+	print 'Connecting to Kinect . ',
 	# Wait for all modules (rgb, depth, skeleton) to connect
 	while True:
 		try:
@@ -19,14 +19,28 @@ def wait_for_kinect(kr):
 			else: first_body = kr.update_body()
 			if (first_rgb and first_depth and first_body): break
 			time.sleep(0.5)
-			print '. ', 		
+			print '. ',
 		except Exception as exp:
 			print exp
 			time.sleep(0.5)
-			print '. ', 
-		if(time.time()-init_start_time > 30): 
+			print '. ',
+		if(time.time()-init_start_time > 30):
 			sys.exit('Waited for more than 30 seconds. Exiting')
 	print '\nAll Kinect modules connected !!'
+
+def skelfile_cmp(path1, path2):
+	c1, m1 = tuple(map(int, os.path.basename(path1).split('_')[:2]))
+	c2, m2 = tuple(map(int, os.path.basename(path2).split('_')[:2]))
+	if(c1==c2): return m1 - m2
+	else: return c1 - c2
+
+def class_str_cmp(str1, str2):
+	# str1 - 3_2, str_2 - 7_1
+	# So 3_2 < 7_1
+	c1, m1 = tuple(map(int, str1.split('_')))
+	c2, m2 = tuple(map(int, str2.split('_')))
+	if(c1==c2): return m1 - m2
+	else: return c1 - c2
 
 def skel_col_reduce(line, num_joints = 1):
 	# Initialize joint IDs
@@ -79,8 +93,8 @@ def file_filter(xef_files_paths, base_write_folder, xef_rgb_factor):
 		xef_filename = os.path.basename(xef_file_path)[:-4]
 		rgb_path = os.path.join(base_write_folder, xef_filename.split('_')[3], xef_filename+'_rgb.avi')
 		pred_rgb_size = 1000.0 * xef_rgb_factor * get_file_size(xef_file_path)/1024.0/1024.0
-		# 5.0 * xef_filesize_in_gb --> this gives no. of seconds in the rgb video. Each sec is an MB approx. 
-		# Multiply with 1000 to convert into KB. # The value 3.8 is empirically found. 
+		# 5.0 * xef_filesize_in_gb --> this gives no. of seconds in the rgb video. Each sec is an MB approx.
+		# Multiply with 1000 to convert into KB. # The value 3.8 is empirically found.
 		if(os.path.isfile(rgb_path)):
 			if(get_file_size(rgb_path) < float(pred_rgb_size)): # File size in KB
 				final_file_paths.append(xef_file_path)

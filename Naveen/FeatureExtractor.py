@@ -9,7 +9,7 @@ from sklearn import svm
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import itertools
-from helpers import skel_col_reduce
+from helpers import skel_col_reduce, class_str_cmp, skelfile_cmp
 
 #####################
 # BASE class for creating features from skeleton files and annotation files
@@ -75,7 +75,7 @@ class FeatureExtractor():
 			self.type_flags = {feat_type: True for feat_type in self.__available_types}
 
 	def find_type_order(self, left, right, thresh_std = 0.08):
-		# thresh_std = 0.08 in meters. It is found by observation. 
+		# thresh_std = 0.08 in meters. It is found by observation.
 		left_std = np.max(np.std(left, axis = 0))
 		right_std = np.max(np.std(right, axis = 0))
 		assert self.__num_available_types % 2 == 0, 'Error! Total no. of types should be even.'
@@ -155,9 +155,9 @@ class FeatureExtractor():
 		########################
 		# colproc_skel_data is a list of tuples [(a, b), (c, d)] --> a and c belong to left hand and b and d for right hand.
 		# Input arguments:
-		#	
+		#
 		# Return:
-		#	
+		#
 		########################
 
 		features = {feat_type: None for feat_type in self.__available_types}
@@ -243,7 +243,7 @@ class FeatureExtractor():
 
 		return features
 
-	
+
 	def generate_features(self, skel_filepath, annot_filepath):
 		########################
 		# Input arguments:
@@ -350,7 +350,7 @@ class FeatureExtractor():
 				features['types_order'] = self.find_type_order(left, right)
 			else:
 				features['types_order'] = list(range(self.__num_available_types))
-				
+
 			result.append(features)
 
 		return result
@@ -380,9 +380,9 @@ class FeatureExtractor():
 			sys.exit('Error: '+ annot_folder_path + ' does not exists\n')
 
 		skel_filepaths = glob(os.path.join(skel_folder_path, '*_skel.txt'))
-
 		if(len(skel_filepaths) == 0):
 			sys.exit('No skeleton files in ' + skel_folder_path + '\n')
+		skel_filepaths = sorted(skel_filepaths, cmp=skelfile_cmp)
 
 		combos = []
 		for skel_filepath in skel_filepaths:
@@ -402,7 +402,7 @@ class FeatureExtractor():
 		return features
 
 	def generate_features_realtime(self, colproc_skel_data):
-		feature = self.process_data_realtime(colproc_skel_data) 
+		feature = self.process_data_realtime(colproc_skel_data)
 		inst = []
 		# for feat_id, feat_type in self.__id_to_available_type.items():
 		for feat_id in feature['types_order']:
@@ -471,6 +471,7 @@ class FeatureExtractor():
 		for feature in features: class_labels.append(feature['label'])
 		raw_class_labels = deepcopy(class_labels)
 		class_labels = list(set(class_labels))
+		class_labels = sorted(class_labels, cmp=class_str_cmp)
 
 		## Generate class IDs
 		for class_id, label in enumerate(class_labels):
