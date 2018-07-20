@@ -384,6 +384,10 @@ class FeatureExtractor():
 			sys.exit('No skeleton files in ' + skel_folder_path + '\n')
 		skel_filepaths = sorted(skel_filepaths, cmp=skelfile_cmp)
 
+		skel_fileorder_path = os.path.join(os.path.dirname(skel_folder_path), os.path.basename(skel_folder_path)+'_skel_order.txt')
+		with open(skel_fileorder_path, 'w') as fp:
+			for fpath in skel_filepaths: fp.write(os.path.basename(fpath)+ '\n')
+
 		combos = []
 		for skel_filepath in skel_filepaths:
 			annot_filepath = os.path.join(annot_folder_path, os.path.basename(skel_filepath)[:-8]+'annot2.txt')
