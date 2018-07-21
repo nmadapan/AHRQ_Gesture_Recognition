@@ -35,9 +35,9 @@ def get_gest(kr):
 			start_y_coo = thresh_level * (skel_pts[3*neck_id+1] - skel_pts[3*base_id+1])
 			left_y = skel_pts[3*left_hand_id+1] - skel_pts[3*base_id+1]
 			right_y = skel_pts[3*right_hand_id+1] - skel_pts[3*base_id+1]
-			if (left_y >= start_y_coo or right_y >= start_y_coo) and (not start_flag): 
+			if (left_y >= start_y_coo or right_y >= start_y_coo) and (not start_flag):
 				start_flag = True
-			if (left_y < start_y_coo and right_y < start_y_coo) and start_flag: 
+			if (left_y < start_y_coo and right_y < start_y_coo) and start_flag:
 				start_flag = False
 			if(start_flag):
 				result.append(skel_col_reduce(skel_pts))
@@ -76,7 +76,7 @@ try:
 		# body_flag = kr.update_body()
 		if rgb_flag and display_flag:
 			cv2.imshow('RGB_Video', cv2.resize(kr.color_image, None, fx=0.4, fy=0.4))
-			if cv2.waitKey(1) == ord('q') : 
+			if cv2.waitKey(1) == ord('q') :
 				cv2.destroyAllWindows()
 				spin = False
 				gest_acq_status = False
@@ -84,7 +84,7 @@ try:
 			prev_out_len = len(out)
 			# print len(out)
 			fe.pred_output_realtime(out[-1], clf)
-			### Now generate features and recognize the gesture. 
+			### Now generate features and recognize the gesture.
 			### Code in the FeatureExtractor should be changed or new functions should be added to work in the realtime
 
 		time.sleep(0.1)

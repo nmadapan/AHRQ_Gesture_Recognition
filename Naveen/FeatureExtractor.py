@@ -9,7 +9,8 @@ from sklearn import svm
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import itertools
-from helpers import skel_col_reduce, class_str_cmp, skelfile_cmp
+
+from helpers import *
 
 #####################
 # BASE class for creating features from skeleton files and annotation files
@@ -17,54 +18,52 @@ from helpers import skel_col_reduce, class_str_cmp, skelfile_cmp
 # How to use it:
 #
 #	from FeatureExtractor import FeatureExtractor
-#	fe = FeatureExtractor(all_flag = False, feature_types = ['left', 'right'], num_joints = 1)
-#		* If all_flag = True, all features types are considered.
-#			In this case, there is no need to have 'feature_types' argument. For instance
-#			fe = FeatureExtractor(all_flag = True, num_joints = 1)
-#		* num_joints = 1 --> only hand, num_joints = 2 --> both hand and the elbow
+#	fe = FeatureExtractor(json_param_path = 'param.json')
 #
-#	fe = FeatureExtractor(all_flag = True, num_joints = 1)
+#		* self.all_flag: If True, all features types are considered.
+#		* self.feature_types: List of feature types to consider. It is necessary iff self.all_flag is false
+#		* self.num_joints: 1 --> only hand, 2 --> both hand and the elbow
+#		* self.randomize: If true, the data is randomized
+#		* self.equate_dim: If true, no. of frames in each gesture is equated via interpolation through a certain number of frames given by self.fixed_num_frames
+#		* self.dim_per_joint = 3; Since we have x, y, z
+#		* self.dominant_first: If true, dominant hand goes first followed by other hand. Else, right follows left
+#
 #	fe.extract_raw_features(skel_filepath, annot_filepath) # See the comments inside function
 #	fe.generate_features(skel_filepath, annot_filepath) # See the comments inside function
 #	fe.batch_generate_features(skel_folder_path, annot_folder_path, ignore_missing_files = False)
-#	fe.generate_io(skel_folder_path, annot_folder_path, randomize = True, equate_dim = False)
+#	fe.generate_io(skel_folder_path, annot_folder_path)
 #####################
 
 class FeatureExtractor():
-	def __init__(self, all_flag = False, num_joints = 1, dim_per_joint = 3, dominant_first = True, **kwargs):
-		# kwargs['feature_types'] = ['left', 'right']
+	def __init__(self, json_param_path = 'param.json'):
 		## Private variables
 		self.__available_types = ['right', 'd_right', 'dd_right', 'theta_right', 'd_theta_right', 'dd_theta_right',\
 							 'left', 'd_left', 'dd_left', 'theta_left', 'd_theta_left', 'dd_theta_left']
 		self.__num_available_types = len(self.__available_types)
 		self.__id_to_available_type = {idx: feat_type for idx, feat_type in zip(range(self.__num_available_types), self.__available_types)}
 
+		# Initialize variables from json param path
+		param_dict = json_to_dict(json_param_path)
+		for key, value in param_dict.items():
+			setattr(self, key, value)
+
 		## Declaring instance variables
-		self.num_joints = num_joints # 1 - only hand, 2 - both hand and the shoulder
-		self.dim_per_joint = dim_per_joint
-		self.dominant_first = dominant_first
 		self.type_flags = {feat_type: False for feat_type in self.__available_types}
 		self.num_feature_types = None
-		self.feature_types = None
 
-		## Check if input arguments take right values
-		# If all_flag is False, then kwargs['feature_types'] should exist
-		if((not all_flag) and ('feature_types' not in kwargs.keys())):
-			sys.exit('Error! \'feature_types\' input argument is mandatory when \'all_flag\' is False \n')
 		# num_joints can either be 1 or 2
 		if(not (self.num_joints == 1 or self.num_joints == 2)):
 			sys.exit('Error: Number of joints should be either 1 or 2\n')
 		# dim_per_joint can either be 2 or 3
 		if(not (self.dim_per_joint == 2 or self.dim_per_joint == 3)):
 			sys.exit('Error: Dimension per joint should be either 2 or 3\n')
-		# If kwargs['feature_types'] exists, the feature types should exist in the availabe types
-		if((not all_flag) and (not set(kwargs['feature_types']).issubset(set(self.__available_types)))):
-			miss = list(set(kwargs['feature_types']).difference(set(kwargs['feature_types']).intersection(set(self.__available_types))))
+		# If self.feature_types exists, the feature types should exist in the availabe types
+		if((not self.all_flag) and (not set(self.feature_types).issubset(set(self.__available_types)))):
+			miss = list(set(self.feature_types).difference(set(self.feature_types).intersection(set(self.__available_types))))
 			sys.exit('Error: Some feature types: \'' + ', '.join(miss) + '\' do not exist\n')
 
 		# Updating the feature type flags
-		if(not all_flag):
-			self.feature_types = kwargs['feature_types']
+		if(not self.all_flag):
 			self.num_feature_types = len(self.feature_types)
 			for feat_type in self.feature_types:
 				if feat_type in self.__available_types:
@@ -74,16 +73,18 @@ class FeatureExtractor():
 			self.num_feature_types = len(self.feature_types)
 			self.type_flags = {feat_type: True for feat_type in self.__available_types}
 
-	def find_type_order(self, left, right, thresh_std = 0.08):
-		# thresh_std = 0.08 in meters. It is found by observation.
+	def find_type_order(self, left, right):
+		# dominant_first_thresh = 0.08 in meters. It is found by observation.
+		# dominant hand ids comes first if the difference is above the threshold
+		# If difference is less than the threshold, right comes first
 		left_std = np.max(np.std(left, axis = 0))
 		right_std = np.max(np.std(right, axis = 0))
 		assert self.__num_available_types % 2 == 0, 'Error! Total no. of types should be even.'
 		sz = int(self.__num_available_types / 2) # Assumes that actual types ordered as right followed by left
 		right_order = range(0, sz)
 		left_order = range(sz, 2*sz)
-		if((right_std - left_std) >= thresh_std): return right_order+left_order
-		elif((left_std - right_std) >= thresh_std): return left_order+right_order
+		if((right_std - left_std) >= self.dominant_first_thresh): return right_order+left_order
+		elif((left_std - right_std) >= self.dominant_first_thresh): return left_order+right_order
 		else: return right_order+left_order
 
 	def extract_raw_features(self, skel_filepath, annot_filepath):
@@ -153,18 +154,17 @@ class FeatureExtractor():
 
 	def process_data_realtime(self, colproc_skel_data):
 		########################
-		# colproc_skel_data is a list of tuples [(a, b), (c, d)] --> a and c belong to left hand and b and d for right hand.
 		# Input arguments:
+		#	colproc_skel_data: a list of tuples [(a, b), (c, d)] --> a and c belong to right hand and b and d for left hand.
 		#
 		# Return:
-		#
+		#	features: dictionary. keys are feature types, value is flattened numpy array or None
 		########################
 
 		features = {feat_type: None for feat_type in self.__available_types}
 
 		left, right = zip(*colproc_skel_data)
-		left = np.array(list(left))
-		right = np.array(list(right))
+		left, right = np.array(list(left)), np.array(list(right))
 
 		right = right.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
 		left = left.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
@@ -412,11 +412,11 @@ class FeatureExtractor():
 		for feat_id in feature['types_order']:
 			feat_type = self.__id_to_available_type[feat_id]
 			if(feature[feat_type] is not None):
-				if(True): ####################
+				if(self.equate_dim):
 					# Interpolate or Extrapolate to fixed dimension
 					print feature[feat_type].shape
 					mod_feat = feature[feat_type].reshape(self.dim_per_joint*self.num_joints, -1).transpose()
-					mod_feat = self.interpn(mod_feat, 40) ####################
+					mod_feat = self.interpn(mod_feat, self.fixed_num_frames)
 					mod_feat = mod_feat.transpose().flatten()
 				else:
 					mod_feat = feature[feat_type]
@@ -429,16 +429,16 @@ class FeatureExtractor():
 		pred_test_output = clf.predict(inst)
 		print pred_test_output
 
-	def generate_io(self, skel_folder_path, annot_folder_path, randomize = False, equate_dim = False, **kwargs):
+	def generate_io(self, skel_folder_path, annot_folder_path):
 		########################
 		# Input arguments:
 		#	1. skel_folder_path: full path to folder containing skeleton files
 		#	2. annot_folder_path: full path to folder containing annotation files
-		#	3. randomize: If True, features are randomized, otherwise, order is maintained
-		#	4. equate_dim: If True, Each gesture instance is interpolated/extrapolated to
+		#	3. self.randomize: If True, features are self.randomized, otherwise, order is maintained
+		#	4. self.equate_dim: If True, Each gesture instance is interpolated/extrapolated to
 		#		a fixed number of frames given by the next argument
 		#	5. num_points: How many frames each gesture instance should contain.
-		#		If equate_dim is True, num_points variable is mandatory
+		#		If self.equate_dim is True, num_points variable is mandatory
 		# Return:
 		#	out - A dictionary containing the following keys:
 		#		1. num_classes - No. of classes
@@ -447,24 +447,19 @@ class FeatureExtractor():
 		#		4. label_to_ids	- dictionary where kyes are class labels and values are class IDs
 		#		5. num_instances - Total number of instances
 		#		6. data_input - List of flattened numpy arrays. Each numpy array is the final feature vector
-		#			All feature vectors will be of same length if 'equate_dim' is True
+		#			All feature vectors will be of same length if 'self.equate_dim' is True
 		#			Each feature vector is a result of concatenation of flattened numpy arrays corresponding to each feature type.
-		#			If 'equate_dim' is True, this is a numpy array of shape (num_instances x fixed_num_of_features)
+		#			If 'self.equate_dim' is True, this is a numpy array of shape (num_instances x fixed_num_of_features)
 		#		7. data_output - One hot representation of corresponding class the feature vector
 		#		8. num_joints - Number of joints considered
 		#		9. num_feature_types - Number of actual feature types considered.
 		########################
 
-		if(equate_dim and ('num_points' not in kwargs.keys())):
-			sys.exit('Error! \'num_points\' input argument is mandatory when \'equate_dim\' is True \n')
-
 		## Obtain all features
 		features = self.batch_generate_features(skel_folder_path, annot_folder_path)
 
 		## Initialize the return variable
-		out = {'num_classes': -1, 'class_labels': None, 'id_to_labels':None, 'label_to_ids':None, \
-				'num_instances': None, 'data_input': [], 'data_output': [], 'num_joints': -1, \
-				'num_feature_types': -1, 'inst_per_class': {}}
+		out = {'data_input': [], 'data_output': []}
 
 		class_labels = []
 		id_to_labels = {}
@@ -484,16 +479,14 @@ class FeatureExtractor():
 			inst_per_class[label] = raw_class_labels.count(label)
 
 		## Overwrite the keys in the return variable
-		out['num_classes'] = len(class_labels)
-		out['class_labels'] = class_labels
-		out['id_to_labels'] = id_to_labels
-		out['label_to_ids'] = label_to_ids
-		out['num_instances'] = len(features)
-		out['num_feature_types'] = self.num_feature_types
-		out['num_joints'] = self.num_joints
-		out['inst_per_class'] = inst_per_class
+		self.num_classes = len(class_labels)
+		self.class_labels = class_labels
+		self.id_to_labels = id_to_labels
+		self.label_to_ids = label_to_ids
+		self.inst_per_class = inst_per_class
+		self.num_instances = len(features)
 
-		I = np.eye(out['num_classes'])
+		I = np.eye(self.num_classes)
 
 		for feature in features:
 			inst = []
@@ -501,23 +494,23 @@ class FeatureExtractor():
 			for feat_id in feature['types_order']:
 				feat_type = self.__id_to_available_type[feat_id]
 				if(feature[feat_type] is not None):
-					if(equate_dim):
+					if(self.equate_dim):
 						# Interpolate or Extrapolate to fixed dimension
 						mod_feat = feature[feat_type].reshape(self.dim_per_joint*self.num_joints, -1).transpose()
-						mod_feat = self.interpn(mod_feat, kwargs['num_points'])
+						mod_feat = self.interpn(mod_feat, self.fixed_num_frames)
 						mod_feat = mod_feat.transpose().flatten()
 					else:
 						mod_feat = feature[feat_type]
 					inst = inst + mod_feat.tolist()
 			out['data_input'].append(np.array(inst))
 			out['data_output'].append(I[label_to_ids[feature['label']], :])
-		if(randomize):
-			# Randomize data input and output
+		if(self.randomize):
+			# self.randomize data input and output
 			temp = zip(out['data_input'], out['data_output'])
 			shuffle(temp)
 			out['data_input'], out['data_output'] = zip(*temp)
 			out['data_input'], out['data_output'] = list(out['data_input']), list(out['data_output'])
-		if(equate_dim):
+		if(self.equate_dim):
 			out['data_input'] = np.array(out['data_input'])
 			out['data_output'] = np.array(out['data_output'])
 		return out
@@ -572,7 +565,7 @@ class FeatureExtractor():
 		feat_dim = data_input.shape[1]
 		num_classes = data_output.shape[1]
 
-		## Randomize
+		## self.randomize
 		perm = list(range(data_input.shape[0]))
 		shuffle(perm)
 		train_input = data_input[0:int(train_per*num_inst), :]
@@ -596,5 +589,7 @@ class FeatureExtractor():
 
 		conf_mat = confusion_matrix(np.argmax(test_output, axis = 1), pred_test_output)
 		self.plot_confusion_matrix(conf_mat, list(range(num_classes)), normalize = True)
+
+		self.svm_clf = clf
 
 		return clf, train_acc, test_acc
