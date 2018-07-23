@@ -65,6 +65,7 @@ for skel_path in skel_file_paths:
 	skel_ts = skel_ts - skel_ts[0]
 	M = np.abs(skel_ts.reshape(-1, 1) - rgb_ts)
 	skel_to_rgb = np.argmin(M, axis = 1)
+	# rgb_to_skel = np.argmin(M, axis = 0)
 	# print M.shape
 	# sys.exit(0)
 

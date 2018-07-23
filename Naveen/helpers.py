@@ -1,6 +1,7 @@
 from glob import glob
 import os, sys, time
 import numpy as np
+import json
 
 def wait_for_kinect(kr):
 	spin = True
@@ -87,3 +88,10 @@ def file_filter(xef_files_paths, base_write_folder, xef_rgb_factor):
 		else:
 			final_file_paths.append(xef_file_path)
 	return final_file_paths
+
+def json_to_dict(json_fpath):
+	if(not os.path.isfile(json_fpath)):
+		sys.exit(json_fpath + ' file does NOT exists')
+	with open(json_fpath, 'r') as fp:
+		data = json.load(fp)
+	return data

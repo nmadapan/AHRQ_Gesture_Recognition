@@ -5,6 +5,10 @@
 /openpose/
 /Flea3/
 /Rahul/Results/
+/Rahul/finger_extract/
+/Rahul/clustering_data/
+/Rahul/Clustering_Plots/
+/Data_OpenPose/
 *.xef
 *.avi
 *.mp4
