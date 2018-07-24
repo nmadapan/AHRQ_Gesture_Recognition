@@ -45,3 +45,4 @@ for lexicon in lexicons:
 					 ' --write_keypoint ' + write_gesture_folder + ' --hand ' + '--keypoint_scale '+'4 '+'--no_display'
 
 		os.system(system_str)
+		# sys.path.insert(0,system_str)
