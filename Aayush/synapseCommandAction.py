@@ -1,17 +1,32 @@
 import pyautogui as auto
 
 window_names = auto.getWindows().keys()
+auto.FAILSAFE = True
+auto.PAUSE = 2
 
 def moveToImage(image):
 	newLocationX, newLocationY = auto.center(auto.locateOnScreen(image))
 	auto.moveTo(newLocationX, newLocationY)
 
-status = {prev_action: "", number_of_panels: ""}
+status = {prev_action: "", number_of_panels: 1}
 
 def get_status():
 	print "Status\n------"
 	print "Previous action: " + status[prev_action] + "\n"
 	print "No. of panels: " + status[number_of_panels] + "\n"
+
+commandList = [[],
+	["Scroll", "Scroll Up", "Scroll Down"],
+	["Flip", "Flip Horizontal", "Flip Vertical"],
+	["Rotate", "Rotate Clockwise", "Rotate Counter-Clockwise"],
+	["Zoom", "Zoom In", "Zoom Out"],
+	["Switch Panel", "Switch Panel Left", "Switch Panel Right", "Switch Panel Up", "Switch Panel Down"],
+	["Pan", "Pan Left", "Pan Right", "Pan Up", "Pan Down"],
+	["Ruler", "Ruler Measure", "Ruler Delete"],
+	["Window", "Window Open", "Window Close"],
+	["Manual Contrast", "Manual Contrast Increase", "Manual Contrast Decrease"],
+	["Layout", "Layout One-Panel", "Layout Two-Panels", "Layout Three-Panels", "Layout Four-Panels"],
+	["Contrast Presets", "Contrast Presets I", "Contrast Presets II"]]
 
 commandSeq = ""
 while (True):
@@ -100,15 +115,31 @@ while (True):
 		elif (commandID == "2"):
 			moveToImage('Images/series-thumbnail-close.png')
 			auto.click()
-	elif (commandID == "21" or commandID == "22"):
-		# manual contrast increase/decrease
-		auto.click(button='right')
-		auto.click()
-	elif (commandID == "23" or commandID == "24" or commandID == "25" or commandID == "26"):
-		# layout with x panels
-		auto.click(button='right')
-		auto.click()
-	elif (commandID == "27" or commandID == "28"):
-		# contrast presets std 1/2
-		auto.click(button='right')
-		auto.click()
+	elif (commandType == "9"):
+		if (commandID == "1"):
+			moveToImage('Images/series-thumbnail.png')
+			auto.click()
+		elif (commandID == "2"):
+			moveToImage('Images/series-thumbnail-close.png')
+			auto.click()
+		elif (commandID == "3"):
+			moveToImage('Images/series-thumbnail-close.png')
+			auto.click()
+	elif (commandType == "10"):
+		if (commandID == "1"):
+			moveToImage('Images/series-thumbnail.png')
+			auto.click()
+		elif (commandID == "2"):
+			moveToImage('Images/series-thumbnail-close.png')
+			auto.click()
+	elif (commandType == "11"):
+		if (commandID == "1"):
+			moveToImage('Images/series-thumbnail.png')
+			auto.click()
+		elif (commandID == "2"):
+			moveToImage('Images/series-thumbnail-close.png')
+			auto.click()
+	status[prev_action] = commandList[int(commandType)][int(commandID)]
+	auto.moveTo(self.width / 2, self.height / 2)
+
+
