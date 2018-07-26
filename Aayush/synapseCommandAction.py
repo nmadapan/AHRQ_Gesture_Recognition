@@ -15,7 +15,7 @@ def get_status():
 	print "Previous action: " + status[prev_action] + "\n"
 	print "No. of panels: " + status[number_of_panels] + "\n"
 
-commandList = [[],
+commandList = [["Quit", "Status"],
 	["Scroll", "Scroll Up", "Scroll Down"],
 	["Flip", "Flip Horizontal", "Flip Vertical"],
 	["Rotate", "Rotate Clockwise", "Rotate Counter-Clockwise"],
@@ -35,15 +35,22 @@ while (True):
 	commandSeq = raw_input("Gesture Command -> ")
 	command = commandSeq[:commandSeq.find(" ")]
 	params = commandSeq[commandSeq.find(" ") + 1:]
-	if (command == "0_0"):
-		break
-	elif (command.find("_") != -1):
-		commandType = command[:command.find("_")]
-		commandID = command[command.find("_") + 1:]
+	if (command.find("_") != -1):
+		try:
+			commandType = int(command[:command.find("_")])
+			commandID = int(command[command.find("_") + 1:])
+		except ValueError:
+			print "Unrecognized sequence of commands!\n"
+			continue
 	else:
-		print "Unrecognized command!\n"
+		print "Invalid command entered!\n"
 		continue
-	if (commandType == "1"):
+	if (commandType == "0"):
+		if (commandID == "0"):
+			break
+		elif (commandID == "1"):
+			get_status()
+	elif (commandType == "1"):
 		scrollAmount = 10
 		if (commandID == "1"):
 			auto.scroll(scrollAmount)
@@ -139,7 +146,7 @@ while (True):
 		elif (commandID == "2"):
 			moveToImage('Images/series-thumbnail-close.png')
 			auto.click()
-	status[prev_action] = commandList[int(commandType)][int(commandID)]
 	auto.moveTo(self.width / 2, self.height / 2)
+	status["prev_action"] = commandList[int(commandType)][int(commandID)]
 
 
