@@ -24,10 +24,8 @@ from helpers import *
 #####################
 
 # Initialization
-xef_folder_path = 'C:\\Users\\Rahul\\Desktop'
-# xef_folder_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\XEF_Files'
-# xef_folder_path = 'G:\\AHRQ\\Study_4_Training_Videos\\S3_L3\\New'
-in_format_flag = False # True since the filename is in the correct format
+xef_folder_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\XEF_Files\\*'
+in_format_flag = True # True since the filename is in the correct format
 enable_repeat = False # If True, all xef files will be executed, Otherwise, only the files that werent read previously or the files that were incompletely read
 xef_rgb_factor = 3.2 # Max is 3.8
 print_fnames = False 

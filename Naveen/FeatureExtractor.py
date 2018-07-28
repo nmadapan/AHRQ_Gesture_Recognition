@@ -37,8 +37,8 @@ from helpers import *
 class FeatureExtractor():
 	def __init__(self, json_param_path = 'param.json'):
 		## Private variables
-		self.available_types = ['right', 'd_right', 'dd_right', 'theta_right', 'd_theta_right', 'dd_theta_right',\
-							 'left', 'd_left', 'dd_left', 'theta_left', 'd_theta_left', 'dd_theta_left']
+		self.available_types = ['right', 'd_right', 'theta_right', 'd_theta_right',\
+							 	'left', 'd_left', 'theta_left', 'd_theta_left']
 		self.num_available_types = len(self.available_types)
 		self.id_to_available_type = {idx: feat_type for idx, feat_type in zip(range(self.num_available_types), self.available_types)}
 
@@ -174,7 +174,6 @@ class FeatureExtractor():
 		right = right.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
 		left = left.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
 		d_reps = np.ones(right.shape[0]-2).tolist(); d_reps.append(2) # diff() reduced length by one. Using this we can fix it.
-		dd_reps = np.ones(right.shape[0]-3).tolist(); dd_reps.append(3) # This is similar to above but for double diff
 
 		## Right hand
 		# Precompute position, velocity and angles
@@ -186,28 +185,18 @@ class FeatureExtractor():
 
 		## Position
 		if(self.type_flags['right']):
-			features['right'] = right.transpose().flatten()
+			features['right'] = right.transpose().flatten() / self.max_r
 		## Velocity
 		if(self.type_flags['d_right']):
-			features['d_right'] = d_right.transpose().flatten()
-		## Acceleration
-		if(self.type_flags['dd_right']):
-			dd_right = np.diff(np.diff(right, axis = 0), axis = 0);
-			dd_right = np.repeat(dd_right, dd_reps, axis = 0)
-			features['dd_right'] = dd_right.transpose().flatten()
+			features['d_right'] = d_right.transpose().flatten() / self.max_dr
 		## Angle
 		if(self.type_flags['theta_right']):
-			features['theta_right'] = theta_right.transpose().flatten()
+			features['theta_right'] = theta_right.transpose().flatten() / self.max_th
 		## Angular velocity
 		if(self.type_flags['d_theta_right']):
 			d_theta_right = np.diff(theta_right, axis = 0);
 			d_theta_right = np.repeat(d_theta_right, d_reps, axis = 0)
-			features['d_theta_right'] = d_theta_right.transpose().flatten()
-		## Angular acceleration
-		if(self.type_flags['dd_theta_right']):
-			dd_theta_right = np.diff(np.diff(theta_right, axis = 0), axis = 0);
-			dd_theta_right = np.repeat(dd_theta_right, dd_reps, axis = 0)
-			features['dd_theta_right'] = dd_theta_right.transpose().flatten()
+			features['d_theta_right'] = d_theta_right.transpose().flatten() / self.max_dth
 
 		## Left arm
 		# Precompute position, velocity and angles
@@ -218,28 +207,18 @@ class FeatureExtractor():
 			theta_left[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 		## Position
 		if(self.type_flags['left']):
-			features['left'] = left.transpose().flatten()
+			features['left'] = left.transpose().flatten() / self.max_r
 		## Velocity
 		if(self.type_flags['d_left']):
-			features['d_left'] = d_left.transpose().flatten()
-		## Acceleration
-		if(self.type_flags['dd_left']):
-			dd_left = np.diff(np.diff(left, axis = 0), axis = 0);
-			dd_left = np.repeat(dd_left, dd_reps, axis = 0)
-			features['dd_left'] = dd_left.transpose().flatten()
+			features['d_left'] = d_left.transpose().flatten() / self.max_dr
 		## Angle
 		if(self.type_flags['theta_left']):
-			features['theta_left'] = theta_left.transpose().flatten()
+			features['theta_left'] = theta_left.transpose().flatten() / self.max_th
 		## Angular velocity
 		if(self.type_flags['d_theta_left']):
 			d_theta_left = np.diff(theta_left, axis = 0);
 			d_theta_left = np.repeat(d_theta_left, d_reps, axis = 0)
-			features['d_theta_left'] = d_theta_left.transpose().flatten()
-		## Angular acceleration
-		if(self.type_flags['dd_theta_left']):
-			dd_theta_left = np.diff(np.diff(theta_left, axis = 0), axis = 0);
-			dd_theta_left = np.repeat(dd_theta_left, dd_reps, axis = 0)
-			features['dd_theta_left'] = dd_theta_left.transpose().flatten()
+			features['d_theta_left'] = d_theta_left.transpose().flatten() / self.max_dth
 
 		if(self.dominant_first):
 			features['types_order'] = self.find_type_order(left, right)
@@ -279,7 +258,6 @@ class FeatureExtractor():
 			right = right.reshape(self.dim_per_joint*(self.num_joints+1), -1).transpose()
 			left = left.reshape(self.dim_per_joint*(self.num_joints+1), -1).transpose()
 			d_reps = np.ones(right.shape[0]-2).tolist(); d_reps.append(2) # diff() reduced length by one. Using this we can fix it.
-			dd_reps = np.ones(right.shape[0]-3).tolist(); dd_reps.append(3) # This is similar to above but for double diff
 
 			## Right arm
 			# Change reference frame to shoulder
@@ -293,28 +271,18 @@ class FeatureExtractor():
 
 			## Position
 			if(self.type_flags['right']):
-				features['right'] = right.transpose().flatten()
+				features['right'] = right.transpose().flatten() / self.max_r
 			## Velocity
 			if(self.type_flags['d_right']):
-				features['d_right'] = d_right.transpose().flatten()
-			## Acceleration
-			if(self.type_flags['dd_right']):
-				dd_right = np.diff(np.diff(right, axis = 0), axis = 0);
-				dd_right = np.repeat(dd_right, dd_reps, axis = 0)
-				features['dd_right'] = dd_right.transpose().flatten()
+				features['d_right'] = d_right.transpose().flatten() / self.max_dr
 			## Angle
 			if(self.type_flags['theta_right']):
-				features['theta_right'] = theta_right.transpose().flatten()
+				features['theta_right'] = theta_right.transpose().flatten() / self.max_th
 			## Angular velocity
 			if(self.type_flags['d_theta_right']):
 				d_theta_right = np.diff(theta_right, axis = 0);
 				d_theta_right = np.repeat(d_theta_right, d_reps, axis = 0)
-				features['d_theta_right'] = d_theta_right.transpose().flatten()
-			## Angular acceleration
-			if(self.type_flags['dd_theta_right']):
-				dd_theta_right = np.diff(np.diff(theta_right, axis = 0), axis = 0);
-				dd_theta_right = np.repeat(dd_theta_right, dd_reps, axis = 0)
-				features['dd_theta_right'] = dd_theta_right.transpose().flatten()
+				features['d_theta_right'] = d_theta_right.transpose().flatten() / self.max_dth
 
 			## Left arm
 			# Change reference frame to shoulder
@@ -327,28 +295,18 @@ class FeatureExtractor():
 				theta_left[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 			## Position
 			if(self.type_flags['left']):
-				features['left'] = left.transpose().flatten()
+				features['left'] = left.transpose().flatten() / self.max_r
 			## Velocity
 			if(self.type_flags['d_left']):
-				features['d_left'] = d_left.transpose().flatten()
-			## Acceleration
-			if(self.type_flags['dd_left']):
-				dd_left = np.diff(np.diff(left, axis = 0), axis = 0);
-				dd_left = np.repeat(dd_left, dd_reps, axis = 0)
-				features['dd_left'] = dd_left.transpose().flatten()
+				features['d_left'] = d_left.transpose().flatten() / self.max_dr
 			## Angle
 			if(self.type_flags['theta_left']):
-				features['theta_left'] = theta_left.transpose().flatten()
+				features['theta_left'] = theta_left.transpose().flatten() / self.max_th
 			## Angular velocity
 			if(self.type_flags['d_theta_left']):
 				d_theta_left = np.diff(theta_left, axis = 0);
 				d_theta_left = np.repeat(d_theta_left, d_reps, axis = 0)
-				features['d_theta_left'] = d_theta_left.transpose().flatten()
-			## Angular acceleration
-			if(self.type_flags['dd_theta_left']):
-				dd_theta_left = np.diff(np.diff(theta_left, axis = 0), axis = 0);
-				dd_theta_left = np.repeat(dd_theta_left, dd_reps, axis = 0)
-				features['dd_theta_left'] = dd_theta_left.transpose().flatten()
+				features['d_theta_left'] = d_theta_left.transpose().flatten() / self.max_dth
 
 			if(self.dominant_first):
 				features['types_order'] = self.find_type_order(left, right)
