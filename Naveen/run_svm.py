@@ -8,7 +8,7 @@ from helpers import skelfile_cmp
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 
-skel_folder_path = '..\\Data\\L2'
+skel_folder_path = '..\\Data\\L3'
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
 
 fe = FeatureExtractor(json_param_path = 'param.json')

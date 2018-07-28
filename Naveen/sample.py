@@ -2,10 +2,12 @@ import numpy as np
 import json
 from helpers import *
 
-fpaths = glob(os.path.join('..', 'Data', 'L2', '*_skel.txt'))
-fpaths = [os.path.basename(fpath) for fpath in fpaths]
-fpaths = sorted(fpaths, cmp = skelfile_cmp)
-print fpaths
+print np.sqrt(6)
+
+# fpaths = glob(os.path.join('..', 'Data', 'L2', '*_skel.txt'))
+# fpaths = [os.path.basename(fpath) for fpath in fpaths]
+# fpaths = sorted(fpaths, cmp = skelfile_cmp)
+# print fpaths
 
 # a = [([1, 2], [2, 3]), ([1, 2], [2, 3])]
 # x, y = zip(*a)
