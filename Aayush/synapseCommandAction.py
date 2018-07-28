@@ -1,114 +1,156 @@
 import pyautogui as auto
 
 window_names = auto.getWindows().keys()
+auto.FAILSAFE = True
+auto.PAUSE = 2
 
 def moveToImage(image):
 	newLocationX, newLocationY = auto.center(auto.locateOnScreen(image))
 	auto.moveTo(newLocationX, newLocationY)
 
-status = {prev_action: "", number_of_panels: ""}
+status = {"prev_action": "", "number_of_panels": 1}
 
 def get_status():
 	print "Status\n------"
-	print "Previous action: " + status[prev_action] + "\n"
-	print "No. of panels: " + status[number_of_panels] + "\n"
+	print "Previous action: " + status["prev_action"] + "\n"
+	print "No. of panels: " + status["number_of_panels"] + "\n"
 
-commandSeq = ""
+actionList = [["Admin", "Quit", "Get Status"],
+	["Scroll", "Up", "Down"],
+	["Flip", "Horizontal", "Vertical"],
+	["Rotate", "Clockwise", "Counter-Clockwise"],
+	["Zoom", "In", "Out"],
+	["Switch Panel", "Left", "Right", "Up", "Down"],
+	["Pan", "Left", "Right", "Up", "Down"],
+	["Ruler", "Measure", "Delete"],
+	["Window", "Open", "Close"],
+	["Manual Contrast", "Increase", "Decrease"],
+	["Layout", "One-Panel", "Two-Panels", "Three-Panels", "Four-Panels"],
+	["Contrast Presets", "I", "II"]]
+
 while (True):
-	commandType = "-1"
-	commandID = "-1"
-	commandSeq = raw_input("Gesture Command -> ")
-	command = commandSeq[:commandSeq.find(" ")]
-	params = commandSeq[commandSeq.find(" ") + 1:]
-	if (command == "0_0"):
-		break
-	elif (command.find("_") != -1):
-		commandType = command[:command.find("_")]
-		commandID = command[command.find("_") + 1:]
+	commandID = -1
+	actionID = -1
+	sequence = raw_input("Gesture Command -> ")
+	commandAction = sequence[:sequence.find(" ")]
+	params = sequence[sequence.find(" ") + 1:]
+	if (commandAction.find("_") != -1):
+		try:
+			commandID = int(commandAction[:commandAction.find("_")])
+			actionID = int(commandAction[commandAction.find("_") + 1:])
+		except ValueError:
+			print "Unrecognized sequence of commands!\n"
+			continue
 	else:
-		print "Unrecognized command!\n"
+		print "Invalid command entered!\n"
 		continue
-	if (commandType == "1"):
+	nameType = actionList[commandID][0]
+	action = actionList[commandID][actionID]
+	if (nameType == "Admin"):
+		if (action == "Quit"):
+			break
+		elif (action == "Get Status"):
+			get_status()
+	elif (nameType == "Scroll"):
 		scrollAmount = 10
-		if (commandID == "1"):
+		if (action == "Up"):
 			auto.scroll(scrollAmount)
-		elif (commandID == "2"):
+		elif (action == "Down"):
 			auto.scroll(-1 * scrollAmount)
 		else:
 			auto.click()
-	elif (commandType == "2" or commandType == "3"):
-		if (commandType != "0"):
+	elif (nameType == "Flip" or nameType == "Rotate"):
+		if (actionID != 0):
 			auto.click(button='right')
 			moveToImage('Images/scale-rotate-flip.png')
 			moveToImage('Images/flip-horizontal.png')
-			if (commandType == "2" and commandID == "2"):
+			if (nameType == "Flip" and action == "Vertical"):
 				moveToImage('Images/flip-vertical.png')
-			elif (commandType == "3" and commandID == "3"):
+			elif (nameType == "Rotate" and action == "Clockwise"):
 				moveToImage('Images/rotate-clockwise.png')
-			elif (commandType == "3" and commandID == "4"):
+			elif (nameType == "Zoom" and action == "Counter-Clockwise"):
 				moveToImage('Images/rotate-anticlockwise.png')
 		auto.click()
-	elif (commandType == "4"):
+	elif (nameType == "Zoom"):
 		scrollAmount = 10
-		if (commandID == "0"):
+		if (actionID == 0):
 			oldLocationX, oldLocationY = auto.position()
 			auto.click(button='right')
 			moveToImage('Images/zoom.png')
 			auto.click()
 			auto.moveTo(oldLocationX, oldLocationY)
-		elif (commandID == "1"):
+		elif (action == "In"):
 			auto.moveDown()
 			auto.scroll(scrollAmount)
-		elif (commandID == "2"):
+		elif (action == "Out"):
 			auto.moveDown()
 			auto.scroll(-1 * scrollAmount)
-	elif (commandType == "5"):
+	elif (nameType == "Switch"):
 		auto.click(button='right')
 		auto.click()
-	elif (commandType == "6"):
+	elif (nameType == "Pan"):
 		oldLocationX, oldLocationY = auto.position()
 		auto.click(button='right')
 		moveToImage('Images/pan.png')
 		auto.click()
 		auto.moveTo(oldLocationX, oldLocationY)
 		dragAmount = 100
-		if (commandID == "1"):
+		if (action == "Left"):
 			auto.dragTo(dragAmount, 0, button='left')
-		elif (commandID == "2"):
+		elif (action == "Right"):
 			auto.dragTo(-1 * dragAmount, 0, button='left')
-		elif (commandID == "3"):
+		elif (action == "Up"):
 			auto.dragTo(0, dragAmount, button='left')
-		elif (commandID == "4"):
+		elif (action == "Down"):
 			auto.dragTo(0, -1 * dragAmount, button='left')
-	elif (commandType == "7"):
+	elif (nameType == "Ruler"):
 		oldLocationX, oldLocationY = auto.position()
 		auto.click(button='right')
 		moveToImage('Images/ruler.png')
 		auto.click()
 		auto.moveTo(oldLocationX, oldLocationY)
 		newLocationX, newLocationY = oldLocationX, oldLocationY
-		if (commandID == "1"):
+		if (actionID == "Measure"):
 			auto.dragTo(newLocationX, newLocationY, button='left')
-		elif (commandID == "2"):
+		elif (actionID == "Delete"):
 			auto.click(button='right')
 			moveToImage('Images/ruler-delete.png')
 			auto.click()
-	elif (commandType == "8"):
-		if (commandID == "1"):
+	elif (nameType == "Window"):
+		if (actionID == "Open"):
 			moveToImage('Images/series-thumbnail.png')
 			auto.click()
-		elif (commandID == "2"):
+		elif (actionID == "Close"):
 			moveToImage('Images/series-thumbnail-close.png')
 			auto.click()
-	elif (commandID == "21" or commandID == "22"):
-		# manual contrast increase/decrease
-		auto.click(button='right')
-		auto.click()
-	elif (commandID == "23" or commandID == "24" or commandID == "25" or commandID == "26"):
-		# layout with x panels
-		auto.click(button='right')
-		auto.click()
-	elif (commandID == "27" or commandID == "28"):
-		# contrast presets std 1/2
-		auto.click(button='right')
-		auto.click()
+	elif (nameType == "Manual Contrast"):
+		if (actionID == "Increase"):
+			moveToImage('Images/series-thumbnail.png')
+			auto.click()
+		elif (actionID == "Decrease"):
+			moveToImage('Images/series-thumbnail-close.png')
+			auto.click()
+	elif (nameType == "Layout"):
+		if (actionID == "One-Panel"):
+			moveToImage('Images/series-thumbnail.png')
+			auto.click()
+		elif (actionID == "Two-Panels"):
+			moveToImage('Images/series-thumbnail-close.png')
+			auto.click()
+		elif (actionID == "Three-Panels"):
+			moveToImage('Images/series-thumbnail-close.png')
+			auto.click()
+		elif (actionID == "Four-Panels"):
+			moveToImage('Images/series-thumbnail-close.png')
+			auto.click()
+	elif (nameType == "Contrast Presets"):
+		if (actionID == "I"):
+			moveToImage('Images/series-thumbnail.png')
+			auto.click()
+		elif (actionID == "II"):
+			moveToImage('Images/series-thumbnail-close.png')
+			auto.click()
+	auto.moveTo(self.width / 2, self.height / 2)
+	status["prev_action"] = nameType + " " + action
+
+
