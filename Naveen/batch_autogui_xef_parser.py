@@ -24,7 +24,7 @@ from helpers import *
 #####################
 
 # Initialization
-xef_folder_path = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\XEF_Files\\*'
+xef_folder_path = 'G:\\AHRQ\\Study_IV\\XEF_Files\\*'
 in_format_flag = True # True since the filename is in the correct format
 enable_repeat = False # If True, all xef files will be executed, Otherwise, only the files that werent read previously or the files that were incompletely read
 xef_rgb_factor = 3.2 # Max is 3.8

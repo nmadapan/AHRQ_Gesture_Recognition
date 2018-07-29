@@ -1,0 +1,6 @@
+2018-07-29 17:33:10.858000
+
+6_0_S1_L2_Pan_X.xef :  [num_images: 1660, video_time: 74.9420000153, FPS: 22]
+10_3_S2_L3_X_ThreePanels.xef :  [num_images: 1006, video_time: 51.5740001297, FPS: 19]
+10_4_S2_L3_X_FourPanels.xef :  [num_images: 1319, video_time: 64.655000061, FPS: 20]
+11_0_S2_L3_ContrastPresets_X.xef : 

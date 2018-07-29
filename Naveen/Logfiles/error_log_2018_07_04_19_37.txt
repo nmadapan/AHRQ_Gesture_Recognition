@@ -1,4 +1,0 @@
-2018-07-04 19:37:47.005000
-
-11_2_S2_L2_X_StdTwo.xef :  [num_images: 1030, video_time: 38.7279999447, FPS: 26]
-5_3_S2_L2_X_Up.xef :  [num_images: 1253, video_time: 44.0339996548, FPS: 28]
