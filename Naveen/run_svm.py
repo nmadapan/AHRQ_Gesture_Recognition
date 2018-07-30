@@ -8,11 +8,13 @@ from helpers import skelfile_cmp
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 
-skel_folder_path = '..\\Data\\L3'
+skel_folder_path = 'D:\\AHRQ\\Study_IV\\Data\\L6'
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
 
 fe = FeatureExtractor(json_param_path = 'param.json')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
+
+## Appending finger lengths
 
 # Randomize data input and output
 temp = zip(out['data_input'], out['data_output'])
@@ -38,3 +40,8 @@ plt.grid(True)
 
 clf, _, _ = fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60)
 
+dirname = os.path.dirname(skel_folder_path)
+pickle_name  = os.path.basename(skel_folder_path) + '_obj.pickle'
+
+with open(os.path.join(dirname, pickle_name), 'wb') as fp:
+	pickle.dump(fe, fp)
