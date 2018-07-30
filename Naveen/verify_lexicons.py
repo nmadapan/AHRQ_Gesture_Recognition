@@ -14,7 +14,7 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lex_folder = '..\\Data\\L3' # Where to write the files
+lex_folder = '..\\Data\\L6' # Where to write the files
 fps = 30
 default_width, default_height = 1920, 1080
 

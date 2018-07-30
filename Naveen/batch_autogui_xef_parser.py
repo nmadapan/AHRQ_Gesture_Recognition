@@ -24,7 +24,7 @@ from helpers import *
 #####################
 
 # Initialization
-xef_folder_path = 'G:\\AHRQ\\Study_IV\\XEF_Files\\*'
+xef_folder_paths = ['G:\\AHRQ\\Study_IV\\XEF_Files\\*', 'E:\\AHRQ\\XEF_Files\\*', 'H:\\AHRQ\\Study_IV\\XEF_Files\\*']
 in_format_flag = True # True since the filename is in the correct format
 enable_repeat = False # If True, all xef files will be executed, Otherwise, only the files that werent read previously or the files that were incompletely read
 xef_rgb_factor = 3.2 # Max is 3.8
@@ -49,11 +49,15 @@ file_active = False
 # # Check consistencies in the xef folder path
 if(in_format_flag):
 	print 'Checking consistencies: '
-	flag, error_strs = check_consis(xef_folder_path)
-	if(not flag): sys.exit(error_strs)
+	for xef_folder_path in xef_folder_paths:
+		flag, error_strs = check_consis(xef_folder_path)
+		if(not flag): sys.exit(error_strs)
 
 ## Get all xef files paths
-xef_files_paths = glob(os.path.join(xef_folder_path, '*.xef'))
+xef_files_paths = []
+for xef_folder_path in xef_folder_paths:
+	xef_files_paths+=glob(os.path.join(xef_folder_path, '*.xef'))
+
 # Remove the repititions
 if(not enable_repeat):
 	xef_files_paths = file_filter(xef_files_paths, base_write_folder, in_format_flag, xef_rgb_factor)
