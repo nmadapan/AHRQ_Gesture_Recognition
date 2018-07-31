@@ -28,7 +28,7 @@ xef_folder_paths = ['G:\\AHRQ\\Study_IV\\XEF_Files\\*', 'E:\\AHRQ\\XEF_Files\\*'
 in_format_flag = True # True since the filename is in the correct format
 enable_repeat = False # If True, all xef files will be executed, Otherwise, only the files that werent read previously or the files that were incompletely read
 xef_rgb_factor = 3.2 # Max is 3.8
-print_fnames = False 
+print_fnames = Falser 
 
 error_log_folder = '.\\Logfiles'
 error_log_filename = os.path.join(error_log_folder, 'error_log_'+datetime.now().strftime("%Y_%m_%d_%H_%M")+'.txt')

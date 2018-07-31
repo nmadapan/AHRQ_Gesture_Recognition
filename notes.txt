@@ -1,3 +1,6 @@
 Kinect Inversion:
 	* Body skeleton's LEFT and RIGHT are ACTUAL person's LEFT and RIGHT
 	* RGB/Depth video has latera inversion. Meaning, LEFT of actual person --> Right of the person in the video. 
+OpenPose Inversion:
+	* Doesn't do any inversion
+	* Left of person in video -> left for openpose

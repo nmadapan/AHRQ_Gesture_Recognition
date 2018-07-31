@@ -13,6 +13,10 @@ annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
 
 fe = FeatureExtractor(json_param_path = 'param.json')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
+print out['data_input'].shape
+print out['data_output'].shape
+
+sys.exit(0)
 
 # Randomize data input and output
 temp = zip(out['data_input'], out['data_output'])

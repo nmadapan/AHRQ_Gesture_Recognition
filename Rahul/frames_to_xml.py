@@ -1,3 +1,4 @@
+
 """
 This files run OpenPoseDemo.exe; so this file should be kept at -
 'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\openpose\Open_Pose_Demo\'
@@ -11,6 +12,8 @@ import glob
 base_path = "F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data_OpenPose"
 frames_folder="Frames"
 xml_folder='xml_files'
+
+open_pose_basepath='F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\openpose\\Open_Pose_Demo'
 
 frames_path=os.path.join(base_path,frames_folder)
 xml_fold_path=os.path.join(base_path,xml_folder)
@@ -41,8 +44,10 @@ for lexicon in lexicons:
 # openpose accepts the path to the directory of images not the path of every image  
 # keypoint_scale = 3 output between [0,1]; (0,0) upper left corner and (1,1) bottom right corner
 # keypoint_scale = 4 output between [-1,1]; (-1,-1) upper left corner and (1,1) bottom right corner
+		os.chdir(open_pose_basepath)
+
 		system_str = exe_addr + ' --image_dir '+ frame_folder + ' --write_keypoint_format ' + 'xml ' + \
 					 ' --write_keypoint ' + write_gesture_folder + ' --hand ' + '--keypoint_scale '+'4 '+'--no_display'
 
 		os.system(system_str)
-		# sys.path.insert(0,system_str)
+		
