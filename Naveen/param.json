@@ -1,4 +1,8 @@
 {
+	"max_r": 0.75,
+	"max_dr": 0.03,
+	"max_th": 3.14,
+	"max_dth": 3.14,
 	"all_flag": false,
 	"feature_types": ["left", "right"],
 	"num_joints": 1,

@@ -173,6 +173,8 @@ class Parser(object):
 
 		## Closing Kinect, RGB, Depth, and annotation file streams
 		self.kr.sensor.close()
+		self.skel_pts_file_id.flush()
+		self.skel_pts_file_id.close()
 		self.color_pts_file_id.flush()
 		self.color_pts_file_id.close()
 		self.depth_pts_file_id.flush()

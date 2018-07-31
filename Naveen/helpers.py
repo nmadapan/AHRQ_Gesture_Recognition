@@ -107,12 +107,15 @@ def get_file_size(filepath):
 		sys.exit('file: '+filepath+' does NOT exist')
 	return float('%.1f'%(os.stat(filepath).st_size/1024.0))
 
-def file_filter(xef_files_paths, base_write_folder, xef_rgb_factor):
+def file_filter(xef_files_paths, base_write_folder, in_format_flag, xef_rgb_factor):
 	final_file_paths = []
 	# Include only xef files that were not completely read before
 	for xef_file_path in xef_files_paths:
 		xef_filename = os.path.basename(xef_file_path)[:-4]
-		rgb_path = os.path.join(base_write_folder, xef_filename.split('_')[3], xef_filename+'_rgb.avi')
+		if(in_format_flag):
+			rgb_path = os.path.join(base_write_folder, xef_filename.split('_')[3], xef_filename+'_rgb.avi')
+		else:
+			rgb_path = os.path.join(base_write_folder, xef_filename+'_rgb.avi')
 		pred_rgb_size = 1000.0 * xef_rgb_factor * get_file_size(xef_file_path)/1024.0/1024.0
 		# 5.0 * xef_filesize_in_gb --> this gives no. of seconds in the rgb video. Each sec is an MB approx.
 		# Multiply with 1000 to convert into KB. # The value 3.8 is empirically found.

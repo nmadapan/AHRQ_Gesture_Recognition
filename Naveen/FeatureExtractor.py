@@ -37,10 +37,10 @@ from helpers import *
 class FeatureExtractor():
 	def __init__(self, json_param_path = 'param.json'):
 		## Private variables
-		self.__available_types = ['right', 'd_right', 'dd_right', 'theta_right', 'd_theta_right', 'dd_theta_right',\
-							 'left', 'd_left', 'dd_left', 'theta_left', 'd_theta_left', 'dd_theta_left']
-		self.__num_available_types = len(self.__available_types)
-		self.__id_to_available_type = {idx: feat_type for idx, feat_type in zip(range(self.__num_available_types), self.__available_types)}
+		self.available_types = ['right', 'd_right', 'theta_right', 'd_theta_right',\
+							 	'left', 'd_left', 'theta_left', 'd_theta_left']
+		self.num_available_types = len(self.available_types)
+		self.id_to_available_type = {idx: feat_type for idx, feat_type in zip(range(self.num_available_types), self.available_types)}
 
 		# Initialize variables from json param path
 		param_dict = json_to_dict(json_param_path)
@@ -48,8 +48,13 @@ class FeatureExtractor():
 			setattr(self, key, value)
 
 		## Declaring instance variables
-		self.type_flags = {feat_type: False for feat_type in self.__available_types}
+		self.type_flags = {feat_type: False for feat_type in self.available_types}
 		self.num_feature_types = None
+
+		## Other variables
+		self.skel_file_order = None
+		self.dominant_type = None
+		self.svm_clf = None
 
 		# num_joints can either be 1 or 2
 		if(not (self.num_joints == 1 or self.num_joints == 2)):
@@ -58,20 +63,20 @@ class FeatureExtractor():
 		if(not (self.dim_per_joint == 2 or self.dim_per_joint == 3)):
 			sys.exit('Error: Dimension per joint should be either 2 or 3\n')
 		# If self.feature_types exists, the feature types should exist in the availabe types
-		if((not self.all_flag) and (not set(self.feature_types).issubset(set(self.__available_types)))):
-			miss = list(set(self.feature_types).difference(set(self.feature_types).intersection(set(self.__available_types))))
+		if((not self.all_flag) and (not set(self.feature_types).issubset(set(self.available_types)))):
+			miss = list(set(self.feature_types).difference(set(self.feature_types).intersection(set(self.available_types))))
 			sys.exit('Error: Some feature types: \'' + ', '.join(miss) + '\' do not exist\n')
 
 		# Updating the feature type flags
 		if(not self.all_flag):
 			self.num_feature_types = len(self.feature_types)
 			for feat_type in self.feature_types:
-				if feat_type in self.__available_types:
+				if feat_type in self.available_types:
 					self.type_flags[feat_type] = True
 		else:
-			self.feature_types = deepcopy(self.__available_types)
+			self.feature_types = deepcopy(self.available_types)
 			self.num_feature_types = len(self.feature_types)
-			self.type_flags = {feat_type: True for feat_type in self.__available_types}
+			self.type_flags = {feat_type: True for feat_type in self.available_types}
 
 	def find_type_order(self, left, right):
 		# dominant_first_thresh = 0.08 in meters. It is found by observation.
@@ -79,8 +84,8 @@ class FeatureExtractor():
 		# If difference is less than the threshold, right comes first
 		left_std = np.max(np.std(left, axis = 0))
 		right_std = np.max(np.std(right, axis = 0))
-		assert self.__num_available_types % 2 == 0, 'Error! Total no. of types should be even.'
-		sz = int(self.__num_available_types / 2) # Assumes that actual types ordered as right followed by left
+		assert self.num_available_types % 2 == 0, 'Error! Total no. of types should be even.'
+		sz = int(self.num_available_types / 2) # Assumes that actual types ordered as right followed by left
 		right_order = range(0, sz)
 		left_order = range(sz, 2*sz)
 		if((right_std - left_std) >= self.dominant_first_thresh): return right_order+left_order
@@ -161,7 +166,7 @@ class FeatureExtractor():
 		#	features: dictionary. keys are feature types, value is flattened numpy array or None
 		########################
 
-		features = {feat_type: None for feat_type in self.__available_types}
+		features = {feat_type: None for feat_type in self.available_types}
 
 		left, right = zip(*colproc_skel_data)
 		left, right = np.array(list(left)), np.array(list(right))
@@ -169,7 +174,6 @@ class FeatureExtractor():
 		right = right.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
 		left = left.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
 		d_reps = np.ones(right.shape[0]-2).tolist(); d_reps.append(2) # diff() reduced length by one. Using this we can fix it.
-		dd_reps = np.ones(right.shape[0]-3).tolist(); dd_reps.append(3) # This is similar to above but for double diff
 
 		## Right hand
 		# Precompute position, velocity and angles
@@ -181,28 +185,18 @@ class FeatureExtractor():
 
 		## Position
 		if(self.type_flags['right']):
-			features['right'] = right.transpose().flatten()
+			features['right'] = right.transpose().flatten() / self.max_r
 		## Velocity
 		if(self.type_flags['d_right']):
-			features['d_right'] = d_right.transpose().flatten()
-		## Acceleration
-		if(self.type_flags['dd_right']):
-			dd_right = np.diff(np.diff(right, axis = 0), axis = 0);
-			dd_right = np.repeat(dd_right, dd_reps, axis = 0)
-			features['dd_right'] = dd_right.transpose().flatten()
+			features['d_right'] = d_right.transpose().flatten() / self.max_dr
 		## Angle
 		if(self.type_flags['theta_right']):
-			features['theta_right'] = theta_right.transpose().flatten()
+			features['theta_right'] = theta_right.transpose().flatten() / self.max_th
 		## Angular velocity
 		if(self.type_flags['d_theta_right']):
 			d_theta_right = np.diff(theta_right, axis = 0);
 			d_theta_right = np.repeat(d_theta_right, d_reps, axis = 0)
-			features['d_theta_right'] = d_theta_right.transpose().flatten()
-		## Angular acceleration
-		if(self.type_flags['dd_theta_right']):
-			dd_theta_right = np.diff(np.diff(theta_right, axis = 0), axis = 0);
-			dd_theta_right = np.repeat(dd_theta_right, dd_reps, axis = 0)
-			features['dd_theta_right'] = dd_theta_right.transpose().flatten()
+			features['d_theta_right'] = d_theta_right.transpose().flatten() / self.max_dth
 
 		## Left arm
 		# Precompute position, velocity and angles
@@ -213,36 +207,25 @@ class FeatureExtractor():
 			theta_left[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 		## Position
 		if(self.type_flags['left']):
-			features['left'] = left.transpose().flatten()
+			features['left'] = left.transpose().flatten() / self.max_r
 		## Velocity
 		if(self.type_flags['d_left']):
-			features['d_left'] = d_left.transpose().flatten()
-		## Acceleration
-		if(self.type_flags['dd_left']):
-			dd_left = np.diff(np.diff(left, axis = 0), axis = 0);
-			dd_left = np.repeat(dd_left, dd_reps, axis = 0)
-			features['dd_left'] = dd_left.transpose().flatten()
+			features['d_left'] = d_left.transpose().flatten() / self.max_dr
 		## Angle
 		if(self.type_flags['theta_left']):
-			features['theta_left'] = theta_left.transpose().flatten()
+			features['theta_left'] = theta_left.transpose().flatten() / self.max_th
 		## Angular velocity
 		if(self.type_flags['d_theta_left']):
 			d_theta_left = np.diff(theta_left, axis = 0);
 			d_theta_left = np.repeat(d_theta_left, d_reps, axis = 0)
-			features['d_theta_left'] = d_theta_left.transpose().flatten()
-		## Angular acceleration
-		if(self.type_flags['dd_theta_left']):
-			dd_theta_left = np.diff(np.diff(theta_left, axis = 0), axis = 0);
-			dd_theta_left = np.repeat(dd_theta_left, dd_reps, axis = 0)
-			features['dd_theta_left'] = dd_theta_left.transpose().flatten()
+			features['d_theta_left'] = d_theta_left.transpose().flatten() / self.max_dth
 
 		if(self.dominant_first):
 			features['types_order'] = self.find_type_order(left, right)
 		else:
-			features['types_order'] = list(range(self.__num_available_types))
+			features['types_order'] = list(range(self.num_available_types))
 
 		return features
-
 
 	def generate_features(self, skel_filepath, annot_filepath):
 		########################
@@ -266,7 +249,7 @@ class FeatureExtractor():
 
 		for inst_id in range(len(xf['right'])):
 			## Initialize the feature instance. Also, put a label
-			features = {feat_type: None for feat_type in self.__available_types}
+			features = {feat_type: None for feat_type in self.available_types}
 			features['label'] = '_'.join(os.path.basename(skel_filepath).split('_')[:2])
 
 			## Preprocess:
@@ -275,7 +258,6 @@ class FeatureExtractor():
 			right = right.reshape(self.dim_per_joint*(self.num_joints+1), -1).transpose()
 			left = left.reshape(self.dim_per_joint*(self.num_joints+1), -1).transpose()
 			d_reps = np.ones(right.shape[0]-2).tolist(); d_reps.append(2) # diff() reduced length by one. Using this we can fix it.
-			dd_reps = np.ones(right.shape[0]-3).tolist(); dd_reps.append(3) # This is similar to above but for double diff
 
 			## Right arm
 			# Change reference frame to shoulder
@@ -289,28 +271,18 @@ class FeatureExtractor():
 
 			## Position
 			if(self.type_flags['right']):
-				features['right'] = right.transpose().flatten()
+				features['right'] = right.transpose().flatten() / self.max_r
 			## Velocity
 			if(self.type_flags['d_right']):
-				features['d_right'] = d_right.transpose().flatten()
-			## Acceleration
-			if(self.type_flags['dd_right']):
-				dd_right = np.diff(np.diff(right, axis = 0), axis = 0);
-				dd_right = np.repeat(dd_right, dd_reps, axis = 0)
-				features['dd_right'] = dd_right.transpose().flatten()
+				features['d_right'] = d_right.transpose().flatten() / self.max_dr
 			## Angle
 			if(self.type_flags['theta_right']):
-				features['theta_right'] = theta_right.transpose().flatten()
+				features['theta_right'] = theta_right.transpose().flatten() / self.max_th
 			## Angular velocity
 			if(self.type_flags['d_theta_right']):
 				d_theta_right = np.diff(theta_right, axis = 0);
 				d_theta_right = np.repeat(d_theta_right, d_reps, axis = 0)
-				features['d_theta_right'] = d_theta_right.transpose().flatten()
-			## Angular acceleration
-			if(self.type_flags['dd_theta_right']):
-				dd_theta_right = np.diff(np.diff(theta_right, axis = 0), axis = 0);
-				dd_theta_right = np.repeat(dd_theta_right, dd_reps, axis = 0)
-				features['dd_theta_right'] = dd_theta_right.transpose().flatten()
+				features['d_theta_right'] = d_theta_right.transpose().flatten() / self.max_dth
 
 			## Left arm
 			# Change reference frame to shoulder
@@ -323,33 +295,23 @@ class FeatureExtractor():
 				theta_left[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 			## Position
 			if(self.type_flags['left']):
-				features['left'] = left.transpose().flatten()
+				features['left'] = left.transpose().flatten() / self.max_r
 			## Velocity
 			if(self.type_flags['d_left']):
-				features['d_left'] = d_left.transpose().flatten()
-			## Acceleration
-			if(self.type_flags['dd_left']):
-				dd_left = np.diff(np.diff(left, axis = 0), axis = 0);
-				dd_left = np.repeat(dd_left, dd_reps, axis = 0)
-				features['dd_left'] = dd_left.transpose().flatten()
+				features['d_left'] = d_left.transpose().flatten() / self.max_dr
 			## Angle
 			if(self.type_flags['theta_left']):
-				features['theta_left'] = theta_left.transpose().flatten()
+				features['theta_left'] = theta_left.transpose().flatten() / self.max_th
 			## Angular velocity
 			if(self.type_flags['d_theta_left']):
 				d_theta_left = np.diff(theta_left, axis = 0);
 				d_theta_left = np.repeat(d_theta_left, d_reps, axis = 0)
-				features['d_theta_left'] = d_theta_left.transpose().flatten()
-			## Angular acceleration
-			if(self.type_flags['dd_theta_left']):
-				dd_theta_left = np.diff(np.diff(theta_left, axis = 0), axis = 0);
-				dd_theta_left = np.repeat(dd_theta_left, dd_reps, axis = 0)
-				features['dd_theta_left'] = dd_theta_left.transpose().flatten()
+				features['d_theta_left'] = d_theta_left.transpose().flatten() / self.max_dth
 
 			if(self.dominant_first):
 				features['types_order'] = self.find_type_order(left, right)
 			else:
-				features['types_order'] = list(range(self.__num_available_types))
+				features['types_order'] = list(range(self.num_available_types))
 
 			result.append(features)
 
@@ -384,9 +346,10 @@ class FeatureExtractor():
 			sys.exit('No skeleton files in ' + skel_folder_path + '\n')
 		skel_filepaths = sorted(skel_filepaths, cmp=skelfile_cmp)
 
-		skel_fileorder_path = os.path.join(os.path.dirname(skel_folder_path), os.path.basename(skel_folder_path)+'_skel_order.txt')
-		with open(skel_fileorder_path, 'w') as fp:
-			for fpath in skel_filepaths: fp.write(os.path.basename(fpath)+ '\n')
+		self.skel_file_order = map(os.path.basename, skel_filepaths)
+		# skel_fileorder_path = os.path.join(os.path.dirname(skel_folder_path), os.path.basename(skel_folder_path)+'_skel_order.txt')
+		# with open(skel_fileorder_path, 'w') as fp:
+		# 	for fpath in skel_filepaths: fp.write(os.path.basename(fpath)+ '\n')
 
 		combos = []
 		for skel_filepath in skel_filepaths:
@@ -408,9 +371,9 @@ class FeatureExtractor():
 	def generate_features_realtime(self, colproc_skel_data):
 		feature = self.process_data_realtime(colproc_skel_data)
 		inst = []
-		# for feat_id, feat_type in self.__id_to_available_type.items():
+		# for feat_id, feat_type in self.id_to_available_type.items():
 		for feat_id in feature['types_order']:
-			feat_type = self.__id_to_available_type[feat_id]
+			feat_type = self.id_to_available_type[feat_id]
 			if(feature[feat_type] is not None):
 				if(self.equate_dim):
 					# Interpolate or Extrapolate to fixed dimension
@@ -457,6 +420,7 @@ class FeatureExtractor():
 
 		## Obtain all features
 		features = self.batch_generate_features(skel_folder_path, annot_folder_path)
+		self.dominant_type = [int(feature['types_order'][0]==0) for feature in features] # 1 for right hand, 0 otherwise
 
 		## Initialize the return variable
 		out = {'data_input': [], 'data_output': []}
@@ -490,9 +454,9 @@ class FeatureExtractor():
 
 		for feature in features:
 			inst = []
-			# for feat_id, feat_type in self.__id_to_available_type.items():
+			# for feat_id, feat_type in self.id_to_available_type.items():
 			for feat_id in feature['types_order']:
-				feat_type = self.__id_to_available_type[feat_id]
+				feat_type = self.id_to_available_type[feat_id]
 				if(feature[feat_type] is not None):
 					if(self.equate_dim):
 						# Interpolate or Extrapolate to fixed dimension
