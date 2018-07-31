@@ -1,14 +1,60 @@
+import time
 import pyautogui as auto
+"""import pyscreenshot as ImageGrab
+from PIL import Image
+from PIL import ImageChops"""
+from PIL import ImageGrab
+from PIL import ImageChops
 
 window_names = auto.getWindows().keys()
+
 auto.FAILSAFE = True
 auto.PAUSE = 2
 
+status = {"prev_action": "", "number_of_panels": 1}
+
+def rightClick():
+	#(locationX, locationY) = auto.position()
+	#(width, height) = auto.size()
+	beforeRight = ImageGrab.grab(bbox=None)
+	auto.click(button='right')
+	afterRight = ImageGrab.grab(bbox=None)
+	(x1, y1, x2, y2) = ImageChops.difference(beforeRight, afterRight).getbbox()
+	return (x1, y1, x2, y2, (x1 + x2) / 2.0, y1 + (0.076 * boxHeight), y2 - y1)
+	"""
+	moveToX = (x1 + x2) / 2.0
+	moveToY = y1 + (0.076 * boxHeight)
+	boxHeight = y2 - y1
+	if (command == "Zoom"):
+		moveToY += 0.036 * boxHeight
+	elif (command == "Pan"):
+		moveToY += (0.036 * 2) * boxHeight
+	elif (command == "Ruler"):
+		moveToY += (0.036 * 3) * boxHeight
+	elif (command == "Flip" or command == "Rotate"):
+		moveToY += ((0.036 * 9) + 0.010) * boxHeight
+		auto.moveTo(moveToX, moveToY)
+		time.sleep(0.5)
+		scaleRotateFlip = ImageGrab.grab(bbox=None)
+		(x1, y1, x2, y2) = ImageChops.difference(afterRight, scaleRotateFlip).getbbox()
+		moveToX = (x1 + x2) / 2.0
+		moveToY = y1 + ((25 / 268) * boxHeight)
+		boxHeight = y2 - y1
+		if (command == "Flip" and action == "Vertical"):
+			moveToY += (36 / 268) * boxHeight
+		elif (command == "Rotate" and action == "Clockwise"):
+			moveToY += (36 * 2 / 268) * boxHeight
+		elif (command == "Rotate" and action == "Counter-Clockwise"):
+			moveToY += (36 * 3 / 268) * boxHeight
+		auto.moveTo(moveToX, moveToY)
+	auto.click()
+	"""
+
+"""
 def moveToImage(image):
 	newLocationX, newLocationY = auto.center(auto.locateOnScreen(image))
 	auto.moveTo(newLocationX, newLocationY)
-
-status = {"prev_action": "", "number_of_panels": 1}
+"""
 
 def get_status():
 	print "Status\n------"
@@ -29,11 +75,12 @@ actionList = [["Admin", "Quit", "Get Status"],
 	["Contrast Presets", "I", "II"]]
 
 while (True):
-	commandID = -1
-	actionID = -1
+	(commandID, actionID) = (-1, -1)
 	sequence = raw_input("Gesture Command -> ")
-	commandAction = sequence[:sequence.find(" ")]
-	params = sequence[sequence.find(" ") + 1:]
+	(commandAction, params) = (sequence, "")
+	if (sequence.find(" ") != -1):
+		commandAction = sequence[:sequence.find(" ")]
+		params = sequence[sequence.find(" ") + 1:]
 	if (commandAction.find("_") != -1):
 		try:
 			commandID = int(commandAction[:commandAction.find("_")])
@@ -44,52 +91,91 @@ while (True):
 	else:
 		print "Invalid command entered!\n"
 		continue
-	nameType = actionList[commandID][0]
+	command = actionList[commandID][0]
 	action = actionList[commandID][actionID]
-	if (nameType == "Admin"):
+	if (command == "Admin"):
 		if (action == "Quit"):
 			break
 		elif (action == "Get Status"):
 			get_status()
-	elif (nameType == "Scroll"):
+	elif (command == "Scroll"):
 		scrollAmount = 10
+		if (params != ""):
+			scrollAmount = int(params)
 		if (action == "Up"):
 			auto.scroll(scrollAmount)
 		elif (action == "Down"):
 			auto.scroll(-1 * scrollAmount)
 		else:
 			auto.click()
-	elif (nameType == "Flip" or nameType == "Rotate"):
+	elif (command == "Flip" or command == "Rotate"):
 		if (actionID != 0):
-			auto.click(button='right')
-			moveToImage('Images/scale-rotate-flip.png')
-			moveToImage('Images/flip-horizontal.png')
-			if (nameType == "Flip" and action == "Vertical"):
-				moveToImage('Images/flip-vertical.png')
-			elif (nameType == "Rotate" and action == "Clockwise"):
-				moveToImage('Images/rotate-clockwise.png')
-			elif (nameType == "Zoom" and action == "Counter-Clockwise"):
-				moveToImage('Images/rotate-anticlockwise.png')
+			(x1, y1, x2, y2, moveToX, moveToY, boxHeight) = rightClick()
+			moveToY += ((0.036 * 9) + 0.010) * boxHeight
+			auto.moveTo(moveToX, moveToY)
+			time.sleep(0.5)
+			scaleRotateFlip = ImageGrab.grab(bbox=None)
+			(x1, y1, x2, y2) = ImageChops.difference(afterRight, scaleRotateFlip).getbbox()
+			moveToX = (x1 + x2) / 2.0
+			moveToY = y1 + ((25 / 268) * boxHeight)
+			boxHeight = y2 - y1
+			if (command == "Flip" and action == "Vertical"):
+				moveToY += (36 / 268) * boxHeight
+			elif (command == "Rotate" and action == "Clockwise"):
+				moveToY += (36 * 2 / 268) * boxHeight
+			elif (command == "Rotate" and action == "Counter-Clockwise"):
+				moveToY += (36 * 3 / 268) * boxHeight
+			auto.moveTo(moveToX, moveToY)
+			"""
+				if (command == "Flip" and action == "Horizontal"):
+					rightClick("Scale_rotate_flip", command, action)
+				elif (command == "Flip" and action == "Vertical"):
+					rightClick("Scale_rotate_flip", command, action)
+					#moveToImage('Images/flip-vertical.png')
+				elif (command == "Rotate" and action == "Clockwise"):
+					rightClick("Scale_rotate_flip", command, action)
+					#moveToImage('Images/rotate-clockwise.png')
+				elif (command == "Zoom" and action == "Counter-Clockwise"):
+					rightClick("Scale_rotate_flip", command, action)
+					#moveToImage('Images/rotate-anticlockwise.png')
+			"""
 		auto.click()
-	elif (nameType == "Zoom"):
-		scrollAmount = 10
+	elif (command == "Zoom"):
+		(x1, y1, x2, y2, moveToX, moveToY, boxHeight) = rightClick()
+		moveToY += 0.036 * boxHeight
+		auto.moveTo(moveToX, moveToY)
+		auto.click()
 		if (actionID == 0):
-			oldLocationX, oldLocationY = auto.position()
-			auto.click(button='right')
-			moveToImage('Images/zoom.png')
-			auto.click()
-			auto.moveTo(oldLocationX, oldLocationY)
-		elif (action == "In"):
-			auto.moveDown()
-			auto.scroll(scrollAmount)
-		elif (action == "Out"):
-			auto.moveDown()
-			auto.scroll(-1 * scrollAmount)
-	elif (nameType == "Switch"):
+			auto.scroll(10)
+			"""
+				oldLocationX, oldLocationY = auto.position()
+				auto.click(button='right')
+				moveToImage('Images/zoom.png')
+				auto.click()
+				auto.moveTo(oldLocationX, oldLocationY)
+			"""
+		else:
+			if (params.find("-") != -1):
+				auto.scroll(-1 * int(params[params.find("-") + 1:]))
+			else:
+				auto.scroll(int(params))
+		"""
+			elif (action == "In"):
+				auto.moveDown()
+				auto.scroll(scrollAmount)
+			elif (action == "Out"):
+				auto.moveDown()
+				auto.scroll(-1 * scrollAmount)
+		"""
+	elif (command == "Switch"):
 		auto.click(button='right')
 		auto.click()
-	elif (nameType == "Pan"):
-		oldLocationX, oldLocationY = auto.position()
+	elif (command == "Pan"):
+		(x1, y1, x2, y2, moveToX, moveToY, boxHeight) = rightClick()
+		moveToY += (0.036 * 2) * boxHeight
+		auto.moveTo(moveToX, moveToY)
+		auto.click()
+		"""oldLocationX, oldLocationY = auto.position()
 		auto.click(button='right')
 		moveToImage('Images/pan.png')
 		auto.click()
@@ -102,9 +188,13 @@ while (True):
 		elif (action == "Up"):
 			auto.dragTo(0, dragAmount, button='left')
 		elif (action == "Down"):
-			auto.dragTo(0, -1 * dragAmount, button='left')
-	elif (nameType == "Ruler"):
-		oldLocationX, oldLocationY = auto.position()
+			auto.dragTo(0, -1 * dragAmount, button='left')"""
+	elif (command == "Ruler"):
+		(x1, y1, x2, y2, moveToX, moveToY, boxHeight) = rightClick()
+		moveToY += (0.036 * 3) * boxHeight
+		auto.moveTo(moveToX, moveToY)
+		auto.click()
+		"""oldLocationX, oldLocationY = auto.position()
 		auto.click(button='right')
 		moveToImage('Images/ruler.png')
 		auto.click()
@@ -115,22 +205,22 @@ while (True):
 		elif (actionID == "Delete"):
 			auto.click(button='right')
 			moveToImage('Images/ruler-delete.png')
-			auto.click()
-	elif (nameType == "Window"):
+			auto.click()"""
+	elif (command == "Window"):
 		if (actionID == "Open"):
 			moveToImage('Images/series-thumbnail.png')
 			auto.click()
 		elif (actionID == "Close"):
 			moveToImage('Images/series-thumbnail-close.png')
 			auto.click()
-	elif (nameType == "Manual Contrast"):
+	elif (command == "Manual Contrast"):
 		if (actionID == "Increase"):
 			moveToImage('Images/series-thumbnail.png')
 			auto.click()
 		elif (actionID == "Decrease"):
 			moveToImage('Images/series-thumbnail-close.png')
 			auto.click()
-	elif (nameType == "Layout"):
+	elif (command == "Layout"):
 		if (actionID == "One-Panel"):
 			moveToImage('Images/series-thumbnail.png')
 			auto.click()
@@ -143,7 +233,7 @@ while (True):
 		elif (actionID == "Four-Panels"):
 			moveToImage('Images/series-thumbnail-close.png')
 			auto.click()
-	elif (nameType == "Contrast Presets"):
+	elif (command == "Contrast Presets"):
 		if (actionID == "I"):
 			moveToImage('Images/series-thumbnail.png')
 			auto.click()
@@ -151,6 +241,14 @@ while (True):
 			moveToImage('Images/series-thumbnail-close.png')
 			auto.click()
 	auto.moveTo(self.width / 2, self.height / 2)
-	status["prev_action"] = nameType + " " + action
+	status["prev_action"] = command + " " + action
+
+
+
+
+
+
+
+
 
 
