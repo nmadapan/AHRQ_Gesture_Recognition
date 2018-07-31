@@ -1,0 +1,14 @@
+2018-07-30 15:20:38.125000
+
+6_0_S1_L2_Pan_X.xef :  [num_images: 1662, video_time: 85.7640002308, FPS: 19]
+10_3_S4_L2_X_ThreePanels.xef :  [num_images: 3116, video_time: 175.37899971, FPS: 17]
+10_4_S4_L2_X_FourPanels.xef :  [num_images: 3164, video_time: 180.742000475, FPS: 17]
+11_0_S4_L2_ContrastPresets_X.xef :  [num_images: 1893, video_time: 107.671000322, FPS: 17]
+11_2_S4_L2_X_StdTwo.xef :  [num_images: 1781, video_time: 101.53700038, FPS: 17]
+1_1_S4_L2_Scroll_Up.xef :  [num_images: 1605, video_time: 87.8180000286, FPS: 18]
+1_2_S4_L2_Scroll_Down.xef :  [num_images: 1406, video_time: 77.9390000324, FPS: 18]
+2_1_S4_L2_Flip_Horizontal.xef :  [num_images: 1627, video_time: 89.7990000801, FPS: 18]
+2_2_S4_L2_Flip_Vertical.xef :  [num_images: 1398, video_time: 78.2959997749, FPS: 17]
+3_1_S4_L2_Rotate_CW.xef :  [num_images: 1585, video_time: 87.7910000343, FPS: 18]
+3_2_S4_L2_Rotate_CCW.xef :  [num_images: 1724, video_time: 110.949000345, FPS: 15]
+4_1_S4_L2_Zoom_In.xef :  [num_images: 1630, video_time: 109.062000277, FPS: 14]

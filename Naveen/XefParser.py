@@ -107,8 +107,8 @@ class Parser(object):
 			except Exception as exp:
 				time.sleep(0.5)
 				print '. ', 
-			if(time.time()-init_start_time > 30): 
-				print('Waited for more than 30 seconds. Exiting')
+			if(time.time()-init_start_time > self.thresh_empty_cycles/2): 
+				print('Waited for more than '+str(self.thresh_empty_cycles/2)+' seconds. Exiting')
 				return (-1, -1, -1)
 		
 		print '\nAll modules connected !!'

@@ -24,17 +24,18 @@ from helpers import *
 #####################
 
 # Initialization
-xef_folder_paths = ['G:\\AHRQ\\Study_IV\\XEF_Files\\*', 'E:\\AHRQ\\XEF_Files\\*', 'H:\\AHRQ\\Study_IV\\XEF_Files\\*']
+xef_folder_paths = ['D:\\AHRQ\\Study_IV\\XEF_Files\\*', 'E:\\AHRQ\\XEF_Files\\*', 'F:\\AHRQ\\Study_IV\\XEF_Files\\*']
 in_format_flag = True # True since the filename is in the correct format
 enable_repeat = False # If True, all xef files will be executed, Otherwise, only the files that werent read previously or the files that were incompletely read
 xef_rgb_factor = 3.2 # Max is 3.8
-print_fnames = Falser 
+print_fnames = False
+images_folder = '.\\Images_AHRQ'
 
 error_log_folder = '.\\Logfiles'
 error_log_filename = os.path.join(error_log_folder, 'error_log_'+datetime.now().strftime("%Y_%m_%d_%H_%M")+'.txt')
 
 # Default settings
-base_write_folder = '..\\Data' # Where to write the files
+base_write_folder = 'D:\\AHRQ\\Study_IV\\Data' # Where to write the files
 kinect_studio_open_time = 3 # in seconds
 thresh_empty_cycles = 200 # No. of cycles to wait before obtaining the first RGB image. Quit after 200 cycles. 
 dynamic_thresh_fac = 10 # How long to wait later for the arrival of RGB frame 
@@ -48,10 +49,11 @@ file_active = False
 
 # # Check consistencies in the xef folder path
 if(in_format_flag):
-	print 'Checking consistencies: '
+	print 'Checking consistencies: ', 
 	for xef_folder_path in xef_folder_paths:
 		flag, error_strs = check_consis(xef_folder_path)
 		if(not flag): sys.exit(error_strs)
+	print 'All Good.'
 
 ## Get all xef files paths
 xef_files_paths = []
@@ -116,7 +118,7 @@ class GUI():
 
 		## Wait until Kinect studio is fully open
 		while(True):
-			res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'start_cond.PNG'))
+			res = auto.locateCenterOnScreen(os.path.join(images_folder, 'start_cond.PNG'))
 			if(res != None): break
 			else: time.sleep(0.2)
 
@@ -132,16 +134,17 @@ class GUI():
 		# 	print('Kinect Studio already connected')
 
 		## Enable color stream
-		res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'activate.PNG'))
+		res = auto.locateCenterOnScreen(os.path.join(images_folder, 'activate.PNG'))
 		if res is not None:
 			cx, cy = res
 			auto.click(cx, cy)
 			auto.moveTo(self.width/2, self.height/2)
 		# else:
 		# 	print('Color stream already connected')
+		time.sleep(2)
 
 		## Play video
-		res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'play.PNG'))
+		res = auto.locateCenterOnScreen(os.path.join(images_folder, 'play.PNG'))
 		if res is not None:
 			cx, cy = res
 			auto.click(cx, cy)
