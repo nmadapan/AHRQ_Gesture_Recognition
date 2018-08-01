@@ -7,8 +7,10 @@ from copy import deepcopy
 import pickle
 from FeatureExtractor import FeatureExtractor
 
-pickle_fname = os.path.join('..', 'Test', 'L6_svm_weights.pickle')
-svm_clf = pickle.load(open(pickle_fname, 'rb'))
+pickle_name = 'D:\\AHRQ\\Study_IV\\Data\\L6_obj.pickle'
+fe = pickle.load(open(pickle_fname, 'rb'))
+
+svm_clf = fe.svm_clf
 
 ## Global parameters
 torso_id = 0

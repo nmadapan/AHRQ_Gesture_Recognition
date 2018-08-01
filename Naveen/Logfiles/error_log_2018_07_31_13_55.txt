@@ -1,0 +1,7 @@
+2018-07-31 13:55:05.928000
+
+10_1_S3_L2_X_OnePanel.xef :  [num_images: 1994, video_time: 137.398000257, FPS: 14]
+5_2_S3_L8_SwitchPanel_Right.xef :  [num_images: 2234, video_time: 153.014999937, FPS: 14]
+5_3_S3_L8_SwitchPanel_Up.xef :  [num_images: 2011, video_time: 144.95600005, FPS: 13]
+6_3_S3_L8_Pan_Up.xef :  [num_images: 1350, video_time: 92.1470000973, FPS: 14]
+8_2_S3_L8_PIW_Close.xef :  [num_images: 1802, video_time: 122.704000057, FPS: 14]

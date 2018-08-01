@@ -39,13 +39,14 @@ from KinectReader import kinect_reader
 
 class Parser(object):
 	def __init__(self, xef_file_name, base_write_folder = '..\\Data', compress_flag = False, \
-				thresh_empty_cycles = 200, dynamic_thresh_fac = 2, in_format_flag = True):
+				thresh_empty_cycles = 200, dynamic_thresh_fac = 2, in_format_flag = True, types_str = ['r', 'd', 'b']):
 
 		self.xef_file_name = os.path.basename(xef_file_name)
 		self.base_write_folder = base_write_folder
 		self.compress_flag = compress_flag # Compresses the rgb and depth videos if True
 		self.thresh_empty_cycles = thresh_empty_cycles # No. of empty cycles to wait for the arrival of first RGB frame, quit otherwise
 		self.dynamic_thresh_fac = dynamic_thresh_fac
+		self.types_str = types_str
 
 		# Remove the file extension if existed
 		if(self.xef_file_name[-4:] == '.xef'): self.xef_file_name = self.xef_file_name[:-4]
@@ -72,6 +73,18 @@ class Parser(object):
 
 		# Initialize Kinect
 		self.kr = kinect_reader()
+		types = 0
+		self.rec_color, self.rec_depth, self.rec_body = False, False, False
+		if('r' in self.types_str): 
+			types = types | self.kr.color_type
+			self.rec_color = True
+		if('d' in self.types_str): 
+			types = types | self.kr.depth_type
+			self.rec_depth = True
+		if('b' in self.types_str): 
+			types = types | self.kr.body_type
+			self.rec_body = True
+		self.types = types
 
 		# Video Recorder
 		fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -86,29 +99,32 @@ class Parser(object):
 		init_start_time = time.time()
 		print 'Connecting to Kinect . ', 
 
-		# cv2.namedWindow('RGB_Video')
+		cv2.namedWindow('RGB_Video')
 		# Wait for all modules (rgb, depth, skeleton) to connect
 		while True:
 			try:
 				# Refreshing Frames
-				if first_rgb: self.kr.update_rgb()
-				else: first_rgb = self.kr.update_rgb()
+				if self.rec_color:
+					if first_rgb: self.kr.update_rgb()
+					else: first_rgb = self.kr.update_rgb()
 
-				if first_depth: self.kr.update_depth()
-				else: first_depth = self.kr.update_depth()
+				if self.rec_depth:
+					if first_depth: self.kr.update_depth()
+					else: first_depth = self.kr.update_depth()
 
-				if first_body: self.kr.update_body()
-				else: first_body = self.kr.update_body()
+				if self.rec_body:
+					if first_body: self.kr.update_body()
+					else: first_body = self.kr.update_body()
 
-				if (first_rgb and first_depth and first_body): break
+				if ((self.rec_color == first_rgb) and (self.rec_depth==first_depth) and (self.rec_body==first_body)): break
 
 				time.sleep(0.5)
 				print '. ', 		
 			except Exception as exp:
 				time.sleep(0.5)
 				print '. ', 
-			if(time.time()-init_start_time > self.thresh_empty_cycles/2): 
-				print('Waited for more than '+str(self.thresh_empty_cycles/2)+' seconds. Exiting')
+			if(time.time()-init_start_time > 30): 
+				print('Waited for more than 30 seconds. Exiting')
 				return (-1, -1, -1)
 		
 		print '\nAll modules connected !!'
@@ -128,15 +144,15 @@ class Parser(object):
 			start_time = time.time()
 			while spin:
 				# Refreshing Frames
-				rgb_flag = self.kr.update_rgb()
-				depth_flag = self.kr.update_depth()
-				body_flag = self.kr.update_body()
-				if rgb_flag:
+				if self.rec_color: rgb_flag = self.kr.update_rgb()
+				if self.rec_depth: depth_flag = self.kr.update_depth()
+				if self.rec_body: body_flag = self.kr.update_body()
+				if (self.rec_color and rgb_flag):
 					max_quit_count = max(max_quit_count, quit_count)
 					# Update dynamic threshold if you witness larger delays in RGB frame arrivals
 					dynamic_thresh = max(dynamic_thresh, self.dynamic_thresh_fac * max_quit_count) 
 					quit_count = 0
-					# cv2.imshow('RGB_Video', cv2.resize(self.kr.color_image, None, fx=0.5, fy=0.5))
+					cv2.imshow('RGB_Video', cv2.resize(self.kr.color_image, None, fx=0.5, fy=0.5))
 					self.image_counter += 1
 					if self.image_counter%25 == 0: print '. ', 
 				else: quit_count += 1
@@ -160,7 +176,7 @@ class Parser(object):
 					self.depth_pts_file_id.write(' '.join(map(str,self.kr.depth_skel_pts.tolist()))+'\n')
 
 				# Breaking condition
-				# if cv2.waitKey(1) == ord('q') : spin = False
+				if cv2.waitKey(1) == ord('q') : spin = False
 				time.sleep(loop_delay)
 
 		except Exception as exp:
@@ -199,7 +215,7 @@ class Parser(object):
 		depth_clip.write_videofile(self.depth_vid_addr[:-4]+'.webm', audio=False)
 		os.remove(self.depth_vid_addr)
 
-# __main__ = "Annotate Files"
-# parser = Parser('S2_L6_woo_hoo')
-# parser.parse()
+__main__ = "Annotate Files"
+parser = Parser('1_1_x_x_x_x')
+parser.parse()
 
