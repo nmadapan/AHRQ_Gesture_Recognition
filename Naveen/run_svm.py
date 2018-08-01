@@ -8,7 +8,7 @@ from helpers import skelfile_cmp
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 
-skel_folder_path = 'D:\\AHRQ\\Study_IV\\Data\\L8'
+skel_folder_path = 'H:\\AHRQ\\Study_IV\\Data\\Data\\L3'
 rerun = False
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
 dirname = os.path.dirname(skel_folder_path)
@@ -24,7 +24,23 @@ else:
 	with open(data_pickle, 'rb') as fp:
 		res = pickle.load(fp)
 		fe, out = res['fe'], res['out']
-## Appending finger lengths
+
+# ## Appending finger lengths
+
+pickle_path1 = 'H:\\AHRQ\\Study_IV\\Data\\Data_OpenPose\\fingers_data'
+
+with open(os.path.join(pickle_path1, 'L3_copy.pkl'), 'rb') as fp:
+	fingers_data = pickle.load(fp)
+
+data_merge=[]
+for txt_file in fe.skel_file_order:
+	key = os.path.splitext(txt_file)[0].split('_')[:-1]
+	s='_'
+	key=s.join(key)
+	for line in np.round(fingers_data.get(key),4):
+		data_merge.append(line)
+
+out['data_input'] = np.concatenate([out['data_input'], np.array(data_merge)], axis = 1)
 
 # Randomize data input and output
 temp = zip(out['data_input'], out['data_output'])
