@@ -6,48 +6,60 @@ from PIL import ImageChops"""
 from PIL import ImageGrab
 from PIL import ImageChops
 
-window_names = auto.getWindows().keys()
+#window_names = auto.getWindow("Citrix Viewer")
 
 auto.FAILSAFE = True
 auto.PAUSE = 2
 
-status = {"prev_action": "", "number_of_panels": 1}
-
 def rightClick():
-	#(locationX, locationY) = auto.position()
+	(oldLocationX, oldLocationY) = auto.position()
 	#(width, height) = auto.size()
-	beforeRight = ImageGrab.grab(bbox=None)
+	#auto.moveTo(width / 2.0, height / 2.0)
+	auto.moveTo(400, 100)
+	
+	"""beforeRight = ImageGrab.grab(bbox=(316 * 2, 35 * 2, 1124 * 2, 811 * 2))
+	beforeRight.save("Images/beforeRight.png")
 	auto.click(button='right')
-	afterRight = ImageGrab.grab(bbox=None)
+	afterRight = ImageGrab.grab(bbox=(316 * 2, 35 * 2, 1124 * 2, 811 * 2))
+	afterRight.save("Images/afterRight.png")
 	(x1, y1, x2, y2) = ImageChops.difference(beforeRight, afterRight).getbbox()
-	return (x1, y1, x2, y2, (x1 + x2) / 2.0, y1 + (0.076 * boxHeight), y2 - y1)
+	print "dimensions: " + str(x1) + " " + str(y1) + " " + str(x2) + " " + str(y2)
+	x1 += 316 * 2
+	y1 += 35 * 2
+	x2 += 316 * 2
+	y2 += 35 * 2
+	print "beforeAfterRight box: " + str(x1) + " " + str(y1) + " " + str(x2) + " " + str(y2)
+	diff = ImageGrab.grab(bbox=(int(x1), int(y1), int(x2), int(y2)))
+	diff.save("Images/diff_beforeAfterRight.png")
+	#return (x1, y1, x2, y2, (x1 + x2) / 2.0, y1 + (0.076 * boxHeight), y2 - y1, afterRight)"""
+	return (x1, y1, x2, y2, afterRight)
 	"""
-	moveToX = (x1 + x2) / 2.0
-	moveToY = y1 + (0.076 * boxHeight)
-	boxHeight = y2 - y1
-	if (command == "Zoom"):
-		moveToY += 0.036 * boxHeight
-	elif (command == "Pan"):
-		moveToY += (0.036 * 2) * boxHeight
-	elif (command == "Ruler"):
-		moveToY += (0.036 * 3) * boxHeight
-	elif (command == "Flip" or command == "Rotate"):
-		moveToY += ((0.036 * 9) + 0.010) * boxHeight
-		auto.moveTo(moveToX, moveToY)
-		time.sleep(0.5)
-		scaleRotateFlip = ImageGrab.grab(bbox=None)
-		(x1, y1, x2, y2) = ImageChops.difference(afterRight, scaleRotateFlip).getbbox()
 		moveToX = (x1 + x2) / 2.0
-		moveToY = y1 + ((25 / 268) * boxHeight)
+		moveToY = y1 + (0.076 * boxHeight)
 		boxHeight = y2 - y1
-		if (command == "Flip" and action == "Vertical"):
-			moveToY += (36 / 268) * boxHeight
-		elif (command == "Rotate" and action == "Clockwise"):
-			moveToY += (36 * 2 / 268) * boxHeight
-		elif (command == "Rotate" and action == "Counter-Clockwise"):
-			moveToY += (36 * 3 / 268) * boxHeight
-		auto.moveTo(moveToX, moveToY)
-	auto.click()
+		if (command == "Zoom"):
+			moveToY += 0.036 * boxHeight
+		elif (command == "Pan"):
+			moveToY += (0.036 * 2) * boxHeight
+		elif (command == "Ruler"):
+			moveToY += (0.036 * 3) * boxHeight
+		elif (command == "Flip" or command == "Rotate"):
+			moveToY += ((0.036 * 9) + 0.010) * boxHeight
+			auto.moveTo(moveToX, moveToY)
+			time.sleep(0.5)
+			scaleRotateFlip = ImageGrab.grab(bbox=None)
+			(x1, y1, x2, y2) = ImageChops.difference(afterRight, scaleRotateFlip).getbbox()
+			moveToX = (x1 + x2) / 2.0
+			moveToY = y1 + ((25 / 268) * boxHeight)
+			boxHeight = y2 - y1
+			if (command == "Flip" and action == "Vertical"):
+				moveToY += (36 / 268) * boxHeight
+			elif (command == "Rotate" and action == "Clockwise"):
+				moveToY += (36 * 2 / 268) * boxHeight
+			elif (command == "Rotate" and action == "Counter-Clockwise"):
+				moveToY += (36 * 3 / 268) * boxHeight
+			auto.moveTo(moveToX, moveToY)
+		auto.click()
 	"""
 
 """
@@ -56,10 +68,7 @@ def moveToImage(image):
 	auto.moveTo(newLocationX, newLocationY)
 """
 
-def get_status():
-	print "Status\n------"
-	print "Previous action: " + status["prev_action"] + "\n"
-	print "No. of panels: " + status["number_of_panels"] + "\n"
+status = {"prev_action": "", "number_of_panels": 1, "window_open": False, "active_panel": [0, 0]}
 
 actionList = [["Admin", "Quit", "Get Status"],
 	["Scroll", "Up", "Down"],
@@ -74,6 +83,12 @@ actionList = [["Admin", "Quit", "Get Status"],
 	["Layout", "One-Panel", "Two-Panels", "Three-Panels", "Four-Panels"],
 	["Contrast Presets", "I", "II"]]
 
+def get_status():
+	print "Status\n------"
+	print "Previous action: " + status["prev_action"] + "\n"
+	print "No. of panels: " + status["number_of_panels"] + "\n"
+	print "Patient information window: " + status["window"] + "\n"
+
 while (True):
 	(commandID, actionID) = (-1, -1)
 	sequence = raw_input("Gesture Command -> ")
@@ -85,14 +100,18 @@ while (True):
 		try:
 			commandID = int(commandAction[:commandAction.find("_")])
 			actionID = int(commandAction[commandAction.find("_") + 1:])
+			command = actionList[commandID][0]
+			action = actionList[commandID][actionID]
 		except ValueError:
 			print "Unrecognized sequence of commands!\n"
+			continue
+		except IndexError:
+			print "Incorrect commands!\n"
 			continue
 	else:
 		print "Invalid command entered!\n"
 		continue
-	command = actionList[commandID][0]
-	action = actionList[commandID][actionID]
+	auto.hotkey("command", "tab")
 	if (command == "Admin"):
 		if (action == "Quit"):
 			break
@@ -110,22 +129,37 @@ while (True):
 			auto.click()
 	elif (command == "Flip" or command == "Rotate"):
 		if (actionID != 0):
-			(x1, y1, x2, y2, moveToX, moveToY, boxHeight) = rightClick()
-			moveToY += ((0.036 * 9) + 0.010) * boxHeight
+			(x1, y1, x2, y2, afterRight) = rightClick()
+			#moveToY += ((0.036 * 9) + 0.010) * boxHeight
+			moveToX = (x1 + x2) / 2
+			moveToY = y1 + 410
 			auto.moveTo(moveToX, moveToY)
 			time.sleep(0.5)
-			scaleRotateFlip = ImageGrab.grab(bbox=None)
-			(x1, y1, x2, y2) = ImageChops.difference(afterRight, scaleRotateFlip).getbbox()
-			moveToX = (x1 + x2) / 2.0
-			moveToY = y1 + ((25 / 268) * boxHeight)
-			boxHeight = y2 - y1
-			if (command == "Flip" and action == "Vertical"):
-				moveToY += (36 / 268) * boxHeight
-			elif (command == "Rotate" and action == "Clockwise"):
-				moveToY += (36 * 2 / 268) * boxHeight
-			elif (command == "Rotate" and action == "Counter-Clockwise"):
-				moveToY += (36 * 3 / 268) * boxHeight
-			auto.moveTo(moveToX, moveToY)
+			scaleRotateFlip = ImageGrab.grab(bbox=(316 * 2, 35 * 2, 1124 * 2, 811 * 2))
+			scaleRotateFlip.save("Images/scaleRotateFlip.png")
+			im = ImageChops.difference(afterRight, scaleRotateFlip)
+			if (im is None or im.getbbox() is None):
+				print "moveToX: " + str(moveToX)
+				print "moveToY: " + str(moveToY)
+			else:
+				(x1, y1, x2, y2) = im.getbbox()
+				x1 += 316 * 2
+				y1 += 35 * 2
+				x2 += 316 * 2
+				y2 += 35 * 2
+				#moveToY = y1 + ((25 / 268) * boxHeight)
+				moveToY = y1 + 25
+				boxHeight = y2 - y1
+				if (command == "Flip" and action == "Vertical"):
+					#moveToY += (36 / 268) * boxHeight
+					moveToY += 36
+				elif (command == "Rotate" and action == "Clockwise"):
+					#moveToY += (36 * 2 / 268) * boxHeight
+					moveToY += 36 * 2
+				elif (command == "Rotate" and action == "Counter-Clockwise"):
+					#moveToY += (36 * 3 / 268) * boxHeight
+					moveToY += 36 * 3
+				auto.moveTo(moveToX, moveToY)
 			"""
 				if (command == "Flip" and action == "Horizontal"):
 					rightClick("Scale_rotate_flip", command, action)
@@ -141,10 +175,14 @@ while (True):
 			"""
 		auto.click()
 	elif (command == "Zoom"):
-		(x1, y1, x2, y2, moveToX, moveToY, boxHeight) = rightClick()
-		moveToY += 0.036 * boxHeight
+		(oldLocationX, oldLocationY) = auto.position()
+		(x1, y1, x2, y2, afterRight) = rightClick()
+		#moveToY += 0.036 * boxHeight
+		moveToY = y1 + 36
 		auto.moveTo(moveToX, moveToY)
 		auto.click()
+		auto.moveTo(oldLocationX, oldLocationY)
+		auto.mouseDown()
 		if (actionID == 0):
 			auto.scroll(10)
 			"""
@@ -167,12 +205,14 @@ while (True):
 				auto.moveDown()
 				auto.scroll(-1 * scrollAmount)
 		"""
+		auto.mouseUp()
 	elif (command == "Switch"):
 		auto.click(button='right')
 		auto.click()
 	elif (command == "Pan"):
-		(x1, y1, x2, y2, moveToX, moveToY, boxHeight) = rightClick()
-		moveToY += (0.036 * 2) * boxHeight
+		(x1, y1, x2, y2, afterRight) = rightClick()
+		#moveToY += (0.036 * 2) * boxHeight
+		moveToY = y1 + (36 * 2)
 		auto.moveTo(moveToX, moveToY)
 		auto.click()
 		"""oldLocationX, oldLocationY = auto.position()
@@ -190,8 +230,9 @@ while (True):
 		elif (action == "Down"):
 			auto.dragTo(0, -1 * dragAmount, button='left')"""
 	elif (command == "Ruler"):
-		(x1, y1, x2, y2, moveToX, moveToY, boxHeight) = rightClick()
-		moveToY += (0.036 * 3) * boxHeight
+		(x1, y1, x2, y2, afterRight) = rightClick()
+		#moveToY += (0.036 * 3) * boxHeight
+		moveToY = y1 + (36 * 3)
 		auto.moveTo(moveToX, moveToY)
 		auto.click()
 		"""oldLocationX, oldLocationY = auto.position()
@@ -207,10 +248,28 @@ while (True):
 			moveToImage('Images/ruler-delete.png')
 			auto.click()"""
 	elif (command == "Window"):
-		if (actionID == "Open"):
-			moveToImage('Images/series-thumbnail.png')
+		(oldLocationX, oldLocationY) = auto.position()
+		if (actionID == "Open" and not status["window_open"]):
+			beforeOpen = ImageGrab.grab(bbox=None)
+			auto.moveTo(oldLocationX, 0)
+			time.sleep(0.5)
+			#auto.moveTo((435 / 573) * (x2 - x1), (150 / 228) * (y2 - y1))
+			auto.moveTo(435, 150)
 			auto.click()
-		elif (actionID == "Close"):
+			time.sleep(5)
+			afterOpen = ImageGrab.grab(bbox=None)
+			(x1, y1, x2, y2) = ImageChops.difference(beforeOpen, afterOpen).getbbox()
+			x1 += 316 * 2
+			y1 += 35 * 2
+			x2 += 316 * 2
+			y2 += 35 * 2
+			x2 -= 14
+			y1 -= 23
+			x1 = x2 - 45
+			y2 = y2 + 40
+			seriesThumbnail = auto.screenshot(region=(x1, y1, x2, y2))
+			seriesThumbnail.save("Images/series-thumbnail-close.png")
+		elif (actionID == "Close" and status["window_open"]):
 			moveToImage('Images/series-thumbnail-close.png')
 			auto.click()
 	elif (command == "Manual Contrast"):
@@ -240,12 +299,14 @@ while (True):
 		elif (actionID == "II"):
 			moveToImage('Images/series-thumbnail-close.png')
 			auto.click()
-	auto.moveTo(self.width / 2, self.height / 2)
 	status["prev_action"] = command + " " + action
+	auto.hotkey("command", "tab")
 
 
-
-
+# When quitting program, remove anything saved
+import os
+if os.path.exists("Images/series-thumbnail-close.png"):
+	os.remove("Images/series-thumbnail-close.png")
 
 
 
