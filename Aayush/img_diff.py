@@ -2,11 +2,11 @@ import numpy as np
 import cv2
 import os
 
-def get_bbox(before_path, after_path, thresholds = None, draw = False):
+def get_bbox(before, after, thresholds = None, draw = False):
 	########
 	# Input Arguments:
-	# 	before_path: path to the image before right click
-	# 	after_path: path to the image after the right click
+	# 	before, after: path to the image before right click, and after right click OR
+	# 	before, after: numpy image before right click, and after right click
 	# 	thresholds: tuple (x_thresh, y_thresh). thresholds in both x and y directions
 	# 	draw: True, display the bounding box. False, do not display
 	#
@@ -14,13 +14,22 @@ def get_bbox(before_path, after_path, thresholds = None, draw = False):
 	# (x1, y1, x2, y2): where x1, y1 are top left corner and x2, y2 are bottom right corner
 	########
 
-	if(not os.path.isfile(before_path)):
-		sys.exit(before_path + ' does NOT exist')
-	if(not os.path.isfile(after_path)):
-		sys.exit(after_path + ' does NOT exist')
+	# Type of before and after should be same
+	if(type(before) != type(after)):
+		return ValueError('before and after should have same type')
 
-	before = cv2.imread(before_path)
-	after = cv2.imread(after_path)
+	# If both are strings
+	if(isinstance(before, str)):
+		if(not os.path.isfile(before)):
+			sys.exit(before + ' does NOT exist')
+		if(not os.path.isfile(after)):
+			sys.exit(after + ' does NOT exist')
+		before = cv2.imread(before)
+		after = cv2.imread(after)
+	elif(isinstance(before, np.ndarray)):
+		assert before.ndim == 3 and after.ndim == 3, 'before and after needs to be rgb arrays'
+		assert (before.shape[0] == after.shape[0]) and (before.shape[1] == after.shape[1]),\
+			 'before and after arrays should be of same dimension'
 
 	dif = cv2.cvtColor(np.uint8(np.abs(after - before)), cv2.COLOR_BGR2GRAY)
 	_, dif = cv2.threshold(dif,127,255,0)
@@ -47,6 +56,11 @@ def get_bbox(before_path, after_path, thresholds = None, draw = False):
 
 	return (x1, y1, x2, y2)
 
-before_path, after_path = os.path.join('.', 'Images', 'beforeRight.png'), os.path.join('.', 'Images', 'afterRight.png')
-x1, y1, x2, y2 = get_bbox(before_path, after_path, thresholds = (100, 30), draw = False)
-# print get_bbox(before_path, after_path)
+before, after = os.path.join('.', 'Images', 'beforeRight.png'), os.path.join('.', 'Images', 'afterRight.png')
+x1, y1, x2, y2 = get_bbox(before, after, thresholds = (100, 30), draw = False)
+# print get_bbox(before, after)
+
+# before = cv2.imread(before)
+# after = cv2.imread(after)
+# print get_bbox(before, after, draw = True)
+
