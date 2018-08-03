@@ -1,0 +1,8 @@
+2018-08-03 17:05:23.624000
+
+S1_Pose2.xef :  [num_images: 246, video_time: 15.1049997711, FPS: 16]
+S1_Pose3.xef :  [num_images: 391, video_time: 23.7539999256, FPS: 16]
+S2_Pose2.xef :  [num_images: 407, video_time: 24.9230000439, FPS: 16]
+S2_Pose3.xef :  [num_images: 366, video_time: 22.1469999809, FPS: 16]
+S3_Pose2.xef :  [num_images: 399, video_time: 24.8719997997, FPS: 16]
+S3_Pose3.xef :  [num_images: 531, video_time: 33.3219999714, FPS: 15]
