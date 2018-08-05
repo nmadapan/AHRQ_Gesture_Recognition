@@ -1,6 +1,6 @@
 {
 	"max_dth": 3.14,
-	"all_flag": false,
+	"all_feature_types": false,
 	"feature_types": ["left", "right"],
 	"num_joints": 1,
 	"dominant_first": true,
