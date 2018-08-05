@@ -338,13 +338,13 @@ class FeatureExtractor():
 
 		# Error checks
 		if(not os.path.isdir(skel_folder_path)):
-			sys.exit('Error: '+ skel_folder_path + ' does not exists\n')
+			raise IOError('Error: '+ skel_folder_path + ' does not exists\n')
 		if(not os.path.isdir(annot_folder_path)):
-			sys.exit('Error: '+ annot_folder_path + ' does not exists\n')
+			raise IOError('Error: '+ annot_folder_path + ' does not exists\n')
 
 		skel_filepaths = glob(os.path.join(skel_folder_path, '*_skel.txt'))
 		if(len(skel_filepaths) == 0):
-			sys.exit('No skeleton files in ' + skel_folder_path + '\n')
+			raise IOError('No skeleton files in ' + skel_folder_path + '\n')
 		skel_filepaths = sorted(skel_filepaths, cmp=skelfile_cmp)
 
 		self.skel_file_order = map(os.path.basename, skel_filepaths)
@@ -360,7 +360,7 @@ class FeatureExtractor():
 				combos.append((skel_filepath, annot_filepath))
 			else:
 				message = 'Annotation file of {} --> {}: does not exist'.format(skel_filepath, annot_filepath)
-				if(not ignore_missing_files): sys.exit(message)
+				if(not ignore_missing_files): raise IOError(message)
 				else: print message
 
 		features = []
