@@ -28,8 +28,7 @@ if(not os.path.isdir(write_foler_path)): os.mkdir(write_foler_path)
 write_file_path = os.path.join(write_foler_path, write_file)
 
 if(not os.path.isfile(video_file_path)): 
-	print('Video file does not exists')
-	sys.exit(0)
+	raise IOError('Video file does not exists')
 
 class Annotate(object):
 	def __init__(self):

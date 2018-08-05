@@ -52,7 +52,7 @@ if(in_format_flag):
 	print 'Checking consistencies: ', 
 	for xef_folder_path in xef_folder_paths:
 		flag, error_strs = check_consis(xef_folder_path)
-		if(not flag): sys.exit(error_strs)
+		if(not flag): raise IOError(error_strs)
 	print 'All Good.'
 
 ## Get all xef files paths

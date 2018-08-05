@@ -90,7 +90,7 @@ def check_consis(xef_folder_path):
 	# For instance: xef_folder_path = '.\\ABC', where folder ABC contains S1_L3, S2_L3, S3_L3, etc., while each of these folders contain the xef files in a specific format.
 	folder_paths = glob(xef_folder_path+'\\') # Get only directories
 	if(len(folder_paths) == 0):
-		sys.exit('There are NO folders in this path')
+		raise IOError('There are NO folders in this path')
 	error_strs = []
 	for folder_path in folder_paths:
 		file_paths = glob(os.path.join(folder_path, '*.xef'))
@@ -104,7 +104,7 @@ def check_consis(xef_folder_path):
 def get_file_size(filepath):
 	# return file size in KB
 	if(not os.path.isfile(filepath)):
-		sys.exit('file: '+filepath+' does NOT exist')
+		raise IOError('file: '+filepath+' does NOT exist')
 	return float('%.1f'%(os.stat(filepath).st_size/1024.0))
 
 def file_filter(xef_files_paths, base_write_folder, in_format_flag, xef_rgb_factor):
@@ -128,7 +128,7 @@ def file_filter(xef_files_paths, base_write_folder, in_format_flag, xef_rgb_fact
 
 def json_to_dict(json_filepath):
 	if(not os.path.isfile(json_filepath)):
-		sys.exit('Error! Json file: '+json_filepath+' does NOT exists!')
+		raise IOError('Error! Json file: '+json_filepath+' does NOT exists!')
 	with open(json_filepath, 'r') as fp:
 		var = json.load(fp)
 	return var
