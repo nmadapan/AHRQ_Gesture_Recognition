@@ -7,6 +7,8 @@ from copy import deepcopy
 import pickle
 from FeatureExtractor import FeatureExtractor
 
+base_folder = 'D:\\AHRQ\\Study_IV\\Data\\Data'
+lex_name = 'L6'
 pickle_name = 'D:\\AHRQ\\Study_IV\\Data\\L6_obj.pickle'
 fe = pickle.load(open(pickle_fname, 'rb'))
 
