@@ -13,20 +13,21 @@ import itertools
 from helpers import *
 
 #####################
-# BASE class for creating features from skeleton files and annotation files
+# BASE class for creating features from (SKELETON files and annotation files)
 #
 # How to use it:
 #
 #	from FeatureExtractor import FeatureExtractor
 #	fe = FeatureExtractor(json_param_path = 'param.json')
-#
-#		* self.all_flag: If True, all features types are considered.
-#		* self.feature_types: List of feature types to consider. It is necessary iff self.all_flag is false
-#		* self.num_joints: 1 --> only hand, 2 --> both hand and the elbow
-#		* self.randomize: If true, the data is randomized
-#		* self.equate_dim: If true, no. of frames in each gesture is equated via interpolation through a certain number of frames given by self.fixed_num_frames
-#		* self.dim_per_joint = 3; Since we have x, y, z
-#		* self.dominant_first: If true, dominant hand goes first followed by other hand. Else, right follows left
+#		* param.json contains following variables:
+#		* all_feature_types: If True, all features types are considered.
+#		* feature_types: List of feature types to consider. It is necessary iff all_feature_types is false
+#		* num_joints: 1 --> only hand, 2 --> both hand and the elbow
+#		* randomize: If true, the data is randomized
+#		* equate_dim: If true, no. of frames in each gesture is equated via interpolation through a certain 
+#			number of frames given by fixed_num_frames variable in param.json
+#		* dim_per_joint = 3; Since we have x, y, z
+#		* dominant_first: If true, dominant hand goes first followed by other hand. Else, right follows left
 #
 #	fe.extract_raw_features(skel_filepath, annot_filepath) # See the comments inside function
 #	fe.generate_features(skel_filepath, annot_filepath) # See the comments inside function
@@ -48,27 +49,27 @@ class FeatureExtractor():
 			setattr(self, key, value)
 
 		## Declaring instance variables
-		self.type_flags = {feat_type: False for feat_type in self.available_types}
+		self.type_flags = {feat_type: False for feat_type in self.available_types} # What feature types to consider
 		self.num_feature_types = None
 
 		## Other variables
-		self.skel_file_order = None
-		self.dominant_type = None
-		self.svm_clf = None
+		self.skel_file_order = None # What is the order in which skeleton files are read.
+		self.dominant_type = None # What is the dominant type of each instance in the skeleton files (in the same order). 
+		self.svm_clf = None # The trained svm classifier is saved in this variable.
 
 		# num_joints can either be 1 or 2
 		if(not (self.num_joints == 1 or self.num_joints == 2)):
-			sys.exit('Error: Number of joints should be either 1 or 2\n')
+			raise ValueError('Error: Number of joints should be either 1 or 2\n')
 		# dim_per_joint can either be 2 or 3
 		if(not (self.dim_per_joint == 2 or self.dim_per_joint == 3)):
-			sys.exit('Error: Dimension per joint should be either 2 or 3\n')
+			raise ValueError('Error: Dimension per joint should be either 2 or 3\n')
 		# If self.feature_types exists, the feature types should exist in the availabe types
-		if((not self.all_flag) and (not set(self.feature_types).issubset(set(self.available_types)))):
+		if((not self.all_feature_types) and (not set(self.feature_types).issubset(set(self.available_types)))):
 			miss = list(set(self.feature_types).difference(set(self.feature_types).intersection(set(self.available_types))))
-			sys.exit('Error: Some feature types: \'' + ', '.join(miss) + '\' do not exist\n')
+			raise ValueError('Error: Some feature types: \'' + ', '.join(miss) + '\' do not exist\n')
 
 		# Updating the feature type flags
-		if(not self.all_flag):
+		if(not self.all_feature_types):
 			self.num_feature_types = len(self.feature_types)
 			for feat_type in self.feature_types:
 				if feat_type in self.available_types:
@@ -81,7 +82,7 @@ class FeatureExtractor():
 	def find_type_order(self, left, right):
 		# dominant_first_thresh = 0.08 in meters. It is found by observation.
 		# dominant hand ids comes first if the difference is above the threshold
-		# If difference is less than the threshold, right comes first
+		# If difference is less than the threshold, RIGHT COMES FIRST
 		left_std = np.max(np.std(left, axis = 0))
 		right_std = np.max(np.std(right, axis = 0))
 		assert self.num_available_types % 2 == 0, 'Error! Total no. of types should be even.'
@@ -337,13 +338,13 @@ class FeatureExtractor():
 
 		# Error checks
 		if(not os.path.isdir(skel_folder_path)):
-			sys.exit('Error: '+ skel_folder_path + ' does not exists\n')
+			raise IOError('Error: '+ skel_folder_path + ' does not exists\n')
 		if(not os.path.isdir(annot_folder_path)):
-			sys.exit('Error: '+ annot_folder_path + ' does not exists\n')
+			raise IOError('Error: '+ annot_folder_path + ' does not exists\n')
 
 		skel_filepaths = glob(os.path.join(skel_folder_path, '*_skel.txt'))
 		if(len(skel_filepaths) == 0):
-			sys.exit('No skeleton files in ' + skel_folder_path + '\n')
+			raise IOError('No skeleton files in ' + skel_folder_path + '\n')
 		skel_filepaths = sorted(skel_filepaths, cmp=skelfile_cmp)
 
 		self.skel_file_order = map(os.path.basename, skel_filepaths)
@@ -359,7 +360,7 @@ class FeatureExtractor():
 				combos.append((skel_filepath, annot_filepath))
 			else:
 				message = 'Annotation file of {} --> {}: does not exist'.format(skel_filepath, annot_filepath)
-				if(not ignore_missing_files): sys.exit(message)
+				if(not ignore_missing_files): raise IOError(message)
 				else: print message
 
 		features = []
@@ -397,25 +398,18 @@ class FeatureExtractor():
 		# Input arguments:
 		#	1. skel_folder_path: full path to folder containing skeleton files
 		#	2. annot_folder_path: full path to folder containing annotation files
-		#	3. self.randomize: If True, features are self.randomized, otherwise, order is maintained
-		#	4. self.equate_dim: If True, Each gesture instance is interpolated/extrapolated to
-		#		a fixed number of frames given by the next argument
-		#	5. num_points: How many frames each gesture instance should contain.
-		#		If self.equate_dim is True, num_points variable is mandatory
+		#
+		# Update:
+		#	This function updates the following variables:
+		# 		self.num_classes, self.class_labels, self.id_to_labels, self.label_to_ids, self.inst_per_class, self.num_instances
+		#
 		# Return:
 		#	out - A dictionary containing the following keys:
-		#		1. num_classes - No. of classes
-		#		2. class_labels - Lis of labels of each class
-		#		3. id_to_labels - dictionary where keys are class IDs and values are class labels
-		#		4. label_to_ids	- dictionary where kyes are class labels and values are class IDs
-		#		5. num_instances - Total number of instances
-		#		6. data_input - List of flattened numpy arrays. Each numpy array is the final feature vector
+		#		1. data_input - List of flattened numpy arrays. Each numpy array is the final feature vector
 		#			All feature vectors will be of same length if 'self.equate_dim' is True
 		#			Each feature vector is a result of concatenation of flattened numpy arrays corresponding to each feature type.
 		#			If 'self.equate_dim' is True, this is a numpy array of shape (num_instances x fixed_num_of_features)
-		#		7. data_output - One hot representation of corresponding class the feature vector
-		#		8. num_joints - Number of joints considered
-		#		9. num_feature_types - Number of actual feature types considered.
+		#		2. data_output - One hot representation of corresponding class the feature vector
 		########################
 
 		## Obtain all features

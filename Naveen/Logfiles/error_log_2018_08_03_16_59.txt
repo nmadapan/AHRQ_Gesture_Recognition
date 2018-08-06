@@ -1,0 +1,4 @@
+2018-08-03 16:59:52.614000
+
+S1_Pose1.xef :  [num_images: 52, video_time: 4.08200008392, FPS: 12]
+S1_Pose2.xef : 

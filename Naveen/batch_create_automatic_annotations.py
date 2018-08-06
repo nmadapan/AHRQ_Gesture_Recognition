@@ -48,19 +48,19 @@ for skel_path in skel_file_paths:
 	# Read RGB timestamps
 	tbase_path = '_'.join(skel_path.split('_')[:-1])
 	if(not os.path.isfile(tbase_path+'_rgbts.txt')): 
-		sys.exit(os.path.basename(tbase_path)+' - RGB timestamps file doesnt exist')
+		raise IOError(os.path.basename(tbase_path)+' - RGB timestamps file doesnt exist')
 	if(not os.path.isfile(tbase_path+'_skelts.txt')): 
-		sys.exit(os.path.basename(tbase_path)+' - Skel timestamps file doesnt exist')
+		raise IOError(os.path.basename(tbase_path)+' - Skel timestamps file doesnt exist')
 
 	with open(tbase_path+'_rgbts.txt', 'r') as fp:
 		rgb_ts = map(float, fp.readlines())
-	if(len(rgb_ts) == 0): sys.exit(os.path.basename(tbase_path)+' - rgb timestamps file is empty')
+	if(len(rgb_ts) == 0): raise IOError(os.path.basename(tbase_path)+' - rgb timestamps file is empty')
 	rgb_ts = np.array(rgb_ts)
 	rgb_ts = rgb_ts - rgb_ts[0]
 	# Read Skeleton timestamps
 	with open(tbase_path+'_skelts.txt', 'r') as fp:
 		skel_ts = map(float, fp.readlines())
-	if(len(skel_ts) == 0): sys.exit(os.path.basename(tbase_path)+' - skeleton timestamps file is empty')	
+	if(len(skel_ts) == 0): raise IOError(os.path.basename(tbase_path)+' - skeleton timestamps file is empty')	
 	skel_ts = np.array(skel_ts)
 	skel_ts = skel_ts - skel_ts[0]
 	M = np.abs(skel_ts.reshape(-1, 1) - rgb_ts)
