@@ -8,7 +8,7 @@ from helpers import skelfile_cmp
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 
-skel_folder_path = 'H:\\AHRQ\\Study_IV\\Data\\Data\\L3'
+skel_folder_path = 'D:\\AHRQ\\Study_IV\\Data\\Data\\L8'
 rerun = False
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
 dirname = os.path.dirname(skel_folder_path)
