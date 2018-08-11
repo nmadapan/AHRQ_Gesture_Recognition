@@ -9,7 +9,7 @@ from PIL import ImageChops
 #window_names = auto.getWindow("Citrix Viewer")
 
 auto.FAILSAFE = True
-auto.PAUSE = 2
+auto.PAUSE = 0.75
 
 (width, height) = auto.size()
 boundBox = (0, 44, width * 2, (height - 51) * 2)
@@ -17,7 +17,7 @@ boundBoxNoTopBar = (0, 272, width * 2, (height - 51) * 2)
 boundBoxNoDash = (20, 66, width * 2 - 20, (height - 51) * 2 - 22)
 boundBoxNoTopBarDash = (20, 272, width * 2 - 10, (height - 51) * 2 - 12)
 
-status = {"prev_action": "", "panel_dim": 1, "window_open": False, "active_panel": [0, 0], "params": ""}
+status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "params": ""}
 
 actionList = [["Admin", "Quit", "Get Status"],
 	["Scroll", "Up", "Down"],
@@ -31,6 +31,8 @@ actionList = [["Admin", "Quit", "Get Status"],
 	["Manual Contrast", "Increase", "Decrease"],
 	["Layout", "One-Panel", "Two-Panels", "Three-Panels", "Four-Panels"],
 	["Contrast Presets", "I", "II"]]
+
+rightOptionHeight = 36
 
 """
 	Input Arguments:
@@ -83,13 +85,51 @@ def get_bbox(before, after, thresholds = None, draw = False):
 
 auto.hotkey("command", "tab")
 
-# Get and store the right click, will be used to later find where a rightClick has been made
+# Get and store the right click
 auto.moveTo(400, 100)
+beforeRight = ImageGrab.grab(bbox=boundBoxNoDash)
+beforeRight.save("Images/RightClick/beforeRight.png")
 auto.click(button='right')
-rightClick = ImageGrab.grab(bbox=(401 * 2, 101 * 2, (401 * 2 + 382), (101 * 2 + 1000)))
+afterRight = ImageGrab.grab(bbox=boundBoxNoDash)
+afterRight.save("Images/RightClick/afterRight.png")
+rightBox = get_bbox("Images/RightClick/beforeRight.png", "Images/RightClick/afterRight.png")
+rightBoxW = rightBox[2] - rightBox[0] + 1
+rightBoxH = rightBox[3] - rightBox[1] + 1
+rightClick = ImageGrab.grab(bbox=(401 * 2, 101 * 2, 401 * 2 + rightBoxW, 101 * 2 + rightBoxH))
 rightClick.save("Images/RightClick/rightClick.png")
-auto.click()
 
+# Get and store image presets
+auto.moveTo((401 * 2 + rightBoxW / 2) / 2, (101 * 2 + 374) / 2)
+time.sleep(1)
+auto.moveTo(400, 100)
+afterPresets = ImageGrab.grab(bbox=boundBoxNoDash)
+afterPresets.save("Images/RightClick/afterPresets.png")
+box = get_bbox("Images/RightClick/afterRight.png", "Images/RightClick/afterPresets.png")
+boxW = box[2] - box[0] + 1
+boxH = box[3] - box[1] + 1
+boxH = 8 * 2 + 36 * 21
+presets = ImageGrab.grab(bbox=((401 + 180 + 25) * 2, (101 + 187 - 9) * 2, (401 + 180) * 2 + boxW, (101 + 187 - 9) * 2 + boxH))
+presets.save("Images/RightClick/presets.png")
+
+# Get and store scale-rotate-flip
+auto.moveTo((401 * 2 + rightBoxW / 2) / 2, (101 * 2 + 410) / 2)
+time.sleep(1)
+auto.moveTo(400, 100)
+afterSRF = ImageGrab.grab(bbox=boundBoxNoDash)
+afterSRF.save("Images/RightClick/afterSRF.png")
+box = get_bbox("Images/RightClick/afterRight.png", "Images/RightClick/afterSRF.png")
+boxW = box[2] - box[0] + 1
+boxH = box[3] - box[1] + 1
+boxH = 8 * 2 + 36 * 7
+scaleRotateFlip = ImageGrab.grab(bbox=((401 + 180 + 25) * 2, (101 + 205 - 9) * 2, (401 + 180) * 2 + boxW, (101 + 205 - 9) * 2 + boxH))
+scaleRotateFlip.save("Images/RightClick/scaleRotateFlip.png")
+
+os.remove("Images/RightClick/beforeRight.png")
+os.remove("Images/RightClick/afterRight.png")
+os.remove("Images/RightClick/afterPresets.png")
+os.remove("Images/RightClick/afterSRF.png")
+
+auto.click()
 auto.hotkey("command", "tab")
 
 def rightClick():
@@ -98,15 +138,16 @@ def rightClick():
 	return (x1, y1, x1 + w, y1 + h)
 
 def get_status():
-	print "Status\n------"
-	print "Previous action: " + status["prev_action"] + "\n"
-	print "Panel Dimension: " + 'x'.join(status["panel_dim"]) + "\n"
-	print "Patient information window: " + ("opened" if status["window_open"] else "closed") + "\n"
+	print "\nStatus\n------"
+	print "Previous action: " + status["prev_action"]
+	print "Panel Dimension: " + str(status["panel_dim"][0]) + 'x' + str(status["panel_dim"][1])
+	print "Active panel: " + str(status["active_panel"][0]) + 'x' + str(status["active_panel"][1])
+	print "Patient information window: " + ("opened" if status["window_open"] else "closed")
 
 while (True):
 	(commandID, actionID) = (-1, -1)
 	sequence = raw_input("Gesture Command -> ")
-	(commandAction, status["params"]) = (sequence, "")
+	commandAction = sequence
 	if (sequence.find(" ") != -1):
 		commandAction = sequence[:sequence.find(" ")]
 		status["params"] = sequence[sequence.find(" ") + 1:]
@@ -116,7 +157,6 @@ while (True):
 			actionID = int(commandAction[commandAction.find("_") + 1:])
 			command = actionList[commandID][0]
 			action = actionList[commandID][actionID]
-			status["prev_action"] = str(commandID) + "_" + str(actionID)
 		except ValueError:
 			print "Unrecognized sequence of commands!\n"
 			continue
@@ -133,62 +173,74 @@ while (True):
 		elif (action == "Get Status"):
 			get_status()
 	elif (command == "Scroll"):
-		scrollAmount = 10
-		if (status["params"] != ""):
-			scrollAmount = int(status["params"])
+		scrollAmount = (10 if status["params"] == "" else int(status["params"]))
 		if (action == "Up"):
-			auto.scroll(scrollAmount)
-		elif (action == "Down"):
 			auto.scroll(-1 * scrollAmount)
+		elif (action == "Down"):
+			auto.scroll(scrollAmount)
 		else:
 			auto.click()
 	elif (command == "Flip" or command == "Rotate"):
 		if (actionID != 0):
 			(x1, y1, x2, y2) = rightClick()
-			#moveToY += ((0.036 * 9) + 0.010) * boxHeight
-			moveToX = (x1 + x2) / 4
-			moveToY = (y1 + 410) / 2
-			auto.moveTo(moveToX, moveToY)
+			auto.moveTo(((x1 + x2) / 4, (y1 + 410) / 2))
 			time.sleep(1)
-			moveToX += (382 + 434) / 4
+			(x1, y1, w, h) = auto.locateOnScreen("Images/RightClick/scaleRotateFlip.png")
+			y1 += 8 + 18
 			if (command == "Flip" and action == "Vertical"):
-				moveToY += 36 / 2
+				y1 += 36
 			elif (command == "Rotate" and action == "Clockwise"):
-				moveToY += 36 * 2 / 2
+				y1 += 36 * 2
 			elif (command == "Rotate" and action == "Counter-Clockwise"):
-				moveToY += 36 * 3 / 2
-			auto.moveTo(moveToX, moveToY)
+				y1 += 36 * 3
+			auto.moveTo(x1 / 2 + w / 4, y1 / 2)
 		auto.click()
 	elif (command == "Zoom"):
 		(oldLocationX, oldLocationY) = auto.position()
 		(x1, y1, x2, y2) = rightClick()
-		#moveToY += 0.036 * boxHeight
-		moveToX = (x1 + x2) / 4
-		moveToY = (y1 + 112) / 2
-		auto.moveTo(moveToX, moveToY)
+		auto.moveTo((x1 + x2) / 4, (y1 + 112) / 2)
 		auto.click()
 		auto.moveTo(oldLocationX, oldLocationY)
 		auto.mouseDown()
 		try:
-			if (actionID == 0):
-				while (True):
-					zoomLevel = raw_input("Enter Zoom Level (negative value to zoom out) -> ")
-					if (zoomLevel.find("-") != -1):
-						auto.moveTo(oldLocationX, oldLocationY - int(zoomLevel[zoomLevel.find("-") + 1:]))
+			if (action == "Zoom"):
+				auto.hotkey("command", "tab")
+				invalidFormat = True
+				while (invalidFormat):
+					rawInput = raw_input("Enter Zoom Level <In/Out> <level> -> ")
+					if (rawInput.find(" ") != -1):
+						direction = rawInput[:rawInput.find(" ")]
+						level = int(rawInput[rawInput.find(" ") + 1:])
+						invalidFormat = False
+						auto.hotkey("command", "tab")
 					else:
-						auto.moveTo(oldLocationX, oldLocationY - int(zoomLevel))
-				#auto.moveTo(oldLocationX, oldLocationY + 100)
-			elif ((actionID == 1 or actionID == 2) and status["params"] != ""):
-				if (status["params"].find("-") != -1):
-					auto.moveTo(oldLocationX, oldLocationY - int(status["params"][status["params"].find("-") + 1:]))
+						print "The zoom parameters you entered are incorrectly formatted: <In/Out> <level>\n"
+			else:
+				if (status["params"] != ""):
+					level = (-1 * int(status["params"]) if action == "In" else int(status["params"]))
 				else:
-					auto.moveTo(oldLocationX, oldLocationY + int(status["params"]))
+					level = (-20 if action == "In" else 20)
+			auto.moveTo(oldLocationX, oldLocationY + level)
 		except ValueError:
 			print "Unrecognized parameter for zooming!\n"
 			continue
 		auto.mouseUp()
-	elif (command == "Switch"):
-		#auto.click(button='right')
+	elif (command == "Switch Panel"):
+		firstW = (float(boundBox[2] - boundBox[0]) / (float(status["panel_dim"][1]) * 4.0))
+		firstH = (float(height) / (float(status["panel_dim"][0]) * 2.0))
+		jumpW = (firstW * 2.0 if status["panel_dim"][1] != 1 else 0)
+		jumpH = (firstH * 2.0 if status["panel_dim"][0] != 1 else 0)
+		if (action == "Left" and status["active_panel"][1] > 1):
+			status["active_panel"][1] -= 1
+		elif (action == "Right" and status["active_panel"][1] < status["panel_dim"][1]):
+			status["active_panel"][1] += 1
+		elif (action == "Up" and status["active_panel"][0] > 1):
+			status["active_panel"][0] -= 1
+		elif (action == "Down" and status["active_panel"][0] < status["panel_dim"][0]):
+			status["active_panel"][0] += 1
+		moveToX = firstW + (jumpW * (status["active_panel"][1] - 1))
+		moveToY = firstH + (jumpH * (status["active_panel"][0] - 1))
+		auto.moveTo(moveToX, moveToY)
 		auto.click()
 	elif (command == "Pan"):
 		(oldLocationX, oldLocationY) = auto.position()
@@ -198,14 +250,37 @@ while (True):
 		auto.moveTo(moveToX, moveToY)
 		auto.click()
 		auto.moveTo(oldLocationX, oldLocationY)
+		panAmount = 20
+		(dragToX, dragToY) = (oldLocationX, oldLocationY)
+		try:
+			if (action == "Pan"):
+				auto.hotkey("command", "tab")
+				invalidFormat = True
+				while (invalidFormat):
+					rawInput = raw_input("Enter for Pan: <direction> <level> -> ")
+					if (rawInput.find(" ") != -1):
+						direction = rawInput[:rawInput.find(" ")]
+						level = str(rawInput[rawInput.find(" ") + 1:])
+						invalidFormat = False
+						auto.hotkey("command", "tab")
+					else:
+						print "The pan parameters you entered are incorrectly formatted: <direction> <level>\n"
+			else:
+				if (status["params"] != ""):
+					level = (int(status["params"]) if action == "Increase" else -1 * int(status["params"]))
+				else:
+					level = (20 if action == "Increase" else -20)
+			auto.moveTo(moveToX, moveToY + level)
+		except ValueError:
+			print "Unrecognized parameter for zooming!\n"
+			continue
 		(width, height) = auto.size()
 		auto.dragTo(width / 2, height / 2, button="left")
 	elif (command == "Ruler"):
 		if (action == "Ruler" or action == "Measure"):
 			(x1, y1, x2, y2) = rightClick()
-			#moveToY += (0.036 * 3) * boxHeight
 			moveToX = (x1 + x2) / 4
-			moveToY = (y1 + 148 + 36) / 2
+			moveToY = (y1 + 184) / 2
 			auto.moveTo(moveToX, moveToY)
 			auto.click()
 		if (action == "Measure"):
@@ -265,30 +340,46 @@ while (True):
 				close = auto.locateOnScreen("Images/window_seriesThumbnailClose_Red.png")
 			if (close is None):
 				close = auto.locateOnScreen("Images/window_seriesThumbnailClose_Gray.png")
-			(x1, y1, w, h)
+			(x1, y1, w, h) = close
 			x2 = x1 + w
 			y2 = y1 + h
 			auto.moveTo((x1 + x2) / 4, (y1 + y2) / 4)
 			auto.click()
 			status["window_open"] = (not status["window_open"])
 	elif (command == "Manual Contrast"):
-		(oldLocationX, oldLocationY) = auto.position()
 		(x1, y1, x2, y2) = rightClick()
 		moveToX = (x1 + x2) / 4
 		moveToY = (y1 + 76) / 2
 		auto.moveTo(moveToX, moveToY)
 		auto.click()
-		auto.moveTo(oldLocationX, oldLocationY)
+		firstW = (float(boundBox[2] - boundBox[0]) / (float(status["panel_dim"][1]) * 4.0))
+		firstH = (float(height) / (float(status["panel_dim"][0]) * 2.0))
+		jumpW = (firstW * 2.0 if status["panel_dim"][1] != 1 else 0)
+		jumpH = (firstH * 2.0 if status["panel_dim"][0] != 1 else 0)
+		moveToX = firstW + (jumpW * (status["active_panel"][1] - 1))
+		moveToY = firstH + (jumpH * (status["active_panel"][0] - 1))
+		auto.moveTo(moveToX, moveToY)
 		auto.mouseDown()
-		#if (actionID == 0):
-		#	auto.dragTo(oldLocationX, moveToY)
-		if (action == "Increase"):
-			auto.scroll(int(status["params"]))
-		elif (action == "Decrease"):
-			auto.scroll(-1 * int(status["params"]))
-		else:
-			auto.scroll(20)
+		try:
+			if (action == "Manual Contrast"):
+				auto.hotkey("command", "tab")
+				contrastLevel = raw_input("Enter Contrast Level (negative value to decrease) -> ")
+				auto.hotkey("command", "tab")
+				if (contrastLevel.find("-") != -1):
+					level = -1 * int(contrastLevel[contrastLevel.find("-") + 1:])
+				else:
+					level = int(contrastLevel)
+			else:
+				if (status["params"] != ""):
+					level = (int(status["params"]) if action == "Increase" else -1 * int(status["params"]))
+				else:
+					level = (20 if action == "Increase" else -20)
+			auto.moveTo(moveToX, moveToY + level)
+		except ValueError:
+			print "Unrecognized parameter for zooming!\n"
+			continue
 		auto.mouseUp()
+		auto.moveTo(moveToX, moveToY)
 	elif (command == "Layout"):
 		noDash = ImageGrab.grab(bbox=boundBoxNoTopBarDash)
 		noDash.save("Images/layout_noDash.png")
@@ -306,50 +397,61 @@ while (True):
 		y1 += 272
 		if (action == "One-Panel"):
 			auto.moveTo(x1 / 2 + 45, y1 / 2 + 64)
-			auto.click()
+			status["panel_dim"][0] = 1
+			status["panel_dim"][1] = 1
 		elif (action == "Two-Panels"):
 			auto.moveTo(x1 / 2 + 107, y1 / 2 + 64)
-			auto.click()
+			status["panel_dim"][0] = 1
+			status["panel_dim"][1] = 2
 		elif (action == "Three-Panels"):
 			auto.moveTo(x1 / 2 + 169, y1 / 2 + 64)
-			auto.click()
+			status["panel_dim"][0] = 1
+			status["panel_dim"][1] = 3
 		elif (action == "Four-Panels"):
 			auto.moveTo(x1 / 2 + 231, y1 / 2 + 64)
-			auto.click()
+			status["panel_dim"][0] = 1
+			status["panel_dim"][1] = 4
+		auto.click()
 	elif (command == "Contrast Presets"):
 		(x1, y1, x2, y2) = rightClick()
-		moveToX = (x1 + x2) / 4
-		moveToY = (y1 + 374) / 2
-		before1 = ImageGrab.grab(bbox=(x2, 44, width * 2, moveToY * 2 - 18))
-		before1.save("Images/contrast_before1.png")
-		before2 = ImageGrab.grab(bbox=(x2, moveToY * 2 + 18, width * 2, (height - 51) * 2))
-		before2.save("Images/contrast_before2.png")
-		auto.moveTo(moveToX, moveToY)
+		auto.moveTo((x1 + x2) / 4, (y1 + 374) / 2)
 		time.sleep(1)
-		after1 = ImageGrab.grab(bbox=(x2, 44, width * 2, moveToY * 2 - 18))
-		after1.save("Images/contrast_after1.png")
-		after2 = ImageGrab.grab(bbox=(x2, moveToY * 2 + 18, width * 2, (height - 51) * 2))
-		after2.save("Images/contrast_after2.png")
-		(x1, y1, x2, y2) = get_bbox("Images/contrast_before1.png", "Images/contrast_after1.png")
-		if (y2 - y1 + 1 == (moveToY * 2 - 18) - 44 and x2 - x1 + 1 == width * 2):
-			(x1, y1, x2, y2) = get_bbox("Images/contrast_before2.png", "Images/contrast_after2.png")
-			moveToY = y1 + 53
-		else:
-			moveToY -= 18
-		diff = ImageGrab.grab(bbox=(x1, moveToY, x2, y2))
-		diff.save("Images/contrast_diff.png")
-		moveToX = (x1 + x2) / 4
+		(x1, y1, w, h) = auto.locateOnScreen("Images/RightClick/presets.png")
+		y1 += 8 + 18
 		if (action == "I"):
-			moveToY += 24
+			y1 += 36
 		elif (action == "II"):
-			moveToY += 42
-		auto.moveTo(moveToX, moveToY)
+			y1 += 36 * 2
+		auto.moveTo(x1 / 2 + w / 4, y1 / 2)
 		auto.click()
+	status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
+	status["params"] = ""
 	auto.hotkey("command", "tab")
 
 
 # When quitting program, remove anything saved
 if os.path.exists("Images/series-thumbnail-close.png"):
 	os.remove("Images/series-thumbnail-close.png")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
