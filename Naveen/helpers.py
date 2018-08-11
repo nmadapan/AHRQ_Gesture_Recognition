@@ -33,6 +33,17 @@ def wait_for_kinect(kr):
 			sys.exit('Waited for more than 30 seconds. Exiting')
 	print '\nAll Kinect modules connected !!'
 
+def get_body_length(line):
+	# line is a list of 75 elements. [x, y, z, so on for all of the kinect joints]
+
+	torso_id = 0
+	neck_id = 2
+
+	torso = np.array(line[3*torso_id:3*torso_id+3])
+	neck = np.array(line[3*neck_id:3*neck_id+3])
+
+	return np.linalg.norm(neck-torso)
+
 def skelfile_cmp(path1, path2):
 	# Example usage:
 		# skelfile_cmp('4_1_S2_L2_Zoom_In_skel.txt', '3_0_S2_L2_Rotate_X_skel.txt')
@@ -132,3 +143,62 @@ def json_to_dict(json_filepath):
 	with open(json_filepath, 'r') as fp:
 		var = json.load(fp)
 	return var
+
+
+def flip_skeleton(skel_path, replace = False):
+	############
+	# Flips the body skeleton along the persons vertical axis.
+	# Input argument:
+	#	* skel_path: path to skeleton file. Each line in the file has 75 elements. [x1, y1, z1 ...]
+	#	* replace: file will be replace if True.
+	#
+	# Assumptions:
+	#	* There is only roll angle about person's veritcal axis
+	#	* Kinect is not tilted.
+	###########
+	
+	if(not replace): newname = os.path.basename(skel_path)[:-4] + '_flip.txt'
+	else: newname = os.path.basename(skel_path)
+
+	with open(skel_path, 'r') as fp:
+		lines = fp.readlines()
+		lines = [map(float, line.strip().split(' ')) for line in lines]
+
+	fp = open(os.path.join(os.path.dirname(skel_path), newname), 'w') 
+
+	left_sh_idx = 4
+	right_sh_idx = 8
+	spine_idx = 0
+
+	for line in lines:
+		torso = np.array(line[3*spine_idx:3*spine_idx+3] )
+		left_sh = np.array(line[3*left_sh_idx:3*left_sh_idx+3])
+		right_sh = np.array(line[3*right_sh_idx:3*right_sh_idx+3])
+		
+		mat = np.reshape(line, (25, 3))
+
+		# Normalize w.r.t torso
+		mat = mat - torso
+
+		# Find the theta
+		zr = right_sh[-1]
+		zl = left_sh[-1]
+		shoulder_length = np.linalg.norm(left_sh-right_sh)
+		theta = np.arcsin((zr-zl)/shoulder_length)
+
+		R = np.eye(3)
+		R[0, 0] = np.cos(theta)
+		R[0, 2] = np.sin(theta)
+		R[2, 0] = -np.sin(theta)
+		R[2, 2] = np.cos(theta)
+
+		# Transform the matrix
+		mat = np.dot(R, mat.transpose())
+		mat[0, :] = -mat[0, :]
+		mat = mat.transpose() + torso
+
+		line = mat.flatten()
+		fp.write(' '.join(map(str, line)) + '\n')
+
+	fp.flush()
+	fp.close()

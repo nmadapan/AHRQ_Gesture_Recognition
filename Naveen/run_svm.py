@@ -40,6 +40,8 @@ for txt_file in fe.skel_file_order:
 	for line in np.round(fingers_data.get(key),4):
 		data_merge.append(line)
 
+
+
 out['data_input'] = np.concatenate([out['data_input'], np.array(data_merge)], axis = 1)
 
 # Randomize data input and output
