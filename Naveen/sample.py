@@ -2,7 +2,20 @@ import numpy as np
 import json
 from helpers import *
 
-print np.sqrt(6)
+var = [None]
+a =2
+
+def func(l, b):
+	l[-1] = 2
+	b = 3
+func(var,a)
+
+print(var)
+print(a)
+
+
+
+
 
 # fpaths = glob(os.path.join('..', 'Data', 'L2', '*_skel.txt'))
 # fpaths = [os.path.basename(fpath) for fpath in fpaths]
