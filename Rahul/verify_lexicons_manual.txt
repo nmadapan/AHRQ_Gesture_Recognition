@@ -1,7 +1,0 @@
-S4_L6
-	* Good
-
-S4_L2
-	* 8_1  8_2 are exactly same
-
-	
