@@ -13,6 +13,9 @@ auto.PAUSE = 0.75
 (width, height) = auto.size()
 (nativeW, nativeH) = ImageGrab.grab().size
 scale = nativeW / width
+print "WxH: %s" % ((width, height),)
+print "nativeW, nativeH: %s" % ((nativeW, nativeH),)
+print str(scale)
 
 """
 	Input Arguments:
@@ -97,19 +100,24 @@ topBarHeight = topBarBox[3]
 #topBarBox = (0, 0, nativeW, topBarHeight)
 #ImageGrab.grab(bbox=topBarBox).save(os.path.join("Images", "topBarBox.png"))
 #os.remove(os.path.join("Images", "fullscreen.png"))
-os.remove(os.path.join("Images", "afteropBar.png"))
+#os.remove(os.path.join("Images", "afterTopBar.png"))
 
 
 # Get border of dashed region
 auto.moveTo(width / 2.0, height / 2.0)
 auto.click(button='right')
-boundBoxNoDash = get_bbox(os.path.join("Images", "fullscreen.png"), ImageGrab.grab())
-boundBoxNoDash = (boundBoxNoDash[0] + (2 * scale), boundBoxNoDash[1] + (2 * scale), boundBoxNoDash[2] + (2 * scale), boundBoxNoDash[3] + (2 * scale))
+noDash = ImageGrab.grab()
+noDash.save(os.path.join("Images", "noDash.png"))
+boundBoxNoDash = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "noDash.png"))
+boundBoxNoDash = (boundBoxNoDash[0] + (2 * scale), boundBoxNoDash[1] + (2 * scale), boundBoxNoDash[2] - (2 * scale), boundBoxNoDash[3] - (2 * scale))
 ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("Images", "boundBoxNoDash.png"))
 #borderDash = topBarHeight / 2.0
 #boundBoxNoDash = (borderDash, borderDash, nativeW - borderDash, nativeH - borderDash)
 (bbndW, bbndH) = ((boundBoxNoDash[2] - boundBoxNoDash[0]) / scale, (boundBoxNoDash[3] - boundBoxNoDash[1]) / scale)
+print "boundBoxNoDash: %s" % (boundBoxNoDash,)
 print "boundBoxNoDash WxH: %s" % ((bbndW, bbndH),)
+#os.remove(os.path.join("Images", "noDash.png"))
+#os.remove(os.path.join("Images", "fullscreen.png"))
 
 
 # Get and store the right click
