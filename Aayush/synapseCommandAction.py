@@ -7,6 +7,13 @@ import pyautogui as auto
 from PIL import ImageGrab
 #from PIL import ImageChops
 
+auto.FAILSAFE = True
+auto.PAUSE = 0.75
+
+(width, height) = auto.size()
+(nativeW, nativeH) = ImageGrab.grab().size
+scale = nativeW / width
+
 """
 	Input Arguments:
 		before, after: path to the image before right click, and after right click OR
@@ -65,43 +72,45 @@ if (platform.system() == "Windows"):
 	navType = "alt"
 else:
 	#(offsetY1, offsetY2) = (44, 84)
-	macHeader = 44
+	macHeader = (44.0 / 2880.0) * (nativeH)
 	#borderDash = 22
 	navType = "command"
 
-auto.FAILSAFE = True
-auto.PAUSE = 0.75
 
-(width, height) = auto.size()
-(nativeW, nativeH) = ImageGrab.grab().size
-scale = nativeW / width
-
+print "Warming up synapse system...\n"
 auto.hotkey(navType, "tab")
 
+
+# Get height of top bar and save it
 auto.moveTo(width / 2.0, height / 2.0)
 time.sleep(1)
-beforeTopBar = ImageGrab.grab()
-beforeTopBar.save(os.path.join("Images", "beforeTopBar.png"))
+fullscreen = ImageGrab.grab()
+fullscreen.save(os.path.join("Images", "fullscreen.png"))
 auto.moveTo(width / 2.0, 0)
 time.sleep(1)
 auto.moveTo(width / 2.0, macHeader)
 time.sleep(1)
 afterTopBar = ImageGrab.grab()
 afterTopBar.save(os.path.join("Images", "afterTopBar.png"))
-topBarBox = get_bbox(os.path.join("Images", "beforeTopBar.png"), os.path.join("Images", "afterTopBar.png"))
+topBarBox = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "afterTopBar.png"))
 topBarHeight = topBarBox[3]
-topBarBox = (0, 0, nativeW, topBarHeight)
+#topBarBox = (0, 0, nativeW, topBarHeight)
 #ImageGrab.grab(bbox=topBarBox).save(os.path.join("Images", "topBarBox.png"))
-os.remove(os.path.join("Images", "beforeTopBar.png"))
+#os.remove(os.path.join("Images", "fullscreen.png"))
 os.remove(os.path.join("Images", "afteropBar.png"))
 
+
+# Get border of dashed region
 auto.moveTo(width / 2.0, height / 2.0)
 auto.click(button='right')
-noDash = ImageGrab.grab()
-
-borderDash = topBarHeight / 2.0
-boundBoxNoDash = (borderDash, borderDash, nativeW - borderDash, nativeH - borderDash)
+boundBoxNoDash = get_bbox(os.path.join("Images", "fullscreen.png"), ImageGrab.grab())
+boundBoxNoDash = (boundBoxNoDash[0] + (2 * scale), boundBoxNoDash[1] + (2 * scale), boundBoxNoDash[2] + (2 * scale), boundBoxNoDash[3] + (2 * scale))
+ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("Images", "boundBoxNoDash.png"))
+#borderDash = topBarHeight / 2.0
+#boundBoxNoDash = (borderDash, borderDash, nativeW - borderDash, nativeH - borderDash)
 (bbndW, bbndH) = ((boundBoxNoDash[2] - boundBoxNoDash[0]) / scale, (boundBoxNoDash[3] - boundBoxNoDash[1]) / scale)
+print "boundBoxNoDash WxH: %s" % ((bbndW, bbndH),)
+
 
 # Get and store the right click
 auto.moveTo(bbndW / 2.0, bbndH / 2.0)
@@ -114,13 +123,10 @@ rightBox = get_bbox(os.path.join("Images", "RightClick", "beforeRight.png"), os.
 print "rightBox: %s" % (rightBox,)
 (rightBoxW, rightBoxH) = (rightBox[2] - rightBox[0] + 1, rightBox[3] - rightBox[1] + 1)
 print "rightBox WxH: %s" % ((rightBoxW, rightBoxH),)
-
 optionH = ((rightBoxH / 1000.0) * 36) / scale
 rightHR = ((rightBoxH / 1000.0) * 10) / scale
-
 rightIcons = ((rightBoxH / 1000.0) * 50)
 rightOffset = ((rightBoxH / 1000.0) * 58)
-
 #(rightBoxW, rightBoxH) = (382, 1000)
 """(x1, y1) = ((rightBox[0] + boundBoxNoDash[0]) * scale / 2.0, (rightBox[1] + boundBoxNoDash[1]) * scale / 2.0)
 rightClick = ImageGrab.grab(bbox=((x1) * scale, (y1) * scale, (x1) * scale + rightBoxW, (y1) * scale + rightBoxH))
@@ -128,6 +134,7 @@ rightClick.save(os.path.join("Images", "RightClick", "rightClick.png"))"""
 (rightx1, righty1) = (rightBox[0] + boundBoxNoDash[0], rightBox[1] + boundBoxNoDash[1])
 rightClick = ImageGrab.grab(bbox=(rightx1 + rightIcons, righty1 + rightOffset, rightx1 + rightBoxW, righty1 + rightBoxH))
 rightClick.save(os.path.join("Images", "RightClick", "rightClick.png"))
+
 
 # Get and store image presets
 auto.moveTo((rightx1 / scale + (rightx1 + rightBoxW) / scale) / 2.0, ((righty1 + rightOffset) / scale + (optionH * 8.5) + (rightHR)))
@@ -140,9 +147,9 @@ box = get_bbox(os.path.join("Images", "RightClick", "afterRight.png"), os.path.j
 (x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
 #boxH = 8 * 2 + 36 * 21
 #presets = ImageGrab.grab(bbox=(((x1) + 180 + 25) * scale, ((y1) + 187 - 9) * scale, ((x1) + 180) * scale + boxW, ((y1) + 187 - 9) * scale + boxH))
-presetsW = boxW
 presets = ImageGrab.grab(bbox=(x1 + rightIcons, y1, x1 + boxW, y1 + boxH))
 presets.save(os.path.join("Images", "RightClick", "presets.png"))
+
 
 # Get and store scale-rotate-flip
 auto.moveTo((rightx1 / scale + (rightx1 + rightBoxW) / scale) / 2.0, ((righty1 + rightOffset) / scale + (optionH * 9.5) + (rightHR)))
@@ -155,7 +162,6 @@ box = get_bbox(os.path.join("Images", "RightClick", "afterRight.png"), os.path.j
 (x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
 #boxH = 8 * 2 + 36 * 7
 #scaleRotateFlip = ImageGrab.grab(bbox=(((x1) + 180 + 25) * scale, ((y1) + 205 - 9) * scale, ((x1) + 180) * scale + boxW, ((y1) + 205 - 9) * scale + boxH))
-scaleRotateFlipW = boxW
 scaleRotateFlip = ImageGrab.grab(bbox=(x1 + rightIcons, y1, x1 + boxW, y1 + boxH))
 scaleRotateFlip.save(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
 
@@ -166,18 +172,21 @@ os.remove(os.path.join("Images", "RightClick", "afterSRF.png"))
 
 auto.click()
 auto.hotkey(navType, "tab")
-
+print "Completed warm-up, make your gestures!\n"
 
 
 status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "params": ""}
 
 def resetPanelMoves():
-	status["firstW"] = (float(boundBoxNoDash[2] - boundBoxNoDash[0]) / (float(status["panel_dim"][1]) * 4.0))
-	status["firstH"] = (float(height) / (float(status["panel_dim"][0]) * 2.0))
+	status["firstW"] = (float(bbndW) / (float(status["panel_dim"][1]) * 4.0))
+	status["firstH"] = (float(bbndH) / (float(status["panel_dim"][0]) * 2.0))
 	status["jumpW"] = (status["firstW"] * 2.0 if status["panel_dim"][1] != 1 else 0)
 	status["jumpH"] = (status["firstH"] * 2.0 if status["panel_dim"][0] != 1 else 0)
 
 resetPanelMoves()
+
+#def moveToActivePanel():
+#	asdf
 
 actionList = [["Admin", "Quit", "Get Status"],
 	["Scroll", "Up", "Down"],
@@ -350,6 +359,7 @@ while (True):
 			auto.moveTo(oldLocationX, macHeader)
 			afterHover = ImageGrab.grab(bbox=(borderDash, topBarHeight + borderDash, nativeW - borderDash, nativeH - borderDash))
 			afterHover.save(os.path.join("Images", "window_afterHover.png"))
+			#afterHover = ImageGrab.grab(bbox=())
 			auto.moveTo((219.0 / 1440.0) * width, (77.0 / 900.0) * height)
 			auto.click()
 			time.sleep(5)
@@ -387,7 +397,6 @@ while (True):
 		if (isValid):
 			rightClick(76)
 			auto.click()
-			moveToActivePanel()
 			auto.mouseDown()
 			if (status["params"] != ""):
 				level = (int(status["params"]) if action == "Increase" else -1 * int(status["params"]))
