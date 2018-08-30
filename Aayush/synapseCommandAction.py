@@ -100,7 +100,7 @@ topBarHeight = topBarBox[3]
 #topBarBox = (0, 0, nativeW, topBarHeight)
 #ImageGrab.grab(bbox=topBarBox).save(os.path.join("Images", "topBarBox.png"))
 #os.remove(os.path.join("Images", "fullscreen.png"))
-#os.remove(os.path.join("Images", "afterTopBar.png"))
+os.remove(os.path.join("Images", "afterTopBar.png"))
 
 
 # Get border of dashed region
@@ -109,7 +109,8 @@ auto.click(button='right')
 noDash = ImageGrab.grab()
 noDash.save(os.path.join("Images", "noDash.png"))
 boundBoxNoDash = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "noDash.png"))
-boundBoxNoDash = (boundBoxNoDash[0] + (2 * scale), boundBoxNoDash[1] + (2 * scale), boundBoxNoDash[2] - (2 * scale), boundBoxNoDash[3] - (2 * scale))
+print "boundBoxNoDash: %s" % (boundBoxNoDash,)
+boundBoxNoDash = (boundBoxNoDash[0] + (10 * scale), boundBoxNoDash[1] + (10 * scale), boundBoxNoDash[2] - (10 * scale), boundBoxNoDash[3] - (10 * scale))
 ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("Images", "boundBoxNoDash.png"))
 #borderDash = topBarHeight / 2.0
 #boundBoxNoDash = (borderDash, borderDash, nativeW - borderDash, nativeH - borderDash)
@@ -118,10 +119,11 @@ print "boundBoxNoDash: %s" % (boundBoxNoDash,)
 print "boundBoxNoDash WxH: %s" % ((bbndW, bbndH),)
 #os.remove(os.path.join("Images", "noDash.png"))
 #os.remove(os.path.join("Images", "fullscreen.png"))
+auto.click()
 
 
 # Get and store the right click
-auto.moveTo(bbndW / 2.0, bbndH / 2.0)
+auto.moveTo(width / 2.0, height / 2.0)
 beforeRight = ImageGrab.grab(bbox=boundBoxNoDash)
 beforeRight.save(os.path.join("Images", "RightClick", "beforeRight.png"))
 auto.click(button='right')
@@ -151,7 +153,9 @@ auto.moveTo(rightx1 / scale, righty1 / scale)
 afterPresets = ImageGrab.grab(bbox=boundBoxNoDash)
 afterPresets.save(os.path.join("Images", "RightClick", "afterPresets.png"))
 box = get_bbox(os.path.join("Images", "RightClick", "afterRight.png"), os.path.join("Images", "RightClick", "afterPresets.png"))
+print "presets box: %s" % (box,)
 (boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
+print "presets box WxH: %s" % ((boxW, boxH),)
 (x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
 #boxH = 8 * 2 + 36 * 21
 #presets = ImageGrab.grab(bbox=(((x1) + 180 + 25) * scale, ((y1) + 187 - 9) * scale, ((x1) + 180) * scale + boxW, ((y1) + 187 - 9) * scale + boxH))
@@ -166,7 +170,9 @@ auto.moveTo(rightx1 / scale, righty1 / scale)
 afterSRF = ImageGrab.grab(bbox=boundBoxNoDash)
 afterSRF.save(os.path.join("Images", "RightClick", "afterSRF.png"))
 box = get_bbox(os.path.join("Images", "RightClick", "afterRight.png"), os.path.join("Images", "RightClick", "afterSRF.png"))
+print "srf box: %s" % (box,)
 (boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
+print "srf box WxH: %s" % ((boxW, boxH),)
 (x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
 #boxH = 8 * 2 + 36 * 7
 #scaleRotateFlip = ImageGrab.grab(bbox=(((x1) + 180 + 25) * scale, ((y1) + 205 - 9) * scale, ((x1) + 180) * scale + boxW, ((y1) + 205 - 9) * scale + boxH))
@@ -186,15 +192,17 @@ print "Completed warm-up, make your gestures!\n"
 status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "params": ""}
 
 def resetPanelMoves():
-	status["firstW"] = (float(bbndW) / (float(status["panel_dim"][1]) * 4.0))
-	status["firstH"] = (float(bbndH) / (float(status["panel_dim"][0]) * 2.0))
+	status["firstW"] = (float(width) / (float(status["panel_dim"][1]) * 2.0))
+	status["firstH"] = (float(height) / (float(status["panel_dim"][0]) * 2.0))
 	status["jumpW"] = (status["firstW"] * 2.0 if status["panel_dim"][1] != 1 else 0)
 	status["jumpH"] = (status["firstH"] * 2.0 if status["panel_dim"][0] != 1 else 0)
 
 resetPanelMoves()
 
-#def moveToActivePanel():
-#	asdf
+def moveToActivePanel():
+	moveToX = status["firstW"] + (status["active_panel"][1] - 1) * (status["jumpW"])
+	moveToY = status["firstH"] + (status["active_panel"][0] - 1) * (status["jumpH"])
+	auto.moveTo(moveToX, moveToY)
 
 actionList = [["Admin", "Quit", "Get Status"],
 	["Scroll", "Up", "Down"],
@@ -245,7 +253,9 @@ def defaultAction(commandID, paramSizes):
 def rightClick(offset):
 	auto.click(button='right')
 	(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "rightClick.png"))
-	auto.moveTo((2 * x1 + w) / 4, (y1 + (offset / 1000.0) * rightBoxH) / 2)
+	#print "rightClick function: %s" % ((x1, y1, w, h),)
+	#auto.moveTo((2 * x1 + w) / 4.0, (y1 + (offset / 1000.0) * rightBoxH) / 2.0)
+	auto.moveTo((x1 / scale) + (w / 2.0) * scale, (y1 + (offset / 1000.0) * rightBoxH) / scale)
 	
 def get_status():
 	print "\nStatus\n------"
@@ -284,26 +294,29 @@ while (True):
 			get_status()
 	elif (command == "Scroll" and action != "Scroll"):
 		scrollAmount = (10 if status["params"] == "" else int(status["params"]))
-		auto.scroll((-1 * scrollAmount if action == "Up" else scrollAmount))
+		scrollAmount = (-1 * scrollAmount if action == "Up" else scrollAmount)
+		auto.scroll(scrollAmount)
 	elif (command == "Flip" and action != "Flip"):
-		rightClick(410)
+		rightClick(352)
 		time.sleep(1)
 		(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
-		y1 += (8 + (optionH / 2.0) if action == "Horizontal" else 8 + (optionH * 1.5))
-		auto.moveTo(x1 / 2 + w / 4, y1 / 2)
+		y1 = y1 / scale;
+		y1 += (8 + (optionH * 0.5) if action == "Horizontal" else 8 + (optionH * 1.5))
+		auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
 		auto.click()
 	elif (command == "Rotate" and action != "Rotate"):
-		rightClick(410)
+		rightClick(352)
 		time.sleep(1)
 		(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
+		y1 = y1 / scale
 		y1 += (8 + (optionH * 2.5) if action == "Clockwise" else 8 + (optionH * 3.5))
-		auto.moveTo(x1 / 2 + w / 4, y1 / 2)
+		auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
 		auto.click()
 	elif (command == "Zoom"):
 		(isValid, action) = ((True, action) if command != action else defaultAction(commandID, [0, 1]))
 		if (isValid):
 			(oldLocationX, oldLocationY) = auto.position()
-			rightClick(112)
+			rightClick(54)
 			auto.click()
 			auto.moveTo(oldLocationX, oldLocationY)
 			auto.mouseDown()
@@ -316,12 +329,13 @@ while (True):
 	elif (command == "Switch Panel" and action != "Switch Panel"):
 		status["active_panel"][1] += (1 if (action == "Left" and status["active_panel"][1] > 1) else -1)
 		status["active_panel"][0] += (1 if (action == "Up" and status["active_panel"][0] > 1) else -1)
+		moveToActivePanel()
 		auto.click()
 	elif (command == "Pan"):
 		(isValid, action) = ((True, action) if command != action else defaultAction(commandID, [0, 1]))
 		if (isValid):
 			(oldLocationX, oldLocationY) = auto.position()
-			rightClick(148)
+			rightClick(90)
 			auto.click()
 			auto.moveTo(oldLocationX, oldLocationY)
 			auto.mouseDown()
@@ -337,7 +351,7 @@ while (True):
 		if (action == "Measure"):
 			(isValid, action) = ((True, action) if command != action else defaultAction(commandID, [2, 4]))
 			if (isValid):
-				rightClick(184)
+				rightClick(126)
 				auto.click()
 				points = status["params"].split("_")
 				try:
@@ -365,16 +379,16 @@ while (True):
 			auto.moveTo(oldLocationX, 0)
 			time.sleep(1)
 			auto.moveTo(oldLocationX, macHeader)
-			afterHover = ImageGrab.grab(bbox=(borderDash, topBarHeight + borderDash, nativeW - borderDash, nativeH - borderDash))
+			afterHover = ImageGrab.grab(bbox=(boundBoxNoDash[0], boundBoxNoDash[1] + topBarHeight + (1 * scale), boundBoxNoDash[2], boundBoxNoDash[3]))
 			afterHover.save(os.path.join("Images", "window_afterHover.png"))
-			#afterHover = ImageGrab.grab(bbox=())
-			auto.moveTo((219.0 / 1440.0) * width, (77.0 / 900.0) * height)
+			#auto.moveTo((219.0 / 1440.0) * width, (77.0 / 900.0) * height)
+			auto.moveTo((329.0 / 1920.0) * width, (82.0 / 1080.0) * height)
 			auto.click()
 			time.sleep(5)
-			afterHover = ImageGrab.grab(bbox=(borderDash, topBarHeight + borderDash, nativeW - borderDash, nativeH - borderDash))
+			seriesThumbnail = ImageGrab.grab(bbox=(boundBoxNoDash[0], boundBoxNoDash[1] + topBarHeight + (1 * scale), boundBoxNoDash[2], boundBoxNoDash[3]))
 			seriesThumbnail.save(os.path.join("Images", "window_seriesThumbnail.png"))
 			(x1, y1, x2, y2) = get_bbox(os.path.join("Images", "window_afterHover.png"), os.path.join("Images", "window_seriesThumbnail.png"))
-			x1 += (20.0 / 1440.0) * width
+			"""x1 += (20.0 / 1440.0) * width
 			y1 += (272.0 / 900.0) * height
 			diff = ImageGrab.grab(bbox=(x1, y1, x2, y2))
 			diff.save(os.path.join("Images", "window_diff.png"))
@@ -386,7 +400,9 @@ while (True):
 			auto.moveTo(x2 + 1, (2 * (y1 + 2) + 40) / 4)
 			auto.click()
 			close = ImageGrab.grab(bbox=((x2 - 83), (y1 + 2), (x2 - 83) + 90, (y1 + 2) + 40))
-			close.save(os.path.join("Images", "window_seriesThumbnailClose_Gray.png"))
+			close.save(os.path.join("Images", "window_seriesThumbnailClose_Gray.png"))"""
+			x1 += boundBoxNoDash[0]
+			y1 += boundBoxNoDash[1] + topBarHeight + (1 )
 			status["window_open"] = (not status["window_open"])
 		elif (action == "Close" and status["window_open"]):
 			close = auto.locateOnScreen(os.path.join("Images", "window_seriesThumbnailClose.png"))
@@ -403,7 +419,7 @@ while (True):
 	elif (command == "Manual Contrast"):
 		(isValid, action) = ((True, action) if command != action else defaultAction(commandID, [0, 1]))
 		if (isValid):
-			rightClick(76)
+			rightClick(18)
 			auto.click()
 			auto.mouseDown()
 			if (status["params"] != ""):
@@ -443,10 +459,10 @@ while (True):
 		auto.moveTo(status["firstW"], status["firstH"])
 		auto.click()
 	elif (command == "Contrast Presets" and action != "Contrast Presets"):
-		rightClick(374)
+		rightClick(316)
 		time.sleep(1)
 		(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "presets.png"))
-		y1 += 8 + (optionH / 2.0)
+		y1 += 8 + (optionH * 0.5)
 		if (action == "I"):
 			y1 += optionH
 		elif (action == "II"):
