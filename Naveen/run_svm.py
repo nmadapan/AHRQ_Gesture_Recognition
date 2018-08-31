@@ -6,6 +6,7 @@ from random import shuffle
 from FeatureExtractor import FeatureExtractor
 from helpers import skelfile_cmp
 import matplotlib.pyplot as plt
+
 plt.rcdefaults()
 
 skel_folder_path = 'H:\\AHRQ\\Study_IV\\Data\\Data\\L8'
