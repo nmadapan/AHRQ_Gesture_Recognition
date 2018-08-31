@@ -13,5 +13,6 @@
 	"equate_dim": true,
 	"fixed_num_frames": 40,
 	"lengths_per_frame": 10,
-	"openpose_downsample_rate": 7
+	"openpose_downsample_rate": 7,
+	"num_fingers": 5
 }
