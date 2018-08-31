@@ -364,9 +364,15 @@ class FeatureExtractor():
 				else: print message
 
 		features = []
+		self.dominant_type = [] # 1 for right hand, 0 otherwise
+
 		for skel_filepath, annot_filepath in combos:
 			temp_features = self.generate_features(skel_filepath, annot_filepath)
-			for feat in temp_features: features.append(feat)
+			temp_dom_type = []
+			for feat in temp_features: 
+				features.append(feat)
+				temp_dom_type.append(int(feat['types_order'][0]==0))
+			self.dominant_type.append(temp_dom_type)
 		return features
 
 	def generate_features_realtime(self, colproc_skel_data):
@@ -414,7 +420,6 @@ class FeatureExtractor():
 
 		## Obtain all features
 		features = self.batch_generate_features(skel_folder_path, annot_folder_path)
-		self.dominant_type = [int(feature['types_order'][0]==0) for feature in features] # 1 for right hand, 0 otherwise
 
 		## Initialize the return variable
 		out = {'data_input': [], 'data_output': []}
