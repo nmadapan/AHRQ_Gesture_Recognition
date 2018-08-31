@@ -16,11 +16,11 @@ class Realtime:
 	self.buf_rgb_size = 10
 
 	## Buffers
-	self.buf_skel = [[None, None] for _ in range(self.buf_skel_size)] # timestamp, frame_list # [..., t-3, t-2, t-1, t]
+	self.buf_skel = [(None, None) for _ in range(self.buf_skel_size)] # timestamp, frame_list # [..., t-3, t-2, t-1, t]
 	self.fl_skel_ready = True
-	self.buf_rgb = [[None, None] for _ in range(self.buf_rgb_size)] # timestamp, frame_nparray
+	self.buf_rgb = [(None, None) for _ in range(self.buf_rgb_size)] # timestamp, frame_nparray
 	self.fl_rgb_ready = True
-	self.buf_finglen = [[None, None] for _ in range(self.buf_rgb_size)] # timestamp, frame_list
+	self.buf_finglen = [(None, None) for _ in range(self.buf_rgb_size)] # timestamp, frame_list
 	self.fl_finglen_ready = True
 
 	# self.que_skel_io = [] # list of sub lists. sub list is ['R', None] or ['W', data]
