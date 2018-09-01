@@ -128,8 +128,8 @@ def calib_fingers(calib_data_path):
 	f_length=extract_fingers_from_video(calib_data_path,img_dir,xml_dir) 
 
 	return f_length
+#function check code
 # calib_data_path = 'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Data\Calib_Data1\S1_Pose1_rgb.avi'
 # print(calib_fingers(calib_data_path))
-img_path='F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\openpose\Open_Pose_Demo\examples\\realtime_fingers\img_fold'
-
-print extract_fingers_realtime(img_path)
+# img_path='F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\openpose\Open_Pose_Demo\examples\\realtime_fingers\img_fold'
+# print extract_fingers_realtime(img_path)

@@ -41,6 +41,9 @@ class kinect_reader(object):
 
 		self.color_image = np.zeros((self.color_height, self.color_width, 3), dtype=np.uint8)
 
+	def close(self):
+		self.sensor.close()
+
 	def Body_basics(self):
 		# Head/Neck/Torso
 		self.display_joint(pk.JointType_Head, pk.JointType_Neck)
