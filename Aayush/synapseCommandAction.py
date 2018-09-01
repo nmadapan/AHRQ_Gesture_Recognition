@@ -97,9 +97,6 @@ afterTopBar = ImageGrab.grab()
 afterTopBar.save(os.path.join("Images", "afterTopBar.png"))
 topBarBox = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "afterTopBar.png"))
 topBarHeight = topBarBox[3]
-#topBarBox = (0, 0, nativeW, topBarHeight)
-#ImageGrab.grab(bbox=topBarBox).save(os.path.join("Images", "topBarBox.png"))
-#os.remove(os.path.join("Images", "fullscreen.png"))
 os.remove(os.path.join("Images", "afterTopBar.png"))
 
 
@@ -117,8 +114,9 @@ ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("Images", "boundBoxNoDash.
 (bbndW, bbndH) = ((boundBoxNoDash[2] - boundBoxNoDash[0]) / scale, (boundBoxNoDash[3] - boundBoxNoDash[1]) / scale)
 print "boundBoxNoDash: %s" % (boundBoxNoDash,)
 print "boundBoxNoDash WxH: %s" % ((bbndW, bbndH),)
-#os.remove(os.path.join("Images", "noDash.png"))
-#os.remove(os.path.join("Images", "fullscreen.png"))
+os.remove(os.path.join("Images", "noDash.png"))
+os.remove(os.path.join("Images", "fullscreen.png"))
+os.remove(os.path.join("Images", "boundBoxNoDash.png"))
 auto.click()
 
 
@@ -133,21 +131,19 @@ rightBox = get_bbox(os.path.join("Images", "RightClick", "beforeRight.png"), os.
 print "rightBox: %s" % (rightBox,)
 (rightBoxW, rightBoxH) = (rightBox[2] - rightBox[0] + 1, rightBox[3] - rightBox[1] + 1)
 print "rightBox WxH: %s" % ((rightBoxW, rightBoxH),)
+
 optionH = ((rightBoxH / 1000.0) * 36) / scale
 rightHR = ((rightBoxH / 1000.0) * 10) / scale
 rightIcons = ((rightBoxH / 1000.0) * 50)
 rightOffset = ((rightBoxH / 1000.0) * 58)
-#(rightBoxW, rightBoxH) = (382, 1000)
-"""(x1, y1) = ((rightBox[0] + boundBoxNoDash[0]) * scale / 2.0, (rightBox[1] + boundBoxNoDash[1]) * scale / 2.0)
-rightClick = ImageGrab.grab(bbox=((x1) * scale, (y1) * scale, (x1) * scale + rightBoxW, (y1) * scale + rightBoxH))
-rightClick.save(os.path.join("Images", "RightClick", "rightClick.png"))"""
-(rightx1, righty1) = (rightBox[0] + boundBoxNoDash[0], rightBox[1] + boundBoxNoDash[1])
-rightClick = ImageGrab.grab(bbox=(rightx1 + rightIcons, righty1 + rightOffset, rightx1 + rightBoxW, righty1 + rightBoxH))
+
+(rightx1, righty1) = (rightBox[0] + boundBoxNoDash[0], rightBox[1] + boundBoxNoDash[1] + rightOffset)
+rightClick = ImageGrab.grab(bbox=(rightx1 + rightIcons, righty1, rightx1 + rightBoxW, righty1 + rightBoxH))
 rightClick.save(os.path.join("Images", "RightClick", "rightClick.png"))
 
 
 # Get and store image presets
-auto.moveTo((rightx1 / scale + (rightx1 + rightBoxW) / scale) / 2.0, ((righty1 + rightOffset) / scale + (optionH * 8.5) + (rightHR)))
+auto.moveTo((rightx1 + rightBoxW / 2.0) / scale, ((righty1 / scale) + (optionH * 8.5) + rightHR))
 time.sleep(1)
 auto.moveTo(rightx1 / scale, righty1 / scale)
 afterPresets = ImageGrab.grab(bbox=boundBoxNoDash)
@@ -157,14 +153,12 @@ print "presets box: %s" % (box,)
 (boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
 print "presets box WxH: %s" % ((boxW, boxH),)
 (x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
-#boxH = 8 * 2 + 36 * 21
-#presets = ImageGrab.grab(bbox=(((x1) + 180 + 25) * scale, ((y1) + 187 - 9) * scale, ((x1) + 180) * scale + boxW, ((y1) + 187 - 9) * scale + boxH))
 presets = ImageGrab.grab(bbox=(x1 + rightIcons, y1, x1 + boxW, y1 + boxH))
 presets.save(os.path.join("Images", "RightClick", "presets.png"))
 
 
 # Get and store scale-rotate-flip
-auto.moveTo((rightx1 / scale + (rightx1 + rightBoxW) / scale) / 2.0, ((righty1 + rightOffset) / scale + (optionH * 9.5) + (rightHR)))
+auto.moveTo((rightx1 + rightBoxW / 2.0) / scale, ((righty1 / scale) + (optionH * 9.5) + rightHR))
 time.sleep(1)
 auto.moveTo(rightx1 / scale, righty1 / scale)
 afterSRF = ImageGrab.grab(bbox=boundBoxNoDash)
@@ -174,8 +168,6 @@ print "srf box: %s" % (box,)
 (boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
 print "srf box WxH: %s" % ((boxW, boxH),)
 (x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
-#boxH = 8 * 2 + 36 * 7
-#scaleRotateFlip = ImageGrab.grab(bbox=(((x1) + 180 + 25) * scale, ((y1) + 205 - 9) * scale, ((x1) + 180) * scale + boxW, ((y1) + 205 - 9) * scale + boxH))
 scaleRotateFlip = ImageGrab.grab(bbox=(x1 + rightIcons, y1, x1 + boxW, y1 + boxH))
 scaleRotateFlip.save(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
 
@@ -379,13 +371,13 @@ while (True):
 			auto.moveTo(oldLocationX, 0)
 			time.sleep(1)
 			auto.moveTo(oldLocationX, macHeader)
-			afterHover = ImageGrab.grab(bbox=(boundBoxNoDash[0], boundBoxNoDash[1] + topBarHeight + (1 * scale), boundBoxNoDash[2], boundBoxNoDash[3]))
+			afterHover = ImageGrab.grab(bbox=(boundBoxNoDash[0] + (1 * scale), boundBoxNoDash[1] + topBarHeight + (1 * scale), boundBoxNoDash[2] + (1 * scale), boundBoxNoDash[3] + (1 * scale)))
 			afterHover.save(os.path.join("Images", "window_afterHover.png"))
 			#auto.moveTo((219.0 / 1440.0) * width, (77.0 / 900.0) * height)
 			auto.moveTo((329.0 / 1920.0) * width, (82.0 / 1080.0) * height)
 			auto.click()
 			time.sleep(5)
-			seriesThumbnail = ImageGrab.grab(bbox=(boundBoxNoDash[0], boundBoxNoDash[1] + topBarHeight + (1 * scale), boundBoxNoDash[2], boundBoxNoDash[3]))
+			seriesThumbnail = ImageGrab.grab(bbox=(boundBoxNoDash[0] + (1 * scale), boundBoxNoDash[1] + topBarHeight + (1 * scale), boundBoxNoDash[2] + (1 * scale), boundBoxNoDash[3] + (1 * scale)))
 			seriesThumbnail.save(os.path.join("Images", "window_seriesThumbnail.png"))
 			(x1, y1, x2, y2) = get_bbox(os.path.join("Images", "window_afterHover.png"), os.path.join("Images", "window_seriesThumbnail.png"))
 			"""x1 += (20.0 / 1440.0) * width
@@ -401,8 +393,22 @@ while (True):
 			auto.click()
 			close = ImageGrab.grab(bbox=((x2 - 83), (y1 + 2), (x2 - 83) + 90, (y1 + 2) + 40))
 			close.save(os.path.join("Images", "window_seriesThumbnailClose_Gray.png"))"""
-			x1 += boundBoxNoDash[0]
-			y1 += boundBoxNoDash[1] + topBarHeight + (1 )
+			(diffW, diffH) = (x2 - x1 + 1, y2 - y1 + 1)
+			x1 += boundBoxNoDash[0] + (1 * scale)
+			y1 += boundBoxNoDash[1] + topBarHeight + (1 * scale)
+			(x2, y2) = (x1 + diffW, y1 + diffH)
+			(x1, y1) = (x2 - (83.0 / 2880.0) * nativeW,  y1 + (2.0 / 2880.0) * nativeW)
+			(x2, y2) = (x1 + (90.0 / 2880.0) * nativeW, y1 + (40.0 / 2880.0) * nativeW)
+			close = ImageGrab.grab(bbox=(x1, y1, x2, y2))
+			close.save(os.path.join("Images", "window_seriesThumbnailClose.png"))
+			auto.moveTo((x1 + x2) / (scale * 2.0), (y1 + y2) / (scale * 2.0))
+			close = ImageGrab.grab(bbox=(x1, y1, x2, y2))
+			close.save(os.path.join("Images", "window_seriesThumbnailClose_Red.png"))
+			auto.moveTo(0, (y1 + y2) / (scale * 2.0))
+			auto.click()
+			close = ImageGrab.grab(bbox=(x1, y1, x2, y2))
+			close.save(os.path.join("Images", "window_seriesThumbnailClose_Gray.png"))
+			asdf
 			status["window_open"] = (not status["window_open"])
 		elif (action == "Close" and status["window_open"]):
 			close = auto.locateOnScreen(os.path.join("Images", "window_seriesThumbnailClose.png"))
@@ -411,9 +417,8 @@ while (True):
 			if (close is None):
 				close = auto.locateOnScreen(os.path.join("Images", "window_seriesThumbnailClose_Gray.png"))
 			(x1, y1, w, h) = close
-			x2 = x1 + w
-			y2 = y1 + h
-			auto.moveTo((x1 + x2) / 4, (y1 + y2) / 4)
+			(x2, y2) = (x1 + w, y1 + h)
+			auto.moveTo((x1 + x2) / (scale * 2.0), (y1 + y2) / (scale * 2.0))
 			auto.click()
 			status["window_open"] = (not status["window_open"])
 	elif (command == "Manual Contrast"):
@@ -429,16 +434,15 @@ while (True):
 			auto.moveTo(moveToX, moveToY + level)
 			auto.mouseUp()
 	elif (command == "Layout" and action != "Layout"):
-		noDash = ImageGrab.grab(bbox=(borderDash, topBarHeight + borderDash, nativeW - borderDash, nativeH - borderDash))
-		noDash.save(os.path.join("Images", "layout_noDash.png"))
 		(oldLocationX, oldLocationY) = auto.position()
 		auto.moveTo(oldLocationX, 0)
 		time.sleep(1)
-		afterHover = ImageGrab.grab(bbox=(borderDash, topBarHeight + borderDash, nativeW - borderDash, nativeH - borderDash))
+		afterHover = ImageGrab.grab(bbox=boundBoxNoDash)
 		afterHover.save(os.path.join("Images", "layout_afterHover.png"))
-		auto.moveTo(428, 77)
+		#auto.moveTo((428.0 / 2880.0) * nativeW, (77.0 / 2880.0) * nativeW)
+		auto.moveTo((428.0 / 1920.0) * width, (77.0 / 1080.0) * height)
 		auto.click()
-		seriesThumbnail = ImageGrab.grab(bbox=(borderDash, topBarHeight + borderDash, nativeW - borderDash, nativeH - borderDash))
+		seriesThumbnail = ImageGrab.grab(bbox=boundBoxNoDash)
 		seriesThumbnail.save(os.path.join("Images", "layout_seriesThumbnail.png"))
 		(x1, y1, x2, y2) = get_bbox(os.path.join("Images", "layout_afterHover.png"), os.path.join("Images", "layout_seriesThumbnail.png"))
 		status["panel_dim"][0] = 1
@@ -456,18 +460,19 @@ while (True):
 			status["panel_dim"][1] = 4
 		auto.click()
 		resetPanelMoves()
-		auto.moveTo(status["firstW"], status["firstH"])
+		moveToActivePanel()
 		auto.click()
 	elif (command == "Contrast Presets" and action != "Contrast Presets"):
 		rightClick(316)
 		time.sleep(1)
 		(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "presets.png"))
+		y1 = y1 / scale
 		y1 += 8 + (optionH * 0.5)
 		if (action == "I"):
 			y1 += optionH
 		elif (action == "II"):
 			y1 += optionH * 2
-		auto.moveTo(x1 / 2 + w / 4, y1 / 2)
+		auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
 		auto.click()
 	status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
 	status["params"] = ""
@@ -475,3 +480,4 @@ while (True):
 
 
 # When quitting program, remove anything saved
+if ()
