@@ -12,9 +12,29 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lex_folder = 'F:\\AHRQ\\Study_IV\\Data\\Data\\L2' # Where to write the files
+# Directory for reading the data that might be possibly flipped
+lex_folder = 'F:\\AHRQ\\Study_IV\\Data\\Data\\L2' 
 fps = 120
 default_width, default_height = 1920, 1080
+
+# Initialize x,y points where the mouse clicks will be stored
+coords = [-1, -1]
+
+## Functions
+
+# Stores the clicks triggered by mouse events
+# event: mouse event
+# x: x coorninate of the click
+# y: y coordinate if the click
+def store_clicks(event, x, y, flags, param):
+	# grab references to the global variables
+	global coords
+ 
+	# if the left mouse button was clicked, record the starting
+	# (x, y) coordinates 
+	if event == cv2.EVENT_LBUTTONDOWN:
+		refPt = [x, y]
+		print (x, y)
 
 ## Initialization
 cmd_dict = json_to_dict('commands.json')
@@ -22,6 +42,12 @@ all_cmds = sorted(cmd_dict.keys(), cmp=class_str_cmp)
 cmds = deepcopy(all_cmds)
 class_dict = {}
 bframe = []
+
+# Initialize the window so we can attach the
+# the mouse callback to it
+window_name = "image"
+cv2.namedWindow(window_name)
+cv2.setMouseCallback(window_name, store_clicks)
 
 for cmd in all_cmds:
 	vids = glob(join(lex_folder, cmd+'*_rgb.avi'))
@@ -50,6 +76,8 @@ for _ in range(M):
 # 	if(value != expect_num_inst):
 # 		print 'Error! '+key+' : '+str(value)
 
+
+
 close_flag = False
 cmd_idx = 0
 while(True):
@@ -73,7 +101,7 @@ while(True):
 		for sublist in bframe: cframe.append(np.concatenate(sublist, axis = 1))
 		cframe = np.concatenate(cframe, axis = 0)
 		cv2.putText(cframe,cmd_dict[cmd], (default_width/(N+1), 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (120,50,220),2,cv2.LINE_AA)
-		cv2.imshow('Full Frame', np.uint8(cframe))
+		cv2.imshow(window_name, np.uint8(cframe))
 
 		key = cv2.waitKey(1000/fps)
 		if(key in [ord('q'), 27]): close_flag = True
