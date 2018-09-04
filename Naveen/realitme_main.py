@@ -80,10 +80,11 @@ class Realtime:
 				left_y = skel_pts[3*self.left_hand_id+1] - skel_pts[3*self.base_id+1]
 				right_y = skel_pts[3*self.right_hand_id+1] - skel_pts[3*self.base_id+1]
 				if (left_y >= start_y_coo or right_y >= start_y_coo) and (not self.fl_gest_started):
+					print 'Gesture Started'
 					self.fl_gest_started = True
 				if (left_y < start_y_coo and right_y < start_y_coo) and self.fl_gest_started:
 					self.fl_gest_started = False
-
+					print 'Gesture Ended', self.fl_gest_started
 				# if(self.fl_gest_started): print 'Gesture started!'
 								
 				# Update the skel buffer
@@ -111,6 +112,8 @@ class Realtime:
 				self.kr.close()
 				exit()
 
+			time.sleep(0.01)
+
 	def th_gen_skel(self):
 		##
 		# Consume: skeleton data
@@ -120,25 +123,32 @@ class Realtime:
 		frame_count = 0 # this needs to be zeroed internally too
 		skel_frames = []
 		while(self.fl_alive):
-			# print self.fl_gest_started
+			# print self.fl_gest_started, frame_count
 			if self.fl_gest_started: 
 				with self.cond_skel:
-					# Waiting for the producer (th_access_kinect) to add frames
 					self.cond_skel.wait()
+					print 'Waiting for the condition'
+					# Waiting for the producer (th_access_kinect) to add frames
+					print 'Got out of condition'
 					# reduce -> append
 					skel_frames.append(deepcopy(self.buf_skel[-1])) 
 					frame_count += 1
-					# print frame_count
-			elif (not self.fl_gest_started) and (frame_count > 0):
-				frame_count = 0
-				timestamps, raw_frames = zip(*skel_frames)
-				# This returns 2D numpy array (1 x num_features)
-				instance_feed = [skel_col_reduce(raw_frame) for raw_frame in raw_frames]
-				self.skel_instance = (timestamps[-1], self.feat_ext.generate_features_realtime(instance_feed))
-				print self.skel_instance[0], self.skel_instance[0].shape
-				print "ARE WE EVEN GETTING HERE???"
-				skel_frames = []
-			print "but are we here.... and WTF is the problem"
+					print frame_count
+			elif not self.fl_gest_started:
+				print "IN SKEL THREAD, GESTURE ENDED" 
+			# elif (frame_count > 0): #(not self.fl_gest_started) and 
+			# 	print 'I am in HERE'
+			# 	frame_count = 0
+			# 	timestamps, raw_frames = zip(*skel_frames)
+			# 	# This returns 2D numpy array (1 x num_features)
+			# 	instance_feed = [skel_col_reduce(raw_frame) for raw_frame in raw_frames]
+			# 	self.skel_instance = (timestamps[-1], self.feat_ext.generate_features_realtime(instance_feed))
+			# 	print self.skel_instance[0], self.skel_instance[0].shape
+			# 	print "ARE WE EVEN GETTING HERE???"
+			# 	skel_frames = []
+			# print "but are we here.... and WTF is the problem"
+
+			time.sleep(0.01)
 
 	def th_access_openpose(self):
 		while(self.fl_alive):

@@ -16,6 +16,7 @@ Following functions are implemented:
 import os,sys,glob,re,cv2,json
 import numpy as np
 from utils import *
+import time
 
 openpose_path='F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\openpose\Open_Pose_Demo'
 sys.path.insert(0,openpose_path)
@@ -28,7 +29,7 @@ variables=json_to_dict(json_file_path)
 num_fingers = variables['num_fingers']
 
 def extract_fingers_realtime(img_dir,dom_hand=1,num_fingers=num_fingers):
-
+	st0=time.time()
 	"""
 	for real time gesture recognition this file outputs finger lengths for an image(frame)
 	if directory has more than one image: value error will be raised
@@ -54,7 +55,12 @@ def extract_fingers_realtime(img_dir,dom_hand=1,num_fingers=num_fingers):
 	print 'writing xml_files in',xml_dir
 	system_str = exe_addr + ' --image_dir '+ img_dir + ' --write_keypoint_format ' + 'xml ' + \
 						 ' --write_keypoint ' + xml_dir + ' --hand ' + '--keypoint_scale '+'4 '+'--no_display'
-	run_OpenPose(system_str)
+	st = time.time()
+	print(st-st0)
+
+	run_OpenPose(system_str) # Run open pose part
+	
+	st = time.time()	
 	fingers=[]
 	left_files=glob.glob(os.path.join(xml_dir,'*_right*'))
 	right_files=glob.glob(os.path.join(xml_dir,'*_left*'))
@@ -67,6 +73,8 @@ def extract_fingers_realtime(img_dir,dom_hand=1,num_fingers=num_fingers):
 			fingers.append(conv_xml(right_files[0]).tolist()[:num_fingers])
 	else:
 		raise ValueError('more than one image given')
+	st2 = time.time()
+	print(st2-st)
 	return np.array(fingers).flatten()
 
 
