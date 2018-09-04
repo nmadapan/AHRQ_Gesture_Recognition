@@ -1,0 +1,14 @@
+upadtes on .py files in this directory
+Date : 08-27-2018
+
+Realtime_fingers.py: commented, working
+
+calibrate_fingers.py: commented, working
+
+frames_to_xml.py: updated,commented,working
+
+OpenPose_Data_generate: updated,commented,working
+
+utils.py: commented, working
+
+openpose_realtime_routine.py: updated,commented,working
