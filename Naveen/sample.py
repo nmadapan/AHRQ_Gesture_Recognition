@@ -2,9 +2,21 @@ import numpy as np
 import json
 from helpers import *
 
-a = ((1,2), (2,3))
-print a
-print list(a)
+x = [1, 3, 6, 9, 13, 17]
+y = [0, 5, 8]
+
+print np.append(x, y).reshape(1, -1)
+
+# print x.tolist() + y.tolist()
+
+# print x, y
+# xx, yy = sync_ts(x, y)
+
+# print y[yy]
+
+# a = np.random.rand(10).tolist()
+# print a
+# print np.reshape(a, (2, 5))
 
 # from threading import Thread
 # import time

@@ -33,6 +33,17 @@ def wait_for_kinect(kr):
 			sys.exit('Waited for more than 30 seconds. Exiting')
 	print '\nAll Kinect modules connected !!'
 
+def sync_ts(skel_ts, rgb_ts):
+	# skel_ts: List of skeleton time stamps. [t1, t2, ...]
+	# rgb_ts: list of rgb timestams. [t1, t2, t3, ...]
+	skel_ts = np.reshape(skel_ts, (-1, 1))
+	rgb_ts = np.reshape(rgb_ts, (1, -1))
+	M = np.abs(skel_ts - rgb_ts)
+	print M
+	apply_on_skel = np.argmin(M, axis = 0)
+	apply_on_rgb = np.argmin(M, axis = 1)
+	return apply_on_skel.tolist(), apply_on_rgb.tolist()
+
 def get_body_length(line):
 	# line is a list of 75 elements. [x, y, z, so on for all of the kinect joints]
 
