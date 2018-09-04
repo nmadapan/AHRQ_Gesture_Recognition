@@ -8,6 +8,7 @@ import pickle
 from FeatureExtractor import FeatureExtractor
 from KinectReader import kinect_reader
 from helpers import *
+from pprint import pprint as pp
 
 class Realtime:
 	def __init__(self):
@@ -50,7 +51,7 @@ class Realtime:
 		self.right_hand_id = 11
 		self.thresh_level = 0.2 #TODO: It seems to be working. 
 
-	def th_access_kinect(self):
+	def th_access_kinect(self):	
 		##
 		# Producer: RGB, skeleton
 		##
@@ -79,23 +80,30 @@ class Realtime:
 				start_y_coo = self.thresh_level * (skel_pts[3*self.neck_id+1] - skel_pts[3*self.base_id+1])
 				left_y = skel_pts[3*self.left_hand_id+1] - skel_pts[3*self.base_id+1]
 				right_y = skel_pts[3*self.right_hand_id+1] - skel_pts[3*self.base_id+1]
-				if (left_y >= start_y_coo or right_y >= start_y_coo) and (not self.fl_gest_started):
-					print 'Gesture Started'
-					self.fl_gest_started = True
-				if (left_y < start_y_coo and right_y < start_y_coo) and self.fl_gest_started:
-					self.fl_gest_started = False
-					print 'Gesture Ended', self.fl_gest_started
-				# if(self.fl_gest_started): print 'Gesture started!'
-								
-				# Update the skel buffer
-				if(self.fl_gest_started):
-					with self.cond_skel: # Producer. Consumers will wait for the notify call
+
+				with self.cond_skel: # Producer. Consumers will wait for the notify call #######
+					if (left_y >= start_y_coo or right_y >= start_y_coo) and (not self.fl_gest_started):
+						print 'Gesture Started'
+						self.fl_gest_started = True
+					if (left_y < start_y_coo and right_y < start_y_coo) and self.fl_gest_started:
+						self.fl_gest_started = False
+						print 'Gesture Ended', self.fl_gest_started
+					
+					# if(self.fl_gest_started): print 'Gesture started!'
+									
+					# Update the skel buffer
+					if(self.fl_gest_started):
+						# with self.cond_skel: # Producer. Consumers will wait for the notify call
 						ts = int(time.time()*100)
 						self.buf_skel.append((ts, skel_col_reduce(skel_pts)))
 						self.buf_skel.pop(0)
-						self.cond_skel.notify_all()
+						# self.cond_skel.notify_all()
 						tslist, _ = zip(*self.buf_skel)
-						# print 'skel: ', tslist
+							# print 'skel: ', tslist
+					# The Notify all should be outside because if not, the cosumer
+					# can wait for this call just after the flags that allow
+					# it to enter the "consuming condition" have changed
+					self.cond_skel.notify_all()
 
 			if(rgb_flag and self.fl_gest_started):
 				with self.cond_rgb: # Producer. Consumers need to wait for producer's 'notify' call
@@ -112,9 +120,7 @@ class Realtime:
 				self.kr.close()
 				exit()
 
-			time.sleep(0.01)
-
-	def th_gen_skel(self):
+	def th_gen_skel(self):		
 		##
 		# Consume: skeleton data
 		# Produce: skeleton features
@@ -122,33 +128,26 @@ class Realtime:
 
 		frame_count = 0 # this needs to be zeroed internally too
 		skel_frames = []
+		first_time = False
 		while(self.fl_alive):
-			# print self.fl_gest_started, frame_count
-			if self.fl_gest_started: 
+			if self.fl_gest_started:
+				first_time = True 
 				with self.cond_skel:
 					self.cond_skel.wait()
-					print 'Waiting for the condition'
-					# Waiting for the producer (th_access_kinect) to add frames
-					print 'Got out of condition'
 					# reduce -> append
 					skel_frames.append(deepcopy(self.buf_skel[-1])) 
 					frame_count += 1
-					print frame_count
-			elif not self.fl_gest_started:
-				print "IN SKEL THREAD, GESTURE ENDED" 
-			# elif (frame_count > 0): #(not self.fl_gest_started) and 
-			# 	print 'I am in HERE'
-			# 	frame_count = 0
-			# 	timestamps, raw_frames = zip(*skel_frames)
-			# 	# This returns 2D numpy array (1 x num_features)
-			# 	instance_feed = [skel_col_reduce(raw_frame) for raw_frame in raw_frames]
-			# 	self.skel_instance = (timestamps[-1], self.feat_ext.generate_features_realtime(instance_feed))
-			# 	print self.skel_instance[0], self.skel_instance[0].shape
-			# 	print "ARE WE EVEN GETTING HERE???"
-			# 	skel_frames = []
-			# print "but are we here.... and WTF is the problem"
+			if not self.fl_gest_started and first_time:
+				print "IN SKEL THREAD, GESTURE ENDED"
+				first_time = False
+				frame_count = 0
+				timestamps, raw_frames = zip(*skel_frames)
+				pp(raw_frames)
 
-			time.sleep(0.01)
+				self.skel_instance = (timestamps[-1], self.feat_ext.generate_features_realtime(list(raw_frames)))
+				pp(self.skel_instance)
+
+				skel_frames = []
 
 	def th_access_openpose(self):
 		while(self.fl_alive):
