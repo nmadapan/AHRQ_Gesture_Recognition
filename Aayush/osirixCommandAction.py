@@ -67,63 +67,13 @@ def get_bbox(before, after, thresholds = None, draw = False):
 	return (x1, y1, x2, y2)
 
 #window_names = auto.getWindow("Citrix Viewer")
-
-if (platform.system() == "Windows"):
-	#(offsetY1, offsetY2) = (0, 0)
-	macHeader = 0
-	#borderDash = 16
-	navType = "alt"
-else:
-	#(offsetY1, offsetY2) = (44, 84)
-	macHeader = (44.0 / 2880.0) * (nativeH)
-	#borderDash = 22
-	navType = "command"
+#(offsetY1, offsetY2) = (44, 84)
+macHeader = (44.0 / 2880.0) * (nativeH)
+#borderDash = 22
 
 
 print "Warming up synapse system...\n"
 auto.hotkey(navType, "tab")
-
-"""auto.moveTo(width / 2, height / 2)
-beforeDashed = ImageGrab.grab()
-beforeDashed.save(os.path.join("Images", "beforeDashed.png"))
-auto.click(button='right')
-afterDashed = ImageGrab.grab()
-afterDashed.save(os.path.join("Images", "afterDashed.png"))
-dashed = get_bbox(os.path.join("Images", "beforeDashed.png"), os.path.join("Images", "afterDashed.png"))
-ImageGrab.grab(bbox=dashed).save(os.path.join("Images", "dashed.png"))
-boundBoxNoDash = (dashed[0] + 3, dashed[1] + 3, dashed[2] + 3, dashed[3] + 3)"""
-boundBoxNoDash = (0 + borderDash, 0 + borderDash, nativeW - borderDash, nativeH - borderDash)
-(bbndW, bbndH) = ((boundBoxNoDash[2] - boundBoxNoDash[0]) / scale, (boundBoxNoDash[3] - boundBoxNoDash[1]) / scale)
-
-print "WxH: %s" % ((width, height),)
-#boundBox = (0, offsetY1, width * scale, (height - offsetY2) * scale)
-#print "%s" % (boundBox,)
-#(boundBoxW, boundBoxH) = ((boundBox[2] - boundBox[0]) * scale / 2.0, (boundBox[3] - boundBox[1]) * scale / 2.0)
-#print "%s" % ((boundBoxW, boundBoxH),)
-#boundBoxNoTopBar = (0, 272, width * 2, (height - offsetY2) * 2)
-#boundBoxNoDash = (borderDash, macHeader + borderDash, width * scale - borderDash, (height - offsetY2) * scale - borderDash)
-#ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("Images", "boundBoxNoDash.png"))
-#print "boundBoxNoDash: %s" % (boundBoxNoDash,)
-
-auto.moveTo(width / 2.0, height / 2.0)
-time.sleep(1)
-beforeTopBar = ImageGrab.grab()
-beforeTopBar.save(os.path.join("Images", "beforeTopBar.png"))
-auto.moveTo(width / 2.0, 0)
-time.sleep(1)
-auto.moveTo(width / 2.0, macHeader)
-time.sleep(1)
-afterTopBar = ImageGrab.grab()
-afterTopBar.save(os.path.join("Images", "afterTopBar.png"))
-topBarBox = get_bbox(os.path.join("Images", "beforeTopBar.png"), os.path.join("Images", "afterTopBar.png"))
-topBarBox = (0, 0, nativeW, topBarBox[3])
-ImageGrab.grab(bbox=topBarBox).save(os.path.join("Images", "topBarBox.png"))
-print "topBarBox: %s" % (topBarBox,)
-
-#boundBoxNoTopBarDash = (borderDash, topBarBox[3] - topBarBox[1], width * scale - borderDash, (height - offsetY2) * scale - borderDash)
-"""boundBoxNoTopBarDash = (boundBoxNoDash[0], topBarBox[1], boundBoxNoDash[2], boundBoxNoDash[3])
-ImageGrab.grab(bbox=boundBoxNoTopBarDash).save(os.path.join("Images", "boundBoxNoTopBarDash.png"))
-print "boundBoxNoTopBarDash: %s" % (boundBoxNoTopBarDash,)"""
 
 status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "params": ""}
 
@@ -148,70 +98,6 @@ actionList = [["Admin", "Quit", "Get Status"],
 	["Layout", "One-Panel", "Two-Panels", "Three-Panels", "Four-Panels"],
 	["Contrast Presets", "I", "II"]]
 
-# Get and store the right click
-auto.moveTo(bbndW / 2.0, bbndH / 2.0)
-beforeRight = ImageGrab.grab(bbox=boundBoxNoDash)
-beforeRight.save(os.path.join("Images", "RightClick", "beforeRight.png"))
-auto.click(button='right')
-afterRight = ImageGrab.grab(bbox=boundBoxNoDash)
-afterRight.save(os.path.join("Images", "RightClick", "afterRight.png"))
-rightBox = get_bbox(os.path.join("Images", "RightClick", "beforeRight.png"), os.path.join("Images", "RightClick", "afterRight.png"))
-print "rightBox: %s" % (rightBox,)
-(rightBoxW, rightBoxH) = (rightBox[2] - rightBox[0] + 1, rightBox[3] - rightBox[1] + 1)
-print "rightBox WxH: %s" % ((rightBoxW, rightBoxH),)
-
-optionH = ((rightBoxH / 1000.0) * 36) / scale
-rightHR = ((rightBoxH / 1000.0) * 10) / scale
-
-rightIcons = ((rightBoxH / 1000.0) * 50)
-rightOffset = ((rightBoxH / 1000.0) * 58)
-
-#(rightBoxW, rightBoxH) = (382, 1000)
-"""(x1, y1) = ((rightBox[0] + boundBoxNoDash[0]) * scale / 2.0, (rightBox[1] + boundBoxNoDash[1]) * scale / 2.0)
-rightClick = ImageGrab.grab(bbox=((x1) * scale, (y1) * scale, (x1) * scale + rightBoxW, (y1) * scale + rightBoxH))
-rightClick.save(os.path.join("Images", "RightClick", "rightClick.png"))"""
-(rightx1, righty1) = (rightBox[0] + boundBoxNoDash[0], rightBox[1] + boundBoxNoDash[1])
-rightClick = ImageGrab.grab(bbox=(rightx1 + rightIcons, righty1 + rightOffset, rightx1 + rightBoxW, righty1 + rightBoxH))
-rightClick.save(os.path.join("Images", "RightClick", "rightClick.png"))
-
-# Get and store image presets
-#auto.moveTo(((x1) * scale + rightBoxW / 2.0) / 2, ((y1) * scale + 374) / 2)
-auto.moveTo((rightx1 / scale + (rightx1 + rightBoxW) / scale) / 2.0, ((righty1 + rightOffset) / scale + (optionH * 8.5) + (rightHR)))
-time.sleep(1)
-auto.moveTo(rightx1 / scale, righty1 / scale)
-afterPresets = ImageGrab.grab(bbox=boundBoxNoDash)
-afterPresets.save(os.path.join("Images", "RightClick", "afterPresets.png"))
-box = get_bbox(os.path.join("Images", "RightClick", "afterRight.png"), os.path.join("Images", "RightClick", "afterPresets.png"))
-(boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
-(x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
-#boxH = 8 * 2 + 36 * 21
-#presets = ImageGrab.grab(bbox=(((x1) + 180 + 25) * scale, ((y1) + 187 - 9) * scale, ((x1) + 180) * scale + boxW, ((y1) + 187 - 9) * scale + boxH))
-presetsW = boxW
-presets = ImageGrab.grab(bbox=(x1 + rightIcons, y1, x1 + boxW, y1 + boxH))
-presets.save(os.path.join("Images", "RightClick", "presets.png"))
-
-# Get and store scale-rotate-flip
-#auto.moveTo(((x1) * scale + rightBoxW / 2.0) / 2, ((y1 + 1) * scale + 410) / 2)
-auto.moveTo((rightx1 / scale + (rightx1 + rightBoxW) / scale) / 2.0, ((righty1 + rightOffset) / scale + (optionH * 9.5) + (rightHR)))
-time.sleep(1)
-auto.moveTo(rightx1 / scale, righty1 / scale)
-afterSRF = ImageGrab.grab(bbox=boundBoxNoDash)
-afterSRF.save(os.path.join("Images", "RightClick", "afterSRF.png"))
-box = get_bbox(os.path.join("Images", "RightClick", "afterRight.png"), os.path.join("Images", "RightClick", "afterSRF.png"))
-(boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
-(x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
-#boxH = 8 * 2 + 36 * 7
-#scaleRotateFlip = ImageGrab.grab(bbox=(((x1) + 180 + 25) * scale, ((y1) + 205 - 9) * scale, ((x1) + 180) * scale + boxW, ((y1) + 205 - 9) * scale + boxH))
-scaleRotateFlipW = boxW
-scaleRotateFlip = ImageGrab.grab(bbox=(x1 + rightIcons, y1, x1 + boxW, y1 + boxH))
-scaleRotateFlip.save(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
-
-os.remove(os.path.join("Images", "RightClick", "beforeRight.png"))
-os.remove(os.path.join("Images", "RightClick", "afterRight.png"))
-os.remove(os.path.join("Images", "RightClick", "afterPresets.png"))
-os.remove(os.path.join("Images", "RightClick", "afterSRF.png"))
-
-auto.click()
 auto.hotkey("command", "tab")
 
 def defaultAction(commandID, paramSizes):
