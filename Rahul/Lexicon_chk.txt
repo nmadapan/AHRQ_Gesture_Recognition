@@ -1,0 +1,8 @@
+L2:
+		Scroll_Up -> S6 starting gestures are not in capured window
+		Flip Horizontal -> S3 wrong name
+		Rotate_Clockwise -> S3 is not there, it comes in Rotate_Anticlockwise
+		Zoom_Out -> S6 video in the beginning is not proper
+		Ruler_Meausre- S6 video is not proper
+		Window_Open -> S6: one instance in the beginning is performed in the wrong way
+		Window_Close -> S4
