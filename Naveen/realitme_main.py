@@ -227,7 +227,7 @@ class Realtime:
 	def get_next_cmd(self, pred_cmd):
 		# pred_cmd : predicted command name
 		
-		# If there are no previous commands, return the predicted command and update the buffer
+		# If there are no previous commands, return the same command
 		if(len(self.prev_executed_cmds) == 0):
 			self.prev_executed_cmds.append(pred_cmd)
 			return pred_cmd
