@@ -279,7 +279,6 @@ class Realtime:
 						cname = self.feat_ext.pred_output_realtime(final_inst)
 					* Logic that operates over the command names. This is lexicon specific. We have L*_repetition.txt file. 
 						command_to_execute = get_next_command(cname)
-						self.prev_executed_cmds.append(command_to_execute)
 					* Let the synapse thread know that command is ready. It can execute it. 
 				'''
 
