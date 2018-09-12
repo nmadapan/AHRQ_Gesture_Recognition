@@ -12,7 +12,7 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lex_folder = 'H:\AHRQ\Study_IV\Data\Data\L2' # Where to write the files
+lex_folder = 'H:\AHRQ\Study_IV\Data\Data\L8' # Where to write the files
 fps = 120
 default_width, default_height = 1920, 1080
 
