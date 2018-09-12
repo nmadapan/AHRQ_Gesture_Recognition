@@ -2,6 +2,7 @@ from glob import glob
 import os, sys, time
 import numpy as np
 import json
+from scipy.interpolate import interp1d
 
 def wait_for_kinect(kr):
 	# Blocking function. It waits for the all modalities (RGB, Depth, Body) of the Kinect to connect.
@@ -39,7 +40,6 @@ def sync_ts(skel_ts, rgb_ts):
 	skel_ts = np.reshape(skel_ts, (-1, 1))
 	rgb_ts = np.reshape(rgb_ts, (1, -1))
 	M = np.abs(skel_ts - rgb_ts)
-	print M
 	apply_on_skel = np.argmin(M, axis = 0)
 	apply_on_rgb = np.argmin(M, axis = 1)
 	return apply_on_skel.tolist(), apply_on_rgb.tolist()
@@ -213,3 +213,43 @@ def flip_skeleton(skel_path, replace = False):
 
 	fp.flush()
 	fp.close()
+
+def smart_interpn(yp, reps, kind = 'copy'):
+	# yp:
+	#	2D numpy array of size num_frames x 3 if num_joints = 1
+	#
+	# reps:
+	#	1D numpy array whose elements range from [0, num_frames-1]. Note that the size of reps is usually larger than num_frames
+	#
+	# kind: 
+	#	'linear'	- linear interpolation
+	#	'copy'		- do the copy
+
+	assert isinstance(yp, np.ndarray), 'yp is NOT a numpy array'
+	assert yp.ndim == 2, 'yp should be a 2D numpy array'
+
+	out = np.float32(yp[reps, :])
+
+	if(kind == 'copy'): return out
+
+	rep_ids = range(0, 1 + np.max(reps))
+	for idx, rep_id in enumerate(rep_ids):
+		# We will not interpolate the last index
+		if idx == len(rep_ids)-1 : break
+		elem_ids = np.argwhere(reps == rep_id).flatten()
+		req_ids = [elem_ids[0], elem_ids[-1]+1]
+		out[elem_ids, :] =  interpn(out[req_ids, :], elem_ids.size+1)[:-1, :]
+	return out
+
+def interpn(yp, num_points, kind = 'linear'):
+	# yp is a gesture instance
+	# yp is 2D numpy array of size num_frames x 3 if num_joints = 1
+	# No. of frames will be increased/reduced to num_points
+	xp = np.linspace(0, 1, num = yp.shape[0])
+	x = np.linspace(0, 1, num = num_points)
+	y = np.zeros((x.size, yp.shape[1]))
+	yp = np.float16(yp)
+	for dim in range(yp.shape[1]):
+		f = interp1d(xp, yp[:, dim], kind = kind)
+		y[:, dim] = f(x)
+	return y

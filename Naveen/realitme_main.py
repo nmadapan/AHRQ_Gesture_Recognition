@@ -17,6 +17,9 @@ from helpers import sync_ts
 class Realtime:
 	def __init__(self):
 		## Global Constants
+		self.lexicon_name = 'L6'
+		self.data_path = '..\\Data'
+
 		self.buf_skel_size = 10
 		self.buf_rgb_size = 10
 
@@ -44,7 +47,7 @@ class Realtime:
 		self.cond_rgb = Condition()
 
 		## Initialize Feature extractor
-		self.feat_ext = FeatureExtractor()
+		self.feat_ext = FeatureExtractor() ## LATER use a trained one. 
 
 		## Other variables
 		self.skel_instance = None # Updated in self.th_gen_skel(). 
@@ -53,12 +56,27 @@ class Realtime:
 		self.op_instance = None # Updated in self.th_gen_openpose(). 
 		# It is a tuple (timestamp, feature_vector of finger lengths - ndarray(num_frames, 10)).
 
+		# Previously executed command
+		self.cmd_reps = {} # Updated by a function call to update_cmd_reps
+		self.prev_executed_cmds = []
+		self.update_cmd_reps()
+
 		## Skeleton constants
 		self.base_id = 0
 		self.neck_id = 2
 		self.left_hand_id = 7
 		self.right_hand_id = 11
 		self.thresh_level = 0.2 #TODO: It seems to be working. 
+
+	def update_cmd_reps(self):
+		rep_path = os.path.join(self.data_path, self.lexicon_name+'_reps.txt')
+		if(not os.path.isfile(rep_path)): raise IOError('reps file does NOT exist')
+		with open(rep_path, 'r') as fp:
+			lines = fp.readlines()
+			if(len(lines) == 0): raise ValueError('reps file is empty')
+		lines = [line.strip().split(' ') for line in lines]
+		for line in lines:
+			self.cmd_reps[line[0]] = line[1:]
 
 	def th_access_kinect(self):	
 		##
@@ -133,9 +151,13 @@ class Realtime:
 		frame_count = 0 # this is zeroed internally
 		skel_frames = []
 		first_time = False
+		print_first_time = True
 		while(self.fl_alive):
 			if(self.fl_skel_ready): continue
 			if self.fl_gest_started:
+				if print_first_time:
+					print "IN SKEL THREAD, GESTURE STARTED: "
+					print_first_time = False
 				first_time = True 
 				with self.cond_skel:
 					self.cond_skel.wait()
@@ -143,8 +165,9 @@ class Realtime:
 					skel_frames.append(deepcopy(self.buf_skel[-1])) 
 					frame_count += 1
 			if not self.fl_gest_started and first_time:
-				print "IN SKEL THREAD, GESTURE ENDED: ", 
+				print "IN SKEL THREAD, GESTURE ENDED: "
 				first_time = False
+				print_first_time = True
 				frame_count = 0
 				timestamps, raw_frames = zip(*skel_frames)
 
@@ -168,10 +191,14 @@ class Realtime:
 		frame_count = 0 # this is zeroed internally
 		op_instance = []
 		first_time = False
+		print_first_time = True
 		rgb_frame = None
 		while(self.fl_alive):
 			if(self.fl_openpose_ready): continue
 			if self.fl_gest_started:
+				if print_first_time:
+					print "IN RGB THREAD, GESTURE STARTED: "
+					print_first_time = False
 				first_time = True 
 				with self.cond_rgb:
 					self.cond_rgb.wait()
@@ -179,8 +206,9 @@ class Realtime:
 					frame_count += 1
 				op_instance.append((rgb_frame[0], extract_fingers_realtime(rgb_frame[-1])))
 			if not self.fl_gest_started and first_time:
-				print "IN RGB THREAD, GESTURE ENDED: ", 
+				print "IN RGB THREAD, GESTURE ENDED: "
 				first_time = False
+				print_first_time = True
 				frame_count = 0
 				timestamps, raw_op_features = zip(*op_instance)
 				# pp(len(raw_op_features))
@@ -190,44 +218,70 @@ class Realtime:
 				self.fl_openpose_ready = True #### Think about conditioning
 
 	def th_synapse(self):
+		## Socket communicaiton code goes here. 
+		# Client
+
+		# 
 		pass
+
+	def get_next_cmd(self, pred_cmd):
+		# pred_cmd : predicted command name
+		
+		# If there are no previous commands, return the predicted command and update the buffer
+		if(len(self.prev_executed_cmds) == 0):
+			self.prev_executed_cmds.append(pred_cmd)
+			return pred_cmd
+
+		##
+		# TODO: Code to smartly select the next command goes here. 
+		##
 
 	def run(self):
 		# Main thread
 		acces_kinect_thread = Thread(name = 'access_kinect', target = self.th_access_kinect) # P: RGB, skel
 		gen_skel_thread = Thread(name = 'gen_skel', target = self.th_gen_skel) # C: skel ; P: skel_features
 		acces_openpose_thread = Thread(name = 'access_openpose', target = self.th_gen_openpose) # C: RGB ; P: finger_lengths
-		# synapse_thread = Thread(name = 'autoclick_synapse', target = self.th_synapse) #
+		synapse_thread = Thread(name = 'autoclick_synapse', target = self.th_synapse) #
 
 		acces_kinect_thread.start()
 		gen_skel_thread.start()
 		acces_openpose_thread.start()
 
+		only_skeleton = True
+
 		## Merger part of the code
 		while(True):
 			if(self.fl_skel_ready and self.fl_openpose_ready):
-				pp(self.skel_instance)
-				pp(self.op_instance)
+				# pp(self.skel_instance)
+				# pp(self.op_instance)
 				
 				# Obtain timestamps
 				skel_ts, skel_inst = self.skel_instance[0], self.skel_instance[1]
 				op_ts, op_inst = self.op_instance[0], self.op_instance[1]
 				_, sync_op_ts = sync_ts(skel_ts, op_ts)
-				op_inst = op_inst[sync_op_ts, :] # If interpolation strategy is COPYING. 
-				# TODO: But later, we might want to do the actual interpolation.
+
+				## Interpolate openpose instances
+				op_inst = smart_interpn(op_inst, sync_op_ts, kind = 'copy') # Change kind to 'linear' for linear interpolation
+				op_inst = interpn(op_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
+
+				final_inst = np.append(skel_inst, op_inst).reshape(1, -1)
+
+				print'skel_inst: ', skel_inst.shape
+				print'op_inst: ', op_inst.shape
+				print'final_inst: ', final_inst.shape
+
+				if(only_skeleton): final_inst = skel_inst
+
 				## Working until here. Debugged!!!!!!!!!!!
 
-				#### This will not work because, SVM is trained with a differnt number of frames. final_inst is VARYING
-				# final_inst = np.append(skel_inst[0], op_inst.flatten()).reshape(1, -1)
-
-				#### For next time ####
-				# We also need to interpolate everything to the number of features that SVM is trained with. 
-				# This would require editing generate_features_realtime() in FeatureExtractor.py so that it 
-				# 	returns a 2D numpy array of size (num_frames x 3/6). Not is returning a flattened array. 
-				####
-
-				pp(final_inst)
-				pp(final_inst.shape)
+				'''
+					* Passing the feature to the actual svm:
+						cname = self.feat_ext.pred_output_realtime(final_inst)
+					* Logic that operates over the command names. This is lexicon specific. We have L*_repetition.txt file. 
+						command_to_execute = get_next_command(cname)
+						self.prev_executed_cmds.append(command_to_execute)
+					* Let the synapse thread know that command is ready. It can execute it. 
+				'''
 
 				self.fl_skel_ready = False
 				self.fl_openpose_ready = False

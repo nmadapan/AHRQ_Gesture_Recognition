@@ -2,7 +2,6 @@ import numpy as np
 import os, sys
 from glob import glob
 import pickle
-from scipy.interpolate import interp1d
 from copy import deepcopy
 from random import shuffle
 from sklearn import svm
@@ -385,7 +384,7 @@ class FeatureExtractor():
 					if(self.equate_dim):
 						# Interpolate or Extrapolate to fixed dimension
 						mod_feat = feature[feat_type].reshape(self.dim_per_joint*self.num_joints, -1).transpose()
-						mod_feat = self.interpn(mod_feat, self.fixed_num_frames)
+						mod_feat = interpn(mod_feat, self.fixed_num_frames)
 						mod_feat = mod_feat.transpose().flatten()
 					else:
 						mod_feat = feature[feat_type]
@@ -499,10 +498,11 @@ class FeatureExtractor():
 					# Interpolate or Extrapolate to fixed dimension
 					# print feature[feat_type].shape
 					mod_feat = feature[feat_type].reshape(self.dim_per_joint*self.num_joints, -1).transpose()
-					mod_feat = self.interpn(mod_feat, self.fixed_num_frames)
+					mod_feat = interpn(mod_feat, self.fixed_num_frames)
 					mod_feat = mod_feat.transpose().flatten()
 				else:
 					mod_feat = feature[feat_type]
+				
 				inst = inst + mod_feat.tolist()
 		return np.array([inst])
 
@@ -516,12 +516,10 @@ class FeatureExtractor():
 		#	class label <string>. for instance, '3_0'
 		########################
 
-		# inst = self.generate_features_realtime(colproc_skel_data)
-
 		## Predict
 		pred_test_output = self.svm_clf.predict(feature_instance)
 		cname = self.label_to_name[self.id_to_labels[pred_test_output]]
-		print cname
+		# print cname
 
 		return cname
 
@@ -547,19 +545,6 @@ class FeatureExtractor():
 		if((right_std - left_std) >= self.dominant_first_thresh): return right_order+left_order
 		elif((left_std - right_std) >= self.dominant_first_thresh): return left_order+right_order
 		else: return right_order+left_order
-
-	###### Miscellaneous Function ########
-	def interpn(self, yp, num_points, kind = 'linear'):
-		# yp is a gesture instance
-		# yp is 2D numpy array of size num_frames x 3 if num_joints = 1
-		# No. of frames will be increased/reduced to num_points
-		xp = np.linspace(0, 1, num = yp.shape[0])
-		x = np.linspace(0, 1, num = num_points)
-		y = np.zeros((x.size, yp.shape[1]))
-		for dim in range(yp.shape[1]):
-			f = interp1d(xp, yp[:, dim], kind = kind)
-			y[:, dim] = f(x)
-		return y
 
 	###### Miscellaneous Function ########
 	def plot_confusion_matrix(self, cm, classes, normalize=False, title='Confusion matrix',cmap=plt.cm.Blues):

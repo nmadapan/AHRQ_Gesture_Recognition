@@ -8,5 +8,5 @@ import time
 
 def extract_fingers_realtime(image):
 	# Takes image of form (num_rows, num_columns, num_channels) : ndarray
-	time.sleep(3)
+	time.sleep(0.3)
 	return np.random.rand(10)
