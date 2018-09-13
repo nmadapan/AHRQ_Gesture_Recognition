@@ -281,6 +281,7 @@ while (True):
 	auto.hotkey(navType, "tab")
 	if (command == "Admin"):
 		if (action == "Quit"):
+			auto.hotkey(navType, "tab")
 			break
 		elif (action == "Get Status"):
 			get_status()
@@ -507,4 +508,32 @@ while (True):
 
 
 # When quitting program, remove anything saved
-#if ()
+if (os.path.isfile(os.path.join("Images", "layout_afterHover.png"))):
+	os.remove(os.path.join("Images", "layout_afterHover.png"))
+if (os.path.isfile(os.path.join("Images", "window_afterHover.png"))):
+	os.remove(os.path.join("Images", "window_afterHover.png"))
+if (os.path.isfile(os.path.join("Images", "layout_seriesThumbnail.png"))):
+	os.remove(os.path.join("Images", "layout_seriesThumbnail.png"))
+if (os.path.isfile(os.path.join("Images", "window_seriesThumbnail.png"))):
+	os.remove(os.path.join("Images", "window_seriesThumbnail.png"))
+if (os.path.isfile("diffLayout.png")):
+	os.remove(os.path.join("diffLayout.png"))
+if (os.path.isfile(os.path.join("Images", "window_seriesThumbnailClose.png"))):
+	os.remove(os.path.join("Images", "window_seriesThumbnailClose.png"))
+if (os.path.isfile(os.path.join("Images", "window_seriesThumbnailClose_Red.png"))):
+	os.remove(os.path.join("Images", "window_seriesThumbnailClose_Red.png"))
+if (os.path.isfile(os.path.join("Images", "window_seriesThumbnailClose_Gray.png"))):
+	os.remove(os.path.join("Images", "window_seriesThumbnailClose_Gray.png"))
+if (os.path.isfile(os.path.join("Images", "window_diff.png"))):
+	os.remove(os.path.join("Images", "window_diff.png"))
+
+
+if (os.path.isfile(os.path.join("Images", "RightClick", "presets.png"))):
+	os.remove(os.path.join("Images", "RightClick", "presets.png"))
+if (os.path.isfile(os.path.join("Images", "RightClick", "rightClick.png"))):
+	os.remove(os.path.join("Images", "RightClick", "rightClick.png"))
+if (os.path.isfile(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))):
+	os.remove(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
+
+
+
