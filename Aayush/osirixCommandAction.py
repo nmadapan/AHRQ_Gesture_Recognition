@@ -79,7 +79,7 @@ status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_
 
 def resetPanelMoves():
 	status["firstW"] = ((float(width) - 110.0) / (float(status["panel_dim"][1]) * 2.0))
-	status["firstH"] = ((float(height) - 100.0) / (float(status["panel_dim"][0]) * 2.0))
+	status["firstH"] = ((float(height) - 100.0 - float(status["panel_dim"][0]) * 38.0) / (float(status["panel_dim"][0]) * 2.0))
 	status["jumpW"] = (status["firstW"] * 2.0 if status["panel_dim"][1] != 1 else 0)
 	status["jumpH"] = (status["firstH"] * 2.0 if status["panel_dim"][0] != 1 else 0)
 
@@ -87,7 +87,7 @@ resetPanelMoves()
 
 def moveToActivePanel():
 	moveToX = 110.0 + status["firstW"] + (status["active_panel"][1] - 1) * (status["jumpW"])
-	moveToY = 100.0 + status["firstH"] + (status["active_panel"][0] - 1) * (status["jumpH"])
+	moveToY = 100.0 + status["firstH"] + (status["active_panel"][0] - 1) * (status["jumpH"]) + float(status["panel_dim"][0]) * 38.0
 	auto.moveTo(moveToX, moveToY)
 
 actionList = [["Admin", "Quit", "Get Status"],
@@ -142,7 +142,7 @@ def rightClick(offset):
 	auto.click(button='right')
 	(x1, y1, w, h) = auto.locateOnScreen("Images/RightClick/rightClick.png")
 	auto.moveTo((2 * x1 + w) / 4, (y1 + (offset / 1000.0) * rightBoxH) / 2)
-
+	
 def get_status():
 	print "\nStatus\n------"
 	print "Previous action: " + status["prev_action"]
@@ -175,6 +175,7 @@ while (True):
 	auto.hotkey("command", "tab")
 	if (command == "Admin"):
 		if (action == "Quit"):
+			auto.hotkey("command", "tab")
 			break
 		elif (action == "Get Status"):
 			get_status()
@@ -202,15 +203,19 @@ while (True):
 	elif (command == "Zoom"):
 		(isValid, action) = ((True, action) if command != action else defaultAction(commandID, [0, 1]))
 		if (isValid):
-			moveToActivePanel()
+			(oldLocationX, oldLocationY) = auto.position()
+			#moveToActivePanel()
 			auto.press("z")
-			auto.mouseDown()
+			#auto.mouseDown()
 			if (status["params"] != ""):
 				level = (-1 * int(status["params"]) if action == "In" else int(status["params"]))
 			else:
 				level = (-20 if action == "In" else 20)
+			auto.PAUSE = 0
+			auto.mouseDown()
 			auto.moveTo(oldLocationX, oldLocationY + level)
 			auto.mouseUp()
+			auto.PAUSE = 0.75
 	elif (command == "Switch Panel" and action != "Switch Panel"):
 		if (action == "Right" or action == "Left"):
 			status["active_panel"][1] += (-1 if action == "Left" else 1)
@@ -226,6 +231,7 @@ while (True):
 		(isValid, action) = ((True, action) if command != action else defaultAction(commandID, [0, 1]))
 		if (isValid):
 			moveToActivePanel()
+			(oldLocationX, oldLocationY) = auto.position()
 			auto.press("m")
 			auto.mouseDown()
 			if (status["params"] != ""):
@@ -348,4 +354,6 @@ while (True):
 	auto.hotkey("command", "tab")
 
 
+
 # When quitting program, remove anything saved
+
