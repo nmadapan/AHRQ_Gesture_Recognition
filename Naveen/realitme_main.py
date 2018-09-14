@@ -94,35 +94,57 @@ class Realtime:
 		self.right_hand_id = 11
 		self.thresh_level = 0.2 #TODO: It seems to be working. 
 
-	def init_socket(self, timeout = 60):
+	def sock_connect(self, timeout = 30):
 		# Description:
 		#	If connected, return as is
-		#	Else, keep trying to connect fir $timeout$ seconds.
+		#	Else, keep trying to connect forever. 
 		print 'Connecting to server .', 
 		if(self.connect_status): 
 			print 'Connected!'
 			return
 
 		start = time.time()
-		while True:
+		while(not self.connect_status):
 			try:
 				self.sock = socket.socket()
-				self.sock.connect((TCP_IP, TCP_PORT)) ## Blocking call. Returns on time out.
+				self.sock.connect((TCP_IP, TCP_PORT)) ## Blocking call. Gives time out exception on time out.
+				self.connect_status = True
 				self.sock.send(INITIAL_MESSAGE)
-				data = self.sock.recv(32) # Blocking call
-				if data:
-					print('Handshake successfull ! ! !')
-					self.connect_status = True
-					break
 				print '. ',
-				time.sleep(0.5)
+				time.sleep(0.5)					
 			except Exception as exp:
 				print '. ',
 				time.sleep(0.5)
-				# print exp
 			if(time.time()-start > timeout):
-				print 'Waited for more than ' + str(timeout) + ' seconds.'
-				raise socket.timeout
+				print 'Connection Failed! Waited for more than ' + str(timeout) + ' seconds.'
+				sys.exit(0)
+
+	def sock_recv(self, timeout = 30):
+		print '\nWaiting for delivery message: .', 
+		data_received = False
+		data = None
+		start = time.time()
+		while(not data_received):
+			try:
+				data = self.sock.recv(32) # Blocking call # Gives time out exception
+				if data:
+					print('Sucess!')
+					data_received = True
+					break
+				print '. ',
+			except Exception as exp:
+				print '. ',
+				time.sleep(0.5)
+
+			if(time.time()-start > timeout):
+				print 'No delivery message! Waited for more than ' + str(timeout) + ' seconds.'
+				sys.exit(0)		
+
+		return data
+
+	def init_socket(self, timeout = 10):
+		self.sock_connect(timeout = timeout)
+		self.sock_recv(timeout = timeout)
 
 	def update_cmd_reps(self):
 		rep_path = os.path.join(self.data_path, self.lexicon_name+'_reps.txt')
@@ -148,12 +170,19 @@ class Realtime:
 		self.fl_stream_ready = True
 
 		while(self.fl_alive):
-			# if(self.fl_skel_ready and self.fl_openpose_ready): continue ## UNCOMMET IT LATER ON
+			if(self.fl_synapse_running): continue # If synapse is running, stop producing the rgb/skeleton data
+			elif(self.fl_skel_ready and self.fl_openpose_ready): continue # If previous skeleton features and op features are not used, stop producing. 
+			
 			# Refreshing Frames
 			rgb_flag = self.kr.update_rgb()
 			body_flag = self.kr.update_body()
 
 			if(body_flag):
+				### TODO:
+				## We need to take into account the direction of movement of hand. 
+				## gestures starts when previous skeleton is below the threshold and current skeleton is above the threshold. 
+				###
+				
 				skel_pts = self.kr.skel_pts.tolist()
 
 				# GESTURE SPOTTING NEEDS TO HAPPEN HERE
@@ -209,7 +238,8 @@ class Realtime:
 		first_time = False
 		print_first_time = True
 		while(self.fl_alive):
-			if(self.fl_skel_ready): continue
+			if(self.fl_synapse_running): continue # If synapse is running, dont do anything
+			if(self.fl_skel_ready): continue # If previous skeleton features are not used, dont do anything.
 			if self.fl_gest_started:
 				if print_first_time:
 					print "IN SKEL THREAD, GESTURE STARTED: "
@@ -250,7 +280,8 @@ class Realtime:
 		print_first_time = True
 		rgb_frame = None
 		while(self.fl_alive):
-			if(self.fl_openpose_ready): continue
+			if(self.fl_synapse_running): continue # If synapse is running, dont do anything
+			if(self.fl_openpose_ready): continue # If previous openpose data is not used, dont do anything
 			if self.fl_gest_started:
 				if print_first_time:
 					print "IN RGB THREAD, GESTURE STARTED: "
@@ -279,12 +310,16 @@ class Realtime:
 			if(not self.fl_cmd_ready): continue
 			self.fl_synapse_running = True
 
-			# If command is ready: Do.
-			self.init_socket()
-			self.sock.send(self.command_to_execute) # Pass a string
-			data = self.sock.recv(32) # Blocking call
-			if(data): pass
-
+			# If command is ready: Do the following:
+			self.sock.send(self.command_to_execute)
+			data = self.sock_recv(timeout = 5)
+			if(data): 
+				self.fl_cmd_ready = False
+				self.fl_synapse_running = False
+			else:
+				print 'Synapse execution failed !'
+				## What to do now
+				sys.exit(0)
 
 	def get_next_cmd(self, pred_cmd):
 		# pred_cmd : predicted command name
@@ -305,36 +340,52 @@ class Realtime:
 		acces_openpose_thread = Thread(name = 'access_openpose', target = self.th_gen_openpose) # C: RGB ; P: finger_lengths
 		synapse_thread = Thread(name = 'autoclick_synapse', target = self.th_synapse) #
 
+		##########
+
+		##########
+
 		acces_kinect_thread.start()
 		gen_skel_thread.start()
 		acces_openpose_thread.start()
+		synapse_thread.start()
 
-		only_skeleton = True
+		# only_skeleton = True
 
 		## Merger part of the code
 		while(True):
+			if(self.fl_synapse_running): continue
 			if(self.fl_skel_ready and self.fl_openpose_ready):
 				# pp(self.skel_instance)
 				# pp(self.op_instance)
 				
-				# Obtain timestamps
-				skel_ts, skel_inst = self.skel_instance[0], self.skel_instance[1]
-				op_ts, op_inst = self.op_instance[0], self.op_instance[1]
-				_, sync_op_ts = sync_ts(skel_ts, op_ts)
+				# # Obtain timestamps
+				# skel_ts, skel_inst = self.skel_instance[0], self.skel_instance[1]
+				# op_ts, op_inst = self.op_instance[0], self.op_instance[1]
+				# _, sync_op_ts = sync_ts(skel_ts, op_ts)
 
-				## Interpolate openpose instances
-				op_inst = smart_interpn(op_inst, sync_op_ts, kind = 'copy') # Change kind to 'linear' for linear interpolation
-				op_inst = interpn(op_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
+				# ## Interpolate openpose instances
+				# op_inst = smart_interpn(op_inst, sync_op_ts, kind = 'copy') # Change kind to 'linear' for linear interpolation
+				# op_inst = interpn(op_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
 
-				final_inst = np.append(skel_inst, op_inst).reshape(1, -1)
+				# final_inst = np.append(skel_inst, op_inst).reshape(1, -1)
 
-				print'skel_inst: ', skel_inst.shape
-				print'op_inst: ', op_inst.shape
-				print'final_inst: ', final_inst.shape
+				# print'skel_inst: ', skel_inst.shape
+				# print'op_inst: ', op_inst.shape
+				# print'final_inst: ', final_inst.shape
 
-				if(only_skeleton): final_inst = skel_inst
+				# if(only_skeleton): final_inst = skel_inst
 
-				## Working until here. Debugged!!!!!!!!!!!
+				# ## Working until here. Debugged!!!!!!!!!!!
+				# cname = self.feat_ext.pred_output_realtime(final_inst)
+				# self.command_to_execute = get_next_command(cname)
+
+				#### Temporary ####
+				self.command_to_execute = '1_1'
+				time.sleep(0.5) 
+				#### Temporary ####
+
+				self.fl_cmd_ready = True
+
 
 				'''
 					* Passing the feature to the actual svm:

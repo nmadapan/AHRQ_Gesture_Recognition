@@ -17,7 +17,7 @@ class Client():
 		self.data_received = False
 		self.init_socket(timeout = 10)
 
-	def init_socket(self, timeout = 30):
+	def sock_connect(self, timeout = 30):
 		# Description:
 		#	If connected, return as is
 		#	Else, keep trying to connect forever. 
@@ -42,7 +42,9 @@ class Client():
 				print 'Connection Failed! Waited for more than ' + str(timeout) + ' seconds.'
 				sys.exit(0)
 
+	def sock_recv(self, timeout = 30):
 		print '\nWaiting for delivery message: .', 
+		data = None
 		start = time.time()
 		while(not self.data_received):
 			try:
@@ -60,6 +62,11 @@ class Client():
 				print 'No delivery message! Waited for more than ' + str(timeout) + ' seconds.'
 				sys.exit(0)		
 
+		return data
+
+	def init_socket(self, timeout = 30):
+		self.sock_connect()
+		self.sock_recv()
 
 	def send_data(self, data):	
 		if self.connect_status:
