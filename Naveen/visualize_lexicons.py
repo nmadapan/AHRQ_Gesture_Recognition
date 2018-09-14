@@ -12,7 +12,7 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lex_folder = 'F:\\AHRQ\\Study_IV\\Data\\Data\\L2' # Where to write the files
+lex_folder = 'H:\AHRQ\Study_IV\Data\Data\L8' # Where to write the files
 fps = 120
 default_width, default_height = 1920, 1080
 
@@ -54,6 +54,12 @@ close_flag = False
 cmd_idx = 0
 while(True):
 	cmd = cmds[cmd_idx]
+
+	## Resetting the bframe
+	for idx1 in range(len(bframe)):
+		for idx2 in range(len(bframe[0])):
+			bframe[idx1][idx2][:] = 255 * np.ones((des_h, des_w, 3))
+
 	if(close_flag): break
 
 	vids = glob(join(lex_folder, cmd+'*_rgb.avi'))

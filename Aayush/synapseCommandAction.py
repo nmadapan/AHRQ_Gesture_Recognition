@@ -102,11 +102,14 @@ os.remove(os.path.join("Images", "afterTopBar.png"))
 # Get border of dashed region
 auto.moveTo(width / 2.0, height / 2.0)
 auto.click(button='right')
+time.sleep(1)
 noDash = ImageGrab.grab()
 noDash.save(os.path.join("Images", "noDash.png"))
 boundBoxNoDash = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "noDash.png"))
+ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("Images", "boundBoxNoDash.png"))
 print "boundBoxNoDash: %s" % (boundBoxNoDash,)
 boundBoxNoDash = (boundBoxNoDash[0] + (10 * scale), boundBoxNoDash[1] + (10 * scale), boundBoxNoDash[2] - (10 * scale), boundBoxNoDash[3] - (10 * scale))
+ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("Images", "boundBoxNoDash2.png"))
 #borderDash = topBarHeight / 2.0
 #boundBoxNoDash = (borderDash, borderDash, nativeW - borderDash, nativeH - borderDash)
 (bbndW, bbndH) = ((boundBoxNoDash[2] - boundBoxNoDash[0]) / scale, (boundBoxNoDash[3] - boundBoxNoDash[1]) / scale)
@@ -114,7 +117,8 @@ print "boundBoxNoDash: %s" % (boundBoxNoDash,)
 print "boundBoxNoDash WxH: %s" % ((bbndW, bbndH),)
 os.remove(os.path.join("Images", "noDash.png"))
 os.remove(os.path.join("Images", "fullscreen.png"))
-#os.remove(os.path.join("Images", "boundBoxNoDash.png"))
+os.remove(os.path.join("Images", "boundBoxNoDash.png"))
+os.remove(os.path.join("Images", "boundBoxNoDash2.png"))
 auto.click()
 
 
@@ -123,6 +127,7 @@ auto.moveTo(width / 2.0, height / 2.0)
 beforeRight = ImageGrab.grab(bbox=boundBoxNoDash)
 beforeRight.save(os.path.join("Images", "RightClick", "beforeRight.png"))
 auto.click(button='right')
+time.sleep(1)
 afterRight = ImageGrab.grab(bbox=boundBoxNoDash)
 afterRight.save(os.path.join("Images", "RightClick", "afterRight.png"))
 rightBox = get_bbox(os.path.join("Images", "RightClick", "beforeRight.png"), os.path.join("Images", "RightClick", "afterRight.png"))
@@ -169,8 +174,8 @@ print "srf box WxH: %s" % ((boxW, boxH),)
 scaleRotateFlip = ImageGrab.grab(bbox=(x1 + rightIcons, y1, x1 + boxW, y1 + boxH))
 scaleRotateFlip.save(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
 
-os.remove(os.path.join("Images", "RightClick", "beforeRight.png"))
-os.remove(os.path.join("Images", "RightClick", "afterRight.png"))
+#os.remove(os.path.join("Images", "RightClick", "beforeRight.png"))
+#os.remove(os.path.join("Images", "RightClick", "afterRight.png"))
 os.remove(os.path.join("Images", "RightClick", "afterPresets.png"))
 os.remove(os.path.join("Images", "RightClick", "afterSRF.png"))
 
@@ -226,7 +231,6 @@ def defaultAction(commandID, paramSizes):
 			for paramSize in paramSizes:
 				if (len(params[1].split("_")) == paramSize):
 					invalidSize = False
-			#invalidSize = (invalidSize | (len(params[1].split("_")) != paramSize) for paramSize in paramSizes)
 			if (invalidSize):
 				auto.hotkey("command", "tab")
 				print "Invalid parameter size given for " + command
@@ -245,8 +249,6 @@ def defaultAction(commandID, paramSizes):
 def rightClick(offset):
 	auto.click(button='right')
 	(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "rightClick.png"))
-	#print "rightClick function: %s" % ((x1, y1, w, h),)
-	#auto.moveTo((2 * x1 + w) / 4.0, (y1 + (offset / 1000.0) * rightBoxH) / 2.0)
 	auto.moveTo((x1 / scale) + (w / 2.0) * scale, (y1 + (offset / 1000.0) * rightBoxH) / scale)
 	
 def get_status():
@@ -311,12 +313,13 @@ while (True):
 			(oldLocationX, oldLocationY) = auto.position()
 			rightClick(54)
 			auto.click()
+			time.sleep(1)
 			auto.moveTo(oldLocationX, oldLocationY)
-			auto.mouseDown()
 			if (status["params"] != ""):
 				level = (-1 * int(status["params"]) if action == "In" else int(status["params"]))
 			else:
 				level = (-20 if action == "In" else 20)
+			auto.mouseDown()
 			auto.moveTo(oldLocationX, oldLocationY + level)
 			auto.mouseUp()
 	elif (command == "Switch Panel" and action != "Switch Panel"):
@@ -336,12 +339,13 @@ while (True):
 			(oldLocationX, oldLocationY) = auto.position()
 			rightClick(90)
 			auto.click()
+			time.sleep(1)
 			auto.moveTo(oldLocationX, oldLocationY)
-			auto.mouseDown()
 			if (status["params"] != ""):
 				level = (-1 * int(status["params"]) if action == "Up" or action == "Left" else int(status["params"]))
 			else:
 				level = (-20 if action == "Up" or action == "Left" else 20)
+			auto.mouseDown()
 			oldLocationX += (0 if action == "Up" or action == "Down" else level)
 			oldLocationY += (level if action == "Up" or action == "Down" else 0)
 			auto.moveTo(oldLocationX, oldLocationY)
@@ -352,6 +356,7 @@ while (True):
 			if (isValid):
 				rightClick(126)
 				auto.click()
+				time.sleep(2)
 				points = status["params"].split("_")
 				try:
 					if (len(points) == 4):
@@ -387,19 +392,6 @@ while (True):
 			seriesThumbnail = ImageGrab.grab(bbox=(boundBoxNoDash[0] + (1 * scale), boundBoxNoDash[1] + topBarHeight + (1 * scale), boundBoxNoDash[2] + (1 * scale), boundBoxNoDash[3] + (1 * scale)))
 			seriesThumbnail.save(os.path.join("Images", "window_seriesThumbnail.png"))
 			(x1, y1, x2, y2) = get_bbox(os.path.join("Images", "window_afterHover.png"), os.path.join("Images", "window_seriesThumbnail.png"))
-			"""x1 += (20.0 / 1440.0) * width
-			y1 += (272.0 / 900.0) * height
-			diff = ImageGrab.grab(bbox=(x1, y1, x2, y2))
-			diff.save(os.path.join("Images", "window_diff.png"))
-			close = ImageGrab.grab(bbox=((x2 - 83), (y1 + 2), (x2 - 83) + 90, (y1 + 2) + 40))
-			close.save(os.path.join("Images", "window_seriesThumbnailClose.png"))
-			auto.moveTo((2 * (x2 - 83) + 90) / 4, (2 * (y1 + 2) + 40) / 4)
-			close = ImageGrab.grab(bbox=((x2 - 83), (y1 + 2), (x2 - 83) + 90, (y1 + 2) + 40))
-			close.save(os.path.join("Images", "window_seriesThumbnailClose_Red.png"))
-			auto.moveTo(x2 + 1, (2 * (y1 + 2) + 40) / 4)
-			auto.click()
-			close = ImageGrab.grab(bbox=((x2 - 83), (y1 + 2), (x2 - 83) + 90, (y1 + 2) + 40))
-			close.save(os.path.join("Images", "window_seriesThumbnailClose_Gray.png"))"""
 			(diffW, diffH) = (x2 - x1 + 1, y2 - y1 + 1)
 			x1 += boundBoxNoDash[0] + (1 * scale)
 			y1 += boundBoxNoDash[1] + topBarHeight + (1 * scale)
@@ -437,6 +429,7 @@ while (True):
 		if (isValid):
 			rightClick(18)
 			auto.click()
+			time.sleep(1)
 			moveToActivePanel()
 			auto.mouseDown()
 			if (status["params"] != ""):
@@ -464,19 +457,15 @@ while (True):
 		ImageGrab.grab(bbox=(x1, y1, x2, y2)).save("diffLayout.png")
 		status["panel_dim"][0] = 1
 		if (action == "One-Panel"):
-			#auto.moveTo((x1 + 20) / 2 + 45, y1 / 2 + 200)
 			auto.moveTo((x1 + (68.0 / 1920.0) * nativeW) / scale, (y1 + (95.0 / 1920.0) * nativeW) / scale)
 			status["panel_dim"][1] = 1
 		elif (action == "Two-Panels"):
-			#auto.moveTo((x1 + 20) / 2 + 107, y1 / 2 + 200)
 			auto.moveTo((x1 + (160.0 / 1920.0) * nativeW) / scale, (y1 + (95.0 / 1920.0) * nativeW) / scale)
 			status["panel_dim"][1] = 2
 		elif (action == "Three-Panels"):
-			#auto.moveTo((x1 + 20) / 2 + 169, y1 / 2 + 200)
 			auto.moveTo((x1 + (252.0 / 1920.0) * nativeW) / scale, (y1 + (95.0 / 1920.0) * nativeW) / scale)
 			status["panel_dim"][1] = 3
 		elif (action == "Four-Panels"):
-			#auto.moveTo((x1 + 20) / 2 + 231, y1 / 2 + 200)
 			auto.moveTo((x1 + (344.0 / 1920.0) * nativeW) / scale, (y1 + (95.0 / 1920.0) * nativeW) / scale)
 			status["panel_dim"][1] = 4
 		auto.click()
@@ -516,8 +505,12 @@ if (os.path.isfile(os.path.join("Images", "layout_seriesThumbnail.png"))):
 	os.remove(os.path.join("Images", "layout_seriesThumbnail.png"))
 if (os.path.isfile(os.path.join("Images", "window_seriesThumbnail.png"))):
 	os.remove(os.path.join("Images", "window_seriesThumbnail.png"))
+
 if (os.path.isfile("diffLayout.png")):
 	os.remove(os.path.join("diffLayout.png"))
+if (os.path.isfile("diffSeries.png")):
+	os.remove(os.path.join("diffSeries.png"))
+
 if (os.path.isfile(os.path.join("Images", "window_seriesThumbnailClose.png"))):
 	os.remove(os.path.join("Images", "window_seriesThumbnailClose.png"))
 if (os.path.isfile(os.path.join("Images", "window_seriesThumbnailClose_Red.png"))):
