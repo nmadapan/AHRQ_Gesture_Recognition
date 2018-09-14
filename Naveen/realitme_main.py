@@ -4,6 +4,7 @@ import os, sys, time
 from threading import Thread, Condition
 from copy import copy, deepcopy
 import pickle
+import socket
 
 from FeatureExtractor import FeatureExtractor
 from KinectReader import kinect_reader
@@ -13,6 +14,11 @@ from pprint import pprint as pp
 # Fake openpose
 from fake_openpose import extract_fingers_realtime
 from helpers import sync_ts
+
+TCP_IP = '128.46.125.209' # The static IP of Ubuntu computer
+TCP_PORT = 5000 # Both server and client should have a common IP and Port
+BUFFER_SIZE = 1024 # in bytes. 1 charecter is one byte.
+INITIAL_MESSAGE = 'Handshake'
 
 class Realtime:
 	def __init__(self):
@@ -33,10 +39,16 @@ class Realtime:
 		self.fl_stream_ready = False # th_access_kinect
 		self.fl_skel_ready = False # th_gen_skel
 		self.fl_openpose_ready = False # th_gen_openpose
-		self.fl_synapse_ready = False # th_synapse
+
+		##
+		# TODO: If synapse breaks down, we should restart. So we need to save the current state info. 
+		##
+
+		# If true, we have command to execute ==> now call synapse, else command is not ready yet. 
+		self.fl_cmd_ready = False
 
 		self.fl_gest_started = False
-		self.fl_cmd_running = False # Synapse running
+		self.fl_synapse_running = False # Synapse running, # th_synapse. If False, meaning synapse is executing a command. So stop everything else. 
 		self.dom_rhand = True # By default, right followed by left
 
 		# Initialize the Kinect
@@ -45,6 +57,20 @@ class Realtime:
 		## thread conditions
 		self.cond_skel = Condition()
 		self.cond_rgb = Condition()
+
+		## Socket initialization
+		# variable inits
+		# wait_for_connection for the first time. 
+		# Set the sself.fl_sock_com = True
+		##
+		## Socket communication
+		self.fl_sock_com = False # If the socket com b/w server and client is established. 
+		self.sock = None # updated in call to init_socket()
+		self.connect_status = False # updated in call to init_socket()
+		socket.setdefaulttimeout(2.0)
+		self.init_socket()
+
+		self.command_to_execute = None
 
 		## Initialize Feature extractor
 		self.feat_ext = FeatureExtractor() ## LATER use a trained one. 
@@ -67,6 +93,36 @@ class Realtime:
 		self.left_hand_id = 7
 		self.right_hand_id = 11
 		self.thresh_level = 0.2 #TODO: It seems to be working. 
+
+	def init_socket(self, timeout = 60):
+		# Description:
+		#	If connected, return as is
+		#	Else, keep trying to connect fir $timeout$ seconds.
+		print 'Connecting to server .', 
+		if(self.connect_status): 
+			print 'Connected!'
+			return
+
+		start = time.time()
+		while True:
+			try:
+				self.sock = socket.socket()
+				self.sock.connect((TCP_IP, TCP_PORT)) ## Blocking call. Returns on time out.
+				self.sock.send(INITIAL_MESSAGE)
+				data = self.sock.recv(32) # Blocking call
+				if data:
+					print('Handshake successfull ! ! !')
+					self.connect_status = True
+					break
+				print '. ',
+				time.sleep(0.5)
+			except Exception as exp:
+				print '. ',
+				time.sleep(0.5)
+				# print exp
+			if(time.time()-start > timeout):
+				print 'Waited for more than ' + str(timeout) + ' seconds.'
+				raise socket.timeout
 
 	def update_cmd_reps(self):
 		rep_path = os.path.join(self.data_path, self.lexicon_name+'_reps.txt')
@@ -218,11 +274,17 @@ class Realtime:
 				self.fl_openpose_ready = True #### Think about conditioning
 
 	def th_synapse(self):
-		## Socket communicaiton code goes here. 
-		# Client
+		#
+		while(self.fl_alive):
+			if(not self.fl_cmd_ready): continue
+			self.fl_synapse_running = True
 
-		# 
-		pass
+			# If command is ready: Do.
+			self.init_socket()
+			self.sock.send(self.command_to_execute) # Pass a string
+			data = self.sock.recv(32) # Blocking call
+			if(data): pass
+
 
 	def get_next_cmd(self, pred_cmd):
 		# pred_cmd : predicted command name
@@ -278,7 +340,11 @@ class Realtime:
 					* Passing the feature to the actual svm:
 						cname = self.feat_ext.pred_output_realtime(final_inst)
 					* Logic that operates over the command names. This is lexicon specific. We have L*_repetition.txt file. 
-						command_to_execute = get_next_command(cname)
+						self.command_to_execute = get_next_command(cname)
+						set self.fl_cmd_ready to True
+						set self.fl_synapse_running	to True
+						Wait for data from the server. If True, set self.fl_synapse_running	to False
+						When self.fl_synapse_running is True, stop everything else. 
 					* Let the synapse thread know that command is ready. It can execute it. 
 				'''
 

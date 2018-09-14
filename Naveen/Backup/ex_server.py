@@ -5,7 +5,7 @@ from threading import Thread
 import time
 
 ## Global Static Variables
-TCP_IP = '127.0.0.1'
+TCP_IP = '128.46.125.209'
 TCP_PORT = 5000
 BUFFER_SIZE = 1024
 MAX_CLIENTS = 1
