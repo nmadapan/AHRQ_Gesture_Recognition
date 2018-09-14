@@ -26,7 +26,7 @@ class Server():
         ## Waiting for establishing the connection between server and client
         self.wait_for_connection()
 
-    def run(self):
+    def th_socket(self):
         while True:
             if(not self.connect_status): self.wait_for_connection()
             try:
@@ -52,9 +52,15 @@ class Server():
             self.connect_status = True
             self.client.send(str(True))
 
+    def run(self):
+        sock_thread = Thread(name='server_thread', target=server.th_socket)
+        synapse_thread = Thread(name='synapse_thread', target=server.th_synapse)
 
-print '--------- Server ---------'
-server = Server()
-server_thread = Thread(name='server_thread', target=server.run)
+        sock_thread.start()
+        synapse_thread.start()
+        
 
-server_thread.start()
+if __name__ == '__main__':
+    print '--------- Server ---------'
+    server = Server()
+    server.run()

@@ -4,11 +4,10 @@ import socket, random
 import time
 
 ## Initializing Global Variables
-TCP_IP = '127.0.0.1' # The static IP of Ubuntu computer
+TCP_IP = '128.46.125.209' # The static IP of Ubuntu computer
 TCP_PORT = 5000 # Both server and client should have a common IP and Port
 BUFFER_SIZE = 1024 # in bytes. 1 charecter is one byte.
 INITIAL_MESSAGE = 'Handshake'
-
 
 class Client():
 	def __init__(self):
