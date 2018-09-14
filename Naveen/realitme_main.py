@@ -128,7 +128,7 @@ class Realtime:
 			try:
 				data = self.sock.recv(32) # Blocking call # Gives time out exception
 				if data:
-					print('Sucess!')
+					print('Success!')
 					data_received = True
 					break
 				print '. ',
@@ -182,7 +182,7 @@ class Realtime:
 				## We need to take into account the direction of movement of hand. 
 				## gestures starts when previous skeleton is below the threshold and current skeleton is above the threshold. 
 				###
-				
+
 				skel_pts = self.kr.skel_pts.tolist()
 
 				# GESTURE SPOTTING NEEDS TO HAPPEN HERE
