@@ -17,8 +17,8 @@ import re
 
 ## Global Variables
 # Directory for reading the data that might be possibly flipped
-lex_folder = r'G:\AHRQ\Study_IV\Data\L2' 
-target_folder = r''
+lex_folder = r'F:\AHRQ\Study_IV\Data\Data\L2' 
+target_folder = r'F:\AHRQ\Study_IV\Flipped_Data\L2'
 filename = 'flipped_files.txt' 
 fps = 120
 default_width, default_height = 1920/2, 1080/2
