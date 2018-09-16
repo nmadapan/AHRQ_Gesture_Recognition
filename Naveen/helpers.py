@@ -156,55 +156,56 @@ def json_to_dict(json_filepath):
 	return var
 
 
-def flip_skeleton(skel_path, replace = False):
+def flip_skeleton(skel_path, out_path, num_joints=3):
 	############
 	# Flips the body skeleton along the persons vertical axis.
 	# Input argument:
-	#	* skel_path: path to skeleton file. Each line in the file has 75 elements. [x1, y1, z1 ...]
-	#	* replace: file will be replace if True.
+	#	* skel_path: path to skeleton file. Each line in the file has num_joints*25 elements. [x1, y1, z1 ...]
+	#	* outPath: path to place the output file.
+	#   * num_joints: the number of joints to be flipped
 	#
 	# Assumptions:
 	#	* There is only roll angle about person's veritcal axis
 	#	* Kinect is not tilted.
 	###########
 	
-	if(not replace): newname = os.path.basename(skel_path)[:-4] + '_flip.txt'
-	else: newname = os.path.basename(skel_path)
-
 	with open(skel_path, 'r') as fp:
 		lines = fp.readlines()
 		lines = [map(float, line.strip().split(' ')) for line in lines]
 
-	fp = open(os.path.join(os.path.dirname(skel_path), newname), 'w') 
+	fp = open(out_path, 'w') 
 
 	left_sh_idx = 4
 	right_sh_idx = 8
 	spine_idx = 0
 
 	for line in lines:
-		torso = np.array(line[3*spine_idx:3*spine_idx+3] )
-		left_sh = np.array(line[3*left_sh_idx:3*left_sh_idx+3])
-		right_sh = np.array(line[3*right_sh_idx:3*right_sh_idx+3])
+		torso = np.array(line[num_joints*spine_idx:num_joints*spine_idx+num_joints] )
+		left_sh = np.array(line[num_joints*left_sh_idx:num_joints*left_sh_idx+num_joints])
+		right_sh = np.array(line[num_joints*right_sh_idx:num_joints*right_sh_idx+num_joints])
 		
-		mat = np.reshape(line, (25, 3))
+		mat = np.reshape(line, (25, num_joints))
 
 		# Normalize w.r.t torso
 		mat = mat - torso
 
-		# Find the theta
-		zr = right_sh[-1]
-		zl = left_sh[-1]
-		shoulder_length = np.linalg.norm(left_sh-right_sh)
-		theta = np.arcsin((zr-zl)/shoulder_length)
+		if num_joints > 2:
+			# Find the theta
+			zr = right_sh[-1]
+			zl = left_sh[-1]
+			shoulder_length = np.linalg.norm(left_sh-right_sh)
+			theta = np.arcsin((zr-zl)/shoulder_length)
 
-		R = np.eye(3)
-		R[0, 0] = np.cos(theta)
-		R[0, 2] = np.sin(theta)
-		R[2, 0] = -np.sin(theta)
-		R[2, 2] = np.cos(theta)
+			R = np.eye(num_joints)
+			R[0, 0] = np.cos(theta)
+			R[0, 2] = np.sin(theta)
+			R[2, 0] = -np.sin(theta)
+			R[2, 2] = np.cos(theta)
 
-		# Transform the matrix
-		mat = np.dot(R, mat.transpose())
+			# Transform the matrix
+			mat = np.dot(R, mat.transpose())
+
+
 		mat[0, :] = -mat[0, :]
 		mat = mat.transpose() + torso
 
@@ -253,3 +254,25 @@ def interpn(yp, num_points, kind = 'linear'):
 		f = interp1d(xp, yp[:, dim], kind = kind)
 		y[:, dim] = f(x)
 	return y
+
+def flip_video(input_video_path, out_video_path):
+	cap = cv2.VideoCapture(video_path)
+	fps = cap.get(cv2.CAP_PROP_FPS)
+	width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+	height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
+	# Define the codec and create VideoWriter object
+	fourcc = cv2.VideoWriter_fourcc(*'XVID')
+	out = cv2.VideoWriter(out_video_path,fourcc, fps, (width,height))
+
+	while(cap.isOpened()):
+	    ret, frame = cap.read()
+	    if ret==True:
+	        frame = cv2.flip(frame,1)
+	        out.write(frame)
+	    else:
+	        break
+	# Release everything if job is finished
+	cap.release()
+	out.release()
+	cv2.destroyAllWindows()

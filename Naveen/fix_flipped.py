@@ -2,10 +2,13 @@ import cv2
 import numpy as np
 from glob import glob
 from os.path import join
+from os import remove as remove_file
+from os import rename
 from helpers import *
 from copy import deepcopy
 import math
-
+import csv
+import re
 ###
 # Use 'n' for next video
 # Use 'p' for previous video
@@ -16,6 +19,7 @@ import math
 # Directory for reading the data that might be possibly flipped
 lex_folder = r'G:\AHRQ\Study_IV\Data\L2' 
 target_folder = r''
+filename = 'flipped_files.txt' 
 fps = 120
 default_width, default_height = 1920/2, 1080/2
 # Initialize the dictionary where the video paths and location information
@@ -128,4 +132,57 @@ while(True):
 
 	for vcap in vcaps: vcap[1].release()
 
+# Compile regular expression to find subject number	
+re_subject = re.compile("_S[0-9]+_")
+re_lexicon = re.compile("_L[0-9]{1}_")
+temp_video_path = join(target_folder,"temp.avi")
+temp_anot_path = join(target_folder,"temp.txt")
 # Write the flipped version of the files in the target folder
+with open(join(target_folder, filename),'w') as csv_file:
+	csv_writer = csv.writer(csv_file, delimiter=',')
+	for cmd, values in videos_per_cmd.items():
+		if not isinstance(values[0],(list,)):
+			continue
+		for video_descriptor in values:
+			# if the video was flipped
+			if video_descriptor[2]:
+				# write all the attributes to a csv file row
+				video_path = video_descriptor[0]
+				video_name = video_path.split('\\')[-1]
+				subject = re_subject.findall(video_name)[0].split('_')[1]
+				lexicon = re_lexicon.findall(video_name)[0].split('_')[1]
+				row = [cmd, cmd_dict[cmd], subject, lexicon,  video_name]
+				csv_writer.writerows(row)
+
+				video_base_name = video_name
+				video_base_name.replace("_rgb.avi", "")
+
+				# flip rgb video (_rgb.avi)
+				flip_video(video_path,temp_video_path)
+				remove_file(video_path)
+				rename(temp_video_path, join(target_folder,video_base_name+"_rgb.avi"))
+
+				# flip depth video (_depth.avi)
+				video_path = join(lex_folder,video_base_name+"_depth.avi")
+				flip_video(video_path,temp_video_path)
+				remove_file(video_path)
+				rename(temp_video_path, join(target_folder,video_base_name+"_depth.avi"))
+
+				# flip skeleton (*_skel.txt)
+				file_path = join(lex_folder,video_base_name+"_skel.txt")
+				flip_skeleton(file_path, temp_anot_path, num_joints=3)
+				remove_file(file_path)
+				rename(temp_anot_path, join(target_folder,video_base_name+"_text.txt"))
+
+				# flip rgb to sklt (*_color.txt)
+				file_path = join(lex_folder,video_base_name+"_color.txt")
+				flip_skeleton(file_path, temp_anot_path, num_joints=2)
+				remove_file(file_path)
+				rename(temp_anot_path, join(target_folder,video_base_name+"_color.txt"))
+
+				# flip depth to sklt (*_depth.txt)
+				file_path = join(lex_folder,video_base_name+"_depth.txt")
+				flip_skeleton(file_path, temp_anot_path, num_joints=2)
+				remove_file(file_path)
+				rename(temp_anot_path, join(target_folder,video_base_name+"_depth.txt"))
+				
