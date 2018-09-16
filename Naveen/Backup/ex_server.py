@@ -5,7 +5,7 @@ from threading import Thread
 import time
 
 ## Global Static Variables
-TCP_IP = '127.0.0.1'
+TCP_IP = '128.46.125.209'
 TCP_PORT = 5000
 BUFFER_SIZE = 1024
 MAX_CLIENTS = 1
@@ -27,18 +27,24 @@ class Server():
         self.wait_for_connection()
 
     def run(self):
-    	while self.connect_status:
-    		try:
-    			data = self.client.recv(BUFFER_SIZE)
-    			self.client.send(str(True))
-    			time.sleep(0.5)
-    		except Exception as exp:
-    			print exp
-    			print 'Connection Closed'
-    			self.connect_status = False
-    			self.client.close()
+        while True:
+            if(not self.connect_status): self.wait_for_connection()
+            try:
+                data = self.client.recv(BUFFER_SIZE)
+                ### Temporary
+                time.sleep(3) # Lets say synapse took three seconds to finish the task.
+                ### Temporary
+                self.client.send(str(True))
+                print data
+                time.sleep(0.5)
+            except Exception as exp:
+                print exp
+                print 'Connection Closed'
+                self.connect_status = False
+                self.client.close()
 
     def wait_for_connection(self):
+        print 'Waiting for connection: .'
         self.client, self.addr = (self.sock.accept())
         data = self.client.recv(BUFFER_SIZE)
         if data == INITIAL_MESSAGE:
