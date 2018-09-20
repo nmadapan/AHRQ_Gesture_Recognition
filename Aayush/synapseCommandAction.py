@@ -7,6 +7,18 @@ import pyautogui as auto
 from PIL import ImageGrab
 #from PIL import ImageChops
 
+import signal
+import sys
+def signal_handler(sig, frame):
+	for file in os.listdir(os.path.join("Images")):
+		if file.endswith(".png"):
+			os.remove(os.path.join(os.path.join("Images"), file))
+	for file in os.listdir(os.path.join("Images", "RightClick")):
+		if file.endswith(".png"):
+			os.remove(os.path.join(os.path.join("Images", "RightClick"), file))
+	sys.exit(0)
+signal.signal(signal.SIGINT, signal_handler)
+
 #Remove images already saved (avoids issues with git)
 for file in os.listdir(os.path.join("Images")):
 	if file.endswith(".png"):
@@ -80,16 +92,31 @@ if (platform.system() == "Windows"):
 	#(offsetY1, offsetY2) = (0, 0)
 	macHeader = 0
 	#borderDash = 16
-	navType = "alt"
+	#navType = "alt"
+	(viewer, prompt) = ("Internet Explorer", "Command Prompt")
 else:
 	#(offsetY1, offsetY2) = (44, 84)
 	macHeader = (44.0 / 2880.0) * (nativeH)
 	#borderDash = 22
-	navType = "command"
+	#navType = "command"
+	(viewer, prompt) = ("Citrix Viewer", "Teminal")
+
+def openWindow(toOpen):
+	while(True):
+		window_names = auto.getWindows().keys()
+		matched_keys = [window_name for window_name in window_names if toOpen in window_name]
+		if (len(matched_keys) != 0): 
+			xef_window_name = matched_keys[0]
+			break
+		time.sleep(0.2)
+
+	xef_window = auto.getWindow(xef_window_name)
+	xef_window.maximize()
 
 
 print "Warming up synapse system...\n"
-auto.hotkey(navType, "tab")
+
+openWindow(viewer)
 
 
 # Get height of top bar and save it
@@ -184,7 +211,8 @@ scaleRotateFlip.save(os.path.join("Images", "RightClick", "scaleRotateFlip.png")
 auto.click()
 
 
-auto.hotkey(navType, "tab")
+openWindow(prompt)
+
 print "Completed warm-up, make your gestures!\n"
 
 
@@ -284,10 +312,12 @@ while (True):
 	else:
 		print "Invalid command entered!\n"
 		continue
-	auto.hotkey(navType, "tab")
+	
+	openWindow(viewer)
+
 	if (command == "Admin"):
 		if (action == "Quit"):
-			auto.hotkey(navType, "tab")
+			openWindow(prompt)
 			break
 		elif (action == "Get Status"):
 			get_status()
@@ -537,13 +567,8 @@ while (True):
 		auto.click()
 	status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
 	status["params"] = ""
-	if (platform.system() == "Windows" and command == "Windows" and action == "Open"):
-		auto.keyDown(navType)
-		auto.press("tab")
-		auto.press("tab")
-		auto.keyUp(navType)
-	else:
-		auto.hotkey(navType, "tab")
+
+	openWindow(prompt)
 
 
 # When quitting program, remove anything saved
