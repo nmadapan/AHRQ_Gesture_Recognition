@@ -6,8 +6,8 @@ import time
 import pyautogui as auto
 from PIL import ImageGrab
 #from PIL import ImageChops
-#import signal
-#import sys
+import signal
+import sys
 
 #Remove images already saved (avoids issues with git)
 def removeImages():
@@ -19,11 +19,11 @@ def removeImages():
 			os.remove(os.path.join(os.path.join("Images", "RightClick"), file))
 
 # If exiting the synapse program, remove all images before closing synapse.
-"""def signal_handler(sig, frame):
+def signal_handler(sig, frame):
 	removeImages()
 	sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
-"""
+
 auto.FAILSAFE = True
 auto.PAUSE = 0.75
 
@@ -89,7 +89,7 @@ if (platform.system() == "Windows"):
 	macHeader = 0
 	#borderDash = 16
 	#navType = "alt"
-	(viewer, prompt) = ("Chrome", "Command Prompt")
+	(viewer, prompt) = ("\\\\Remote", "Command Prompt")
 else:
 	#(offsetY1, offsetY2) = (44, 84)
 	macHeader = (44.0 / 2880.0) * (nativeH)
@@ -99,22 +99,42 @@ else:
 
 def openWindow(toOpen):
 	window_names = auto.getWindows().keys()
+	print "window_names: "
+	print window_names
+	print ""
+	for window_name in window_names:
+		auto.getWindow(window_name).close()
+		if (toOpen in window_name):
+			xef_window_name = window_name
+			print "xef_window_name:"
+			print xef_window_name
+			print ""
+	#matched_keys = [window_name for window_name in window_names if toOpen in window_name]
+	#if (len(matched_keys) != 0):
+		#xef_window_name = matched_keys[0]
+	xef_window = auto.getWindow(xef_window_name)
+	xef_window.maximize()
+
+"""def closeWindow(toOpen):
+	window_names = auto.getWindows().keys()
 	matched_keys = [window_name for window_name in window_names if toOpen in window_name]
+	print matched_keys
 	if (len(matched_keys) != 0):
 		xef_window_name = matched_keys[0]
 	xef_window = auto.getWindow(xef_window_name)
-	xef_window.maximize()
-	xef_window.minimize()
-	xef_window.maximize()
-
+	xef_window.close()
+"""
 
 print "Warming up synapse system...\n"
 
+#closeWindow(prompt)
+#closeWindow(viewer)
 openWindow(viewer)
 
 
 # Get height of top bar and save it
 auto.moveTo(width / 2.0, height / 2.0)
+auto.click()
 fullscreen = ImageGrab.grab()
 fullscreen.save(os.path.join("Images", "fullscreen.png"))
 auto.moveTo(width / 2.0, 0)
@@ -168,38 +188,26 @@ rightOffset = ((rightBoxH / 1000.0) * 58.0)
 rightClick = ImageGrab.grab(bbox=(rightx1 + rightIcons, righty1 + rightOffset, rightx1 + rightBoxW, righty1 + rightBoxH))
 rightClick.save(os.path.join("Images", "RightClick", "rightClick.png"))
 
+# Get and store image presets, scaleRotateFlip
+def rightOptions(option, offset):
+	auto.moveTo((rightx1 + rightBoxW / 2.0) / scale, (((righty1 + rightOffset) / scale) + (optionH * offset) + rightHR))
+	time.sleep(1)
+	auto.moveTo(rightx1 / scale, (righty1 + rightOffset) / scale)
+	afterPresets = ImageGrab.grab(bbox=boundBoxNoDash)
+	afterPresets.save(os.path.join("Images", "RightClick", "after" + option + ".png"))
+	box = get_bbox(os.path.join("Images", "RightClick", "afterRight.png"), os.path.join("Images", "RightClick", "after" + option + ".png"))
+	print option + " box: %s" % (box,)
+	(boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
+	print option + " box WxH: %s" % ((boxW, boxH),)
+	(x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
+	ImageGrab.grab(bbox=(x1 + rightIcons, y1, x1 + boxW, y1 + boxH)).save(os.path.join("Images", "RightClick", option + ".png"))
 
-# Get and store image presets
-auto.moveTo((rightx1 + rightBoxW / 2.0) / scale, (((righty1 + rightOffset) / scale) + (optionH * 8.5) + rightHR))
-time.sleep(1)
-auto.moveTo(rightx1 / scale, (righty1 + rightOffset) / scale)
-afterPresets = ImageGrab.grab(bbox=boundBoxNoDash)
-afterPresets.save(os.path.join("Images", "RightClick", "afterPresets.png"))
-box = get_bbox(os.path.join("Images", "RightClick", "afterRight.png"), os.path.join("Images", "RightClick", "afterPresets.png"))
-print "presets box: %s" % (box,)
-(boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
-print "presets box WxH: %s" % ((boxW, boxH),)
-(x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
-presets = ImageGrab.grab(bbox=(x1 + rightIcons, y1, x1 + boxW, y1 + boxH))
-presets.save(os.path.join("Images", "RightClick", "presets.png"))
+rightOptions("presets", 8.5)
+rightOptions("scaleRotateFlip", 9.5)
+auto.press("escape")
 
-
-# Get and store scale-rotate-flip
-auto.moveTo((rightx1 + rightBoxW / 2.0) / scale, (((righty1 + rightOffset) / scale) + (optionH * 9.5) + rightHR))
-time.sleep(1)
-auto.moveTo(rightx1 / scale, (righty1 + rightOffset) / scale)
-afterSRF = ImageGrab.grab(bbox=boundBoxNoDash)
-afterSRF.save(os.path.join("Images", "RightClick", "afterSRF.png"))
-box = get_bbox(os.path.join("Images", "RightClick", "afterRight.png"), os.path.join("Images", "RightClick", "afterSRF.png"))
-print "srf box: %s" % (box,)
-(boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
-print "srf box WxH: %s" % ((boxW, boxH),)
-(x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
-scaleRotateFlip = ImageGrab.grab(bbox=(x1 + rightIcons, y1, x1 + boxW, y1 + boxH))
-scaleRotateFlip.save(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
-auto.click()
-
-
+#closeWindow(prompt)
+#closeWindow(viewer)
 openWindow(prompt)
 
 print "\nCompleted warm-up, make your gestures!\n"
@@ -269,8 +277,14 @@ def defaultAction(commandID, paramSizes):
 
 def rightClick(offset):
 	auto.click(button='right')
-	(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "rightClick.png"))
-	auto.moveTo((x1 / scale) + (w / 2.0) * scale, (y1 + (offset / 1000.0) * rightBoxH) / scale)
+	located = auto.locateOnScreen(os.path.join("Images", "RightClick", "rightClick.png"))
+	if (located is not None):
+		(x1, y1, w, h) = located
+		auto.moveTo((x1 / scale) + (w / 2.0) * scale, (y1 + (offset / 1000.0) * rightBoxH) / scale)
+		return True
+	else:
+		print "Error when performing right click function."
+		return False
 	
 def get_status():
 	print "\nStatus\n------"
@@ -302,30 +316,39 @@ while (True):
 		print "Invalid command entered!\n"
 		continue
 	
+	#closeWindow(prompt)
+	#closeWindow(viewer)
 	openWindow(viewer)
 
 	if (command == "Admin"):
 		if (action == "Quit"):
+			#closeWindow(prompt)
+			#closeWindow(viewer)
 			openWindow(prompt)
 			break
 		elif (action == "Get Status"):
 			get_status()
 	elif (command == "Scroll" and action != "Scroll"):
 		moveToActivePanel()
+		auto.click()
 		scrollAmount = (10 if status["params"] == "" else int(status["params"]))
 		nums = scrollAmount
 		scrollAmount = (-1 * scrollAmount if action == "Up" else scrollAmount)
 		#auto.scroll(scrollAmount)
 		auto.PAUSE = 0
 		print str(nums)
-		toPress = ("up" if action == "Up" else "down")
+		toPress = ("right" if action == "Up" else "left")
 		print toPress
 		for i in range(nums):
 			auto.press(toPress)
 		auto.PAUSE = 0.75
+		time.sleep(1)
 	elif (command == "Flip" and action != "Flip"):
 		moveToActivePanel()
-		rightClick(352)
+		located = rightClick(352)
+		if (not located):
+			openWindow(prompt)
+			continue
 		time.sleep(1)
 		(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
 		y1 = y1 / scale;
@@ -334,7 +357,10 @@ while (True):
 		auto.click()
 	elif (command == "Rotate" and action != "Rotate"):
 		moveToActivePanel()
-		rightClick(352)
+		located = rightClick(352)
+		if (not located):
+			openWindow(prompt)
+			continue
 		time.sleep(1)
 		(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
 		y1 = y1 / scale
@@ -346,7 +372,10 @@ while (True):
 		if (isValid):
 			(oldLocationX, oldLocationY) = auto.position()
 			moveToActivePanel()
-			rightClick(54)
+			located = rightClick(54)
+			if (not located):
+				openWindow(prompt)
+				continue
 			auto.click()
 			time.sleep(1)
 			auto.moveTo(oldLocationX, oldLocationY)
@@ -371,7 +400,10 @@ while (True):
 		if (isValid):
 			(oldLocationX, oldLocationY) = auto.position()
 			moveToActivePanel()
-			rightClick(90)
+			located = rightClick(90)
+			if (not located):
+				openWindow(prompt)
+				continue
 			auto.click()
 			time.sleep(1)
 			auto.moveTo(oldLocationX, oldLocationY)
@@ -389,7 +421,10 @@ while (True):
 			(isValid, action) = ((True, action) if command != action else defaultAction(commandID, [2, 4]))
 			if (isValid):
 				moveToActivePanel()
-				rightClick(126)
+				located = rightClick(126)
+				if (not located):
+					openWindow(prompt)
+					continue
 				auto.click()
 				time.sleep(2)
 				points = status["params"].split("_")
@@ -489,7 +524,10 @@ while (True):
 		(isValid, action) = ((True, action) if command != action else defaultAction(commandID, [0, 1]))
 		if (isValid):
 			moveToActivePanel()
-			rightClick(18)
+			located = rightClick(18)
+			if (not located):
+				openWindow(prompt)
+				continue
 			auto.click()
 			time.sleep(1)
 			moveToActivePanel()
@@ -543,7 +581,10 @@ while (True):
 		auto.click()
 	elif (command == "Contrast Presets" and action != "Contrast Presets"):
 		moveToActivePanel()
-		rightClick(316)
+		located = rightClick(316)
+		if (not located):
+			openWindow(prompt)
+			continue
 		time.sleep(1)
 		(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "presets.png"))
 		y1 = y1 / scale
@@ -559,6 +600,8 @@ while (True):
 		status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
 	status["params"] = ""
 
+	#closeWindow(prompt)
+	#closeWindow(viewer)
 	openWindow(prompt)
 
 
