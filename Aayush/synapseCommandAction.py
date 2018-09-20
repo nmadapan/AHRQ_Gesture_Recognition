@@ -6,27 +6,24 @@ import time
 import pyautogui as auto
 from PIL import ImageGrab
 #from PIL import ImageChops
+#import signal
+#import sys
 
-import signal
-import sys
-def signal_handler(sig, frame):
+#Remove images already saved (avoids issues with git)
+def removeImages():
 	for file in os.listdir(os.path.join("Images")):
 		if file.endswith(".png"):
 			os.remove(os.path.join(os.path.join("Images"), file))
 	for file in os.listdir(os.path.join("Images", "RightClick")):
 		if file.endswith(".png"):
 			os.remove(os.path.join(os.path.join("Images", "RightClick"), file))
+
+# If exiting the synapse program, remove all images before closing synapse.
+"""def signal_handler(sig, frame):
+	removeImages()
 	sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
-
-#Remove images already saved (avoids issues with git)
-for file in os.listdir(os.path.join("Images")):
-	if file.endswith(".png"):
-		os.remove(os.path.join(os.path.join("Images"), file))
-for file in os.listdir(os.path.join("Images", "RightClick")):
-	if file.endswith(".png"):
-		os.remove(os.path.join(os.path.join("Images", "RightClick"), file))
-
+"""
 auto.FAILSAFE = True
 auto.PAUSE = 0.75
 
@@ -86,14 +83,13 @@ def get_bbox(before, after, thresholds = None, draw = False):
 
 	return (x1, y1, x2, y2)
 
-#window_names = auto.getWindow("Citrix Viewer")
 
 if (platform.system() == "Windows"):
 	#(offsetY1, offsetY2) = (0, 0)
 	macHeader = 0
 	#borderDash = 16
 	#navType = "alt"
-	(viewer, prompt) = ("Internet Explorer", "Command Prompt")
+	(viewer, prompt) = ("Chrome", "Command Prompt")
 else:
 	#(offsetY1, offsetY2) = (44, 84)
 	macHeader = (44.0 / 2880.0) * (nativeH)
@@ -102,15 +98,13 @@ else:
 	(viewer, prompt) = ("Citrix Viewer", "Teminal")
 
 def openWindow(toOpen):
-	while(True):
-		window_names = auto.getWindows().keys()
-		matched_keys = [window_name for window_name in window_names if toOpen in window_name]
-		if (len(matched_keys) != 0): 
-			xef_window_name = matched_keys[0]
-			break
-		time.sleep(0.2)
-
+	window_names = auto.getWindows().keys()
+	matched_keys = [window_name for window_name in window_names if toOpen in window_name]
+	if (len(matched_keys) != 0):
+		xef_window_name = matched_keys[0]
 	xef_window = auto.getWindow(xef_window_name)
+	xef_window.maximize()
+	xef_window.minimize()
 	xef_window.maximize()
 
 
@@ -132,7 +126,6 @@ afterTopBar.save(os.path.join("Images", "afterTopBar.png"))
 topBarBox = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "afterTopBar.png"))
 topBarHeight = topBarBox[3]
 ImageGrab.grab(bbox=(0, 0, nativeW, topBarHeight)).save(os.path.join("Images", "topBar.png"))
-#os.remove(os.path.join("Images", "afterTopBar.png"))
 
 
 # Get border of dashed region
@@ -143,12 +136,8 @@ time.sleep(1)
 noDash = ImageGrab.grab()
 noDash.save(os.path.join("Images", "noDash.png"))
 boundBoxNoDash = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "noDash.png"))
-ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("Images", "boundBoxNoDash.png"))
 print "boundBoxNoDash: %s" % (boundBoxNoDash,)
-boundBoxNoDash = (boundBoxNoDash[0] + (10 * scale), boundBoxNoDash[1] + (10 * scale), boundBoxNoDash[2] - (10 * scale), boundBoxNoDash[3] - (10 * scale))
-ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("Images", "boundBoxNoDash2.png"))
-#borderDash = topBarHeight / 2.0
-#boundBoxNoDash = (borderDash, borderDash, nativeW - borderDash, nativeH - borderDash)
+boundBoxNoDash = (boundBoxNoDash[0] + (20 * scale), boundBoxNoDash[1] + (20 * scale), boundBoxNoDash[2] - (20 * scale), boundBoxNoDash[3] - (20 * scale))
 (bbndW, bbndH) = ((boundBoxNoDash[2] - boundBoxNoDash[0]) / scale, (boundBoxNoDash[3] - boundBoxNoDash[1]) / scale)
 print "boundBoxNoDash: %s" % (boundBoxNoDash,)
 print "boundBoxNoDash WxH: %s" % ((bbndW, bbndH),)
@@ -169,11 +158,11 @@ print "rightBox: %s" % (rightBox,)
 (rightBoxW, rightBoxH) = (rightBox[2] - rightBox[0] + 1, rightBox[3] - rightBox[1] + 1)
 print "rightBox WxH: %s" % ((rightBoxW, rightBoxH),)
 
-optionH = ((rightBoxH / 1000.0) * 36) / scale
-rightHR = ((rightBoxH / 1000.0) * 10) / scale
-rightPlus = ((rightBoxH / 1000.0) * 8) / scale
-rightIcons = ((rightBoxH / 1000.0) * 50)
-rightOffset = ((rightBoxH / 1000.0) * 58)
+optionH = ((rightBoxH / 1000.0) * 36.0) / scale
+rightHR = ((rightBoxH / 1000.0) * 10.0) / scale
+rightPlus = ((rightBoxH / 1000.0) * 8.0) / scale
+rightIcons = ((rightBoxH / 1000.0) * 50.0)
+rightOffset = ((rightBoxH / 1000.0) * 58.0)
 
 (rightx1, righty1) = (rightBox[0] + boundBoxNoDash[0], rightBox[1] + boundBoxNoDash[1])
 rightClick = ImageGrab.grab(bbox=(rightx1 + rightIcons, righty1 + rightOffset, rightx1 + rightBoxW, righty1 + rightBoxH))
@@ -213,7 +202,7 @@ auto.click()
 
 openWindow(prompt)
 
-print "Completed warm-up, make your gestures!\n"
+print "\nCompleted warm-up, make your gestures!\n"
 
 
 status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "params": "", "rulers": {"len": 0}}
@@ -329,7 +318,7 @@ while (True):
 		#auto.scroll(scrollAmount)
 		auto.PAUSE = 0
 		print str(nums)
-		toPress = ("right" if action == "Up" else "left")
+		toPress = ("up" if action == "Up" else "down")
 		print toPress
 		for i in range(nums):
 			auto.press(toPress)
@@ -565,16 +554,13 @@ while (True):
 			y1 += optionH * 2
 		auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
 		auto.click()
-	status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
+	
+	if (command != "Admin"):
+		status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
 	status["params"] = ""
 
 	openWindow(prompt)
 
 
 # When quitting program, remove anything saved
-for file in os.listdir(os.path.join("Images")):
-	if file.endswith(".png"):
-		os.remove(os.path.join(os.path.join("Images"), file))
-for file in os.listdir(os.path.join("Images", "RightClick")):
-	if file.endswith(".png"):
-		os.remove(os.path.join(os.path.join("Images", "RightClick"), file))
+removeImages()
