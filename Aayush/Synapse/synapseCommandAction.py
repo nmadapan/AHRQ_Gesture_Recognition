@@ -85,17 +85,9 @@ def get_bbox(before, after, thresholds = None, draw = False):
 
 
 if (platform.system() == "Windows"):
-	#(offsetY1, offsetY2) = (0, 0)
-	macHeader = 0
-	#borderDash = 16
-	#navType = "alt"
-	(viewer, prompt) = ("\\\\Remote", "Command Prompt")
+	(macHeader, viewer, prompt) = (0, "\\\\Remote", "Command Prompt")
 else:
-	#(offsetY1, offsetY2) = (44, 84)
-	macHeader = (44.0 / 2880.0) * (nativeH)
-	#borderDash = 22
-	#navType = "command"
-	(viewer, prompt) = ("Citrix Viewer", "Teminal")
+	(macHeader, viewer, prompt) = ((44.0 / 2880.0) * (nativeH), "Citrix Viewer", "Teminal")
 
 def openWindow(toOpen):
 	window_names = auto.getWindows().keys()
@@ -109,101 +101,101 @@ def openWindow(toOpen):
 			print "xef_window_name:"
 			print xef_window_name
 			print ""
-	#matched_keys = [window_name for window_name in window_names if toOpen in window_name]
-	#if (len(matched_keys) != 0):
-		#xef_window_name = matched_keys[0]
 	xef_window = auto.getWindow(xef_window_name)
 	xef_window.maximize()
 
-"""def closeWindow(toOpen):
-	window_names = auto.getWindows().keys()
-	matched_keys = [window_name for window_name in window_names if toOpen in window_name]
-	print matched_keys
-	if (len(matched_keys) != 0):
-		xef_window_name = matched_keys[0]
-	xef_window = auto.getWindow(xef_window_name)
-	xef_window.close()
-"""
+
+class Calibration(object):
+	def __init__(self):
+		self.resetTopBarHeight()
+		self.resetBoundBoxNoDash()
+		self.resetRightClick()
+		self.resetRightOptions("presets", 8.5)
+		self.resetRightOptions("scaleRotateFlip", 9.5)
+
+	# Reset height of top bar and save it
+	def resetTopBarHeight(self):
+		auto.moveTo(width / 2.0, height / 2.0)
+		auto.click()
+		ImageGrab.grab().save(os.path.join("Images", "fullscreen.png"))
+		auto.moveTo(width / 2.0, 0)
+		time.sleep(1)
+		ImageGrab.grab().save(os.path.join("Images", "afterTopBar.png"))
+		topBarBox = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "afterTopBar.png"))
+		self.topBarHeight = topBarBox[3] - topBarBox[1] + 1
+		ImageGrab.grab(bbox=(0, 0, nativeW, self.topBarHeight)).save(os.path.join("Images", "topBar.png"))
+
+	# Reset border inside dashed region
+	def resetBoundBoxNoDash(self):
+		auto.moveTo(width / 2.0, height / 2.0)
+		auto.click(button='right')
+		ImageGrab.grab().save(os.path.join("Images", "noDash.png"))
+		box = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "noDash.png"))
+		(x1, y1, x2, y2) = (box[0] + (10 * scale), box[1] + (10 * scale), box[2] - (10 * scale), box[3] - (10 * scale))
+		(bbndW, bbndH) = ((x2 - x1) / scale, (y2 - y1) / scale)
+		self.boundBoxNoDash = (x1, y1, x2, y2)
+		print "boundBoxNoDash: %s" % (self.boundBoxNoDash,)
+		print "boundBoxNoDash WxH: %s" % ((bbndW, bbndH),)
+		auto.press("escape")
+
+	# Reset the right click
+	def resetRightClick(self):
+		auto.moveTo(width / 2.0, height / 2.0)
+		beforeRightPath = os.path.join("Images", "RightClick", "beforeRight.png")
+		ImageGrab.grab(bbox=self.boundBoxNoDash).save(beforeRightPath)
+		auto.click(button='right')
+		time.sleep(1)
+		afterRightPath = os.path.join("Images", "RightClick", "afterRight.png")
+		ImageGrab.grab(bbox=self.boundBoxNoDash).save(afterRightPath)
+		rightBox = get_bbox(beforeRightPath, afterRightPath)
+		print "rightBox: %s" % (rightBox,)
+		(self.rightBoxW, self.rightBoxH) = (rightBox[2] - rightBox[0] + 1, rightBox[3] - rightBox[1] + 1)
+		print "rightBox WxH: %s" % ((self.rightBoxW, self.rightBoxH),)
+
+		self.optionH = ((self.rightBoxH / 1000.0) * 36.0) / scale
+		self.rightHR = ((self.rightBoxH / 1000.0) * 10.0) / scale
+		self.rightPlus = ((self.rightBoxH / 1000.0) * 8.0) / scale
+		self.rightIcons = ((self.rightBoxH / 1000.0) * 50.0)
+		self.rightOffset = ((self.rightBoxH / 1000.0) * 58.0)
+
+		(self.rightx1, self.righty1) = (rightBox[0] + self.boundBoxNoDash[0], rightBox[1] + self.boundBoxNoDash[1])
+		(x1, y1) = (self.rightx1 + self.rightIcons, self.righty1 + self.rightOffset)
+		(x2, y2) = (self.rightx1 + self.rightBoxW, self.righty1 + self.rightBoxH)
+		ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(os.path.join("Images", "RightClick", "rightClick.png"))
+
+		auto.moveTo(x1, y1)
+		auto.moveTo(x2, y2)
+		auto.press("escape")
+
+	# Reset rightClick's presets/scaleRotateFlip
+	def resetRightOptions(self, option, offset):
+		auto.moveTo(width / 2.0, height / 2.0)
+		auto.click(button='right')
+		moveToX = (self.rightx1 + self.rightBoxW / 2.0) / scale
+		moveToY = ((self.righty1 + self.rightOffset) / scale) + (self.optionH * offset) + self.rightHR
+		auto.moveTo(moveToX, moveToY)
+		time.sleep(1)
+		auto.moveTo(self.rightx1 / scale, (self.righty1 + self.rightOffset) / scale)
+		afterRightPath = os.path.join("Images", "RightClick", "afterRight.png")
+		afterOptionPath = os.path.join("Images", "RightClick", "after" + option + ".png")
+		ImageGrab.grab(bbox=self.boundBoxNoDash).save(afterOptionPath)
+		box = get_bbox(afterRightPath, afterOptionPath)
+		print option + " box: %s" % (box,)
+		(boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
+		print option + " box WxH: %s" % ((boxW, boxH),)
+		(x1, y1) = (box[0] + self.boundBoxNoDash[0], box[1] + self.boundBoxNoDash[1])
+		optionPath = os.path.join("Images", "RightClick", option + ".png")
+		ImageGrab.grab(bbox=(x1 + self.rightIcons, y1, x1 + boxW, y1 + boxH)).save(optionPath)
+
 
 print "Warming up synapse system...\n"
-#closeWindow(prompt)
-#closeWindow(viewer)
 openWindow(viewer)
 
+Calibration = Calibration()
 
-# Get height of top bar and save it
-auto.moveTo(width / 2.0, height / 2.0)
-auto.click()
-fullscreen = ImageGrab.grab()
-fullscreen.save(os.path.join("Images", "fullscreen.png"))
-auto.moveTo(width / 2.0, 0)
-time.sleep(1)
-auto.moveTo(width / 2.0, macHeader)
-time.sleep(1)
-afterTopBar = ImageGrab.grab()
-afterTopBar.save(os.path.join("Images", "afterTopBar.png"))
-topBarBox = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "afterTopBar.png"))
-topBarHeight = topBarBox[3]
-ImageGrab.grab(bbox=(0, 0, nativeW, topBarHeight)).save(os.path.join("Images", "topBar.png"))
+openWindow(prompt)
+print "\nCompleted warm-up, make your gestures!\n"
 
-
-# Get border of dashed region
-auto.moveTo(width / 2.0, height / 2.0)
-time.sleep(1)
-auto.click(button='right')
-time.sleep(1)
-noDash = ImageGrab.grab()
-noDash.save(os.path.join("Images", "noDash.png"))
-boundBoxNoDash = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "noDash.png"))
-print "boundBoxNoDash: %s" % (boundBoxNoDash,)
-boundBoxNoDash = (boundBoxNoDash[0] + (20 * scale), boundBoxNoDash[1] + (20 * scale), boundBoxNoDash[2] - (20 * scale), boundBoxNoDash[3] - (20 * scale))
-(bbndW, bbndH) = ((boundBoxNoDash[2] - boundBoxNoDash[0]) / scale, (boundBoxNoDash[3] - boundBoxNoDash[1]) / scale)
-print "boundBoxNoDash: %s" % (boundBoxNoDash,)
-print "boundBoxNoDash WxH: %s" % ((bbndW, bbndH),)
-auto.click()
-
-
-# Get and store the right click
-auto.moveTo(width / 2.0, height / 2.0)
-time.sleep(1)
-beforeRight = ImageGrab.grab(bbox=boundBoxNoDash)
-beforeRight.save(os.path.join("Images", "RightClick", "beforeRight.png"))
-auto.click(button='right')
-time.sleep(1)
-afterRight = ImageGrab.grab(bbox=boundBoxNoDash)
-afterRight.save(os.path.join("Images", "RightClick", "afterRight.png"))
-rightBox = get_bbox(os.path.join("Images", "RightClick", "beforeRight.png"), os.path.join("Images", "RightClick", "afterRight.png"))
-print "rightBox: %s" % (rightBox,)
-(rightBoxW, rightBoxH) = (rightBox[2] - rightBox[0] + 1, rightBox[3] - rightBox[1] + 1)
-print "rightBox WxH: %s" % ((rightBoxW, rightBoxH),)
-
-optionH = ((rightBoxH / 1000.0) * 36.0) / scale
-rightHR = ((rightBoxH / 1000.0) * 10.0) / scale
-rightPlus = ((rightBoxH / 1000.0) * 8.0) / scale
-rightIcons = ((rightBoxH / 1000.0) * 50.0)
-rightOffset = ((rightBoxH / 1000.0) * 58.0)
-
-(rightx1, righty1) = (rightBox[0] + boundBoxNoDash[0], rightBox[1] + boundBoxNoDash[1])
-rightClick = ImageGrab.grab(bbox=(rightx1 + rightIcons, righty1 + rightOffset, rightx1 + rightBoxW, righty1 + rightBoxH))
-rightClick.save(os.path.join("Images", "RightClick", "rightClick.png"))
-
-# Get and store image presets, scaleRotateFlip
-def rightOptions(option, offset):
-	auto.moveTo((rightx1 + rightBoxW / 2.0) / scale, (((righty1 + rightOffset) / scale) + (optionH * offset) + rightHR))
-	time.sleep(1)
-	auto.moveTo(rightx1 / scale, (righty1 + rightOffset) / scale)
-	afterPresets = ImageGrab.grab(bbox=boundBoxNoDash)
-	afterPresets.save(os.path.join("Images", "RightClick", "after" + option + ".png"))
-	box = get_bbox(os.path.join("Images", "RightClick", "afterRight.png"), os.path.join("Images", "RightClick", "after" + option + ".png"))
-	print option + " box: %s" % (box,)
-	(boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
-	print option + " box WxH: %s" % ((boxW, boxH),)
-	(x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
-	ImageGrab.grab(bbox=(x1 + rightIcons, y1, x1 + boxW, y1 + boxH)).save(os.path.join("Images", "RightClick", option + ".png"))
-
-rightOptions("presets", 8.5)
-rightOptions("scaleRotateFlip", 9.5)
-auto.press("escape")
 
 status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "params": "", "rulers": {"len": 0}}
 
@@ -222,7 +214,7 @@ def moveToActivePanel():
 	moveToY = status["firstH"] + (status["active_panel"][0] - 1) * (status["jumpH"])
 	auto.moveTo(moveToX, moveToY)
 
-actionList = [["Admin", "Quit", "Get Status"],
+actionList = [["Admin", "Quit", "Get Status", "Reset 0", "Reset 1", "Reset 2", "Reset 3", "Reset 4", "Reset 5"],
 	["Scroll", "Up", "Down"],
 	["Flip", "Horizontal", "Vertical"],
 	["Rotate", "Clockwise", "Counter-Clockwise"],
@@ -286,12 +278,6 @@ def get_status():
 	print "Patient information window: " + ("opened" if status["window_open"] else "closed")
 
 
-#closeWindow(prompt)
-#closeWindow(viewer)
-openWindow(prompt)
-print "\nCompleted warm-up, make your gestures!\n"
-
-
 while (True):
 	(commandID, actionID) = (-1, -1)
 	sequence = raw_input("Gesture Command -> ")
@@ -314,19 +300,30 @@ while (True):
 	else:
 		print "Invalid command entered!\n"
 		continue
-	
-	#closeWindow(prompt)
-	#closeWindow(viewer)
+
 	openWindow(viewer)
+
 
 	if (command == "Admin"):
 		if (action == "Quit"):
-			#closeWindow(prompt)
-			#closeWindow(viewer)
 			openWindow(prompt)
 			break
 		elif (action == "Get Status"):
 			get_status()
+		elif ("Reset" in action):
+			actionNum = actionID - 3
+			if (actionNum == 0):
+				Calibration = Calibration()
+			elif (actionNum == 1):
+				Calibration.resetTopBarHeight()
+			elif (actionNum == 2):
+				Calibration.resetBoundBoxNoDash()
+			elif (actionNum == 3):
+				Calibration.resetRightClick()
+			elif (actionNum == 4):
+				Calibration.resetRightOptions("presets", 8.5)
+			elif (actionNum == 5):
+				Calibration.resetRightOptions("scaleRotateFlip", 9.5)
 	elif (command == "Scroll" and action != "Scroll"):
 		moveToActivePanel()
 		auto.click()
@@ -599,8 +596,7 @@ while (True):
 		status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
 		status["params"] = ""
 
-	#closeWindow(prompt)
-	#closeWindow(viewer)
+
 	openWindow(prompt)
 
 
