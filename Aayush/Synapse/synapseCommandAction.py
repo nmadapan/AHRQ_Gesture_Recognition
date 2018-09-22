@@ -91,16 +91,10 @@ else:
 
 def openWindow(toOpen):
 	window_names = auto.getWindows().keys()
-	print "window_names: "
-	print window_names
-	print ""
 	for window_name in window_names:
 		auto.getWindow(window_name).close()
 		if (toOpen in window_name):
 			xef_window_name = window_name
-			print "xef_window_name:"
-			print xef_window_name
-			print ""
 	xef_window = auto.getWindow(xef_window_name)
 	xef_window.maximize()
 
@@ -112,6 +106,10 @@ class Calibration(object):
 		self.resetRightClick()
 		self.resetRightOptions("presets", 8.5)
 		self.resetRightOptions("scaleRotateFlip", 9.5)
+
+	def getAll(self):
+		return (self.topBarHeight, self.boundBoxNoDash, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
+			self.rightOffset, self.rightBoxW, self.rightBoxH)
 
 	# Reset height of top bar and save it
 	def resetTopBarHeight(self):
@@ -128,6 +126,7 @@ class Calibration(object):
 	# Reset border inside dashed region
 	def resetBoundBoxNoDash(self):
 		auto.moveTo(width / 2.0, height / 2.0)
+		auto.click()
 		auto.click(button='right')
 		ImageGrab.grab().save(os.path.join("Images", "noDash.png"))
 		box = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "noDash.png"))
@@ -136,11 +135,12 @@ class Calibration(object):
 		self.boundBoxNoDash = (x1, y1, x2, y2)
 		print "boundBoxNoDash: %s" % (self.boundBoxNoDash,)
 		print "boundBoxNoDash WxH: %s" % ((bbndW, bbndH),)
-		auto.press("escape")
+		auto.press("esc")
 
 	# Reset the right click
 	def resetRightClick(self):
 		auto.moveTo(width / 2.0, height / 2.0)
+		auto.click()
 		beforeRightPath = os.path.join("Images", "RightClick", "beforeRight.png")
 		ImageGrab.grab(bbox=self.boundBoxNoDash).save(beforeRightPath)
 		auto.click(button='right')
@@ -165,7 +165,7 @@ class Calibration(object):
 
 		auto.moveTo(x1, y1)
 		auto.moveTo(x2, y2)
-		auto.press("escape")
+		auto.press("esc")
 
 	# Reset rightClick's presets/scaleRotateFlip
 	def resetRightOptions(self, option, offset):
@@ -186,12 +186,15 @@ class Calibration(object):
 		(x1, y1) = (box[0] + self.boundBoxNoDash[0], box[1] + self.boundBoxNoDash[1])
 		optionPath = os.path.join("Images", "RightClick", option + ".png")
 		ImageGrab.grab(bbox=(x1 + self.rightIcons, y1, x1 + boxW, y1 + boxH)).save(optionPath)
+		auto.press("esc")
 
 
 print "Warming up synapse system...\n"
 openWindow(viewer)
 
 Calibration = Calibration()
+(topBarHeight, boundBoxNoDash, optionH, rightHR, rightPlus, rightIcons, rightOffset,
+	rightBoxW, rightBoxH) = Calibration.getAll()
 
 openWindow(prompt)
 print "\nCompleted warm-up, make your gestures!\n"
@@ -324,6 +327,8 @@ while (True):
 				Calibration.resetRightOptions("presets", 8.5)
 			elif (actionNum == 5):
 				Calibration.resetRightOptions("scaleRotateFlip", 9.5)
+			(topBarHeight, boundBoxNoDash, optionH, rightHR, rightPlus, rightIcons, rightOffset,
+				rightBoxW, rightBoxH) = Calibration.getAll()
 	elif (command == "Scroll" and action != "Scroll"):
 		moveToActivePanel()
 		auto.click()
