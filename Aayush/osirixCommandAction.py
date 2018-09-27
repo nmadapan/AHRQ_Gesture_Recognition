@@ -326,18 +326,29 @@ while (True):
 			auto.mouseUp()
 	elif (command == "Layout" and action != "Layout"):
 		auto.moveTo(194.0 / scale, 105.0 / scale)
-		auto.scroll(200)
+		auto.click()
+		auto.PAUSE = 0
+		for i in range(12):
+			auto.press("up")
 		status["panel_dim"][0] = 1
+		numDowns = 0
 		if (action == "One-Panel"):
 			status["panel_dim"][1] = 1
 		elif (action == "Two-Panels"):
 			status["panel_dim"][1] = 2
+			numDowns = 1
 		elif (action == "Three-Panels"):
 			status["panel_dim"][1] = 3
+			numDowns = 4
 		elif (action == "Four-Panels"):
 			status["panel_dim"][1] = 4
-		auto.moveTo(225.0 / scale, (20.0 + 126 * (status["panel_dim"][1] - 0.5)) / scale)
-		auto.click()
+			numDowns = 9
+		#auto.moveTo(225.0 / scale, (20.0 + 126.0 * (status["panel_dim"][1] - 0.5)) / scale)
+		for i in range(numDowns):
+			auto.press("down")
+		#auto.click()
+		auto.PAUSE = 0.75
+		auto.press("space")
 		resetPanelMoves()
 		(status["active_panel"][0], status["active_panel"][1]) = (1, 1)
 		moveToActivePanel()
