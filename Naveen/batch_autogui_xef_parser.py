@@ -24,7 +24,11 @@ from helpers import *
 #####################
 
 # Initialization
+<<<<<<< HEAD
+xef_folder_paths = ['E:\\AHRQ\\XEF_Files\\S6_L3']
+=======
 xef_folder_paths = [r'E:\AHRQ\XEF_Files\S6_L3']
+>>>>>>> c6bc70624d37aac42c386edc3e452515418b6a75
 in_format_flag = True # True since the filename is in the correct format
 enable_repeat = True # If True, all xef files will be executed, Otherwise, only the files that werent read previously or the files that were incompletely read
 xef_rgb_factor = 3.2 # Max is 3.8
@@ -35,8 +39,13 @@ error_log_folder = '.\\Logfiles'
 error_log_filename = os.path.join(error_log_folder, 'error_log_'+datetime.now().strftime("%Y_%m_%d_%H_%M")+'.txt')
 
 # Default settings
+<<<<<<< HEAD
+base_write_folder = 'D:\\AHRQ\\Study_IV\\Data\\Data' # Where to write the files
+kinect_studio_open_time = 3 # in seconds
+=======
 base_write_folder = r'H:\AHRQ\Study_IV\Data\Data' # Where to write the files
 kinect_studio_open_time = 3 # in seconds`
+>>>>>>> c6bc70624d37aac42c386edc3e452515418b6a75
 thresh_empty_cycles = 200 # No. of cycles to wait before obtaining the first RGB image. Quit after 200 cycles. 
 dynamic_thresh_fac = 10 # How long to wait later for the arrival of RGB frame 
 
