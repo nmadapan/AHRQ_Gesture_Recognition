@@ -21,6 +21,7 @@ def removeImages():
 # If exiting the synapse program, remove all images before closing synapse.
 def signal_handler(sig, frame):
 	removeImages()
+	print ""
 	sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
@@ -87,16 +88,34 @@ def get_bbox(before, after, thresholds = None, draw = False):
 if (platform.system() == "Windows"):
 	(macHeader, viewer, prompt) = (0, "\\\\Remote", "Command Prompt")
 else:
-	(macHeader, viewer, prompt) = ((44.0 / 2880.0) * (nativeH), "Citrix Viewer", "Teminal")
+	(macHeader, viewer, prompt) = ((44.0 / 2880.0) * (nativeW), "Citrix Viewer", "Teminal")
 
+# Close all other windows and open either command prompt or the Citrix Viewer
 def openWindow(toOpen):
 	window_names = auto.getWindows().keys()
+	for window_name in window_names:
+		auto.getWindow(window_name).close()
 	for window_name in window_names:
 		auto.getWindow(window_name).close()
 		if (toOpen in window_name):
 			xef_window_name = window_name
 	xef_window = auto.getWindow(xef_window_name)
 	xef_window.maximize()
+
+status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "rulers": {"len": 0}}
+
+def resetPanelMoves():
+	status["firstW"] = (float(width) / (float(status["panel_dim"][1]) * 2.0))
+	status["firstH"] = (float(height) / (float(status["panel_dim"][0]) * 2.0))
+	status["jumpW"] = (status["firstW"] * 2.0 if status["panel_dim"][1] != 1 else 0)
+	status["jumpH"] = (status["firstH"] * 2.0 if status["panel_dim"][0] != 1 else 0)
+resetPanelMoves()
+
+
+def moveToActivePanel():
+	moveToX = status["firstW"] + (status["active_panel"][1] - 1) * (status["jumpW"])
+	moveToY = status["firstH"] + (status["active_panel"][0] - 1) * (status["jumpH"])
+	auto.moveTo(moveToX, moveToY)
 
 
 class Calibration(object):
@@ -113,33 +132,33 @@ class Calibration(object):
 
 	# Reset height of top bar and save it
 	def resetTopBarHeight(self):
-		auto.moveTo(width / 2.0, height / 2.0)
+		moveToActivePanel()
 		auto.click()
-		ImageGrab.grab().save(os.path.join("Images", "fullscreen.png"))
-		auto.moveTo(width / 2.0, 0)
+		ImageGrab.grab(bbox=(0, macHeader, nativeW, nativeH)).save(os.path.join("Images", "fullscreen.png"))
+		auto.moveTo(auto.position()[0], 0)
 		time.sleep(1)
-		ImageGrab.grab().save(os.path.join("Images", "afterTopBar.png"))
+		ImageGrab.grab(bbox=(0, macHeader, nativeW, nativeH)).save(os.path.join("Images", "afterTopBar.png"))
 		topBarBox = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "afterTopBar.png"))
 		self.topBarHeight = topBarBox[3] - topBarBox[1] + 1
-		ImageGrab.grab(bbox=(0, 0, nativeW, self.topBarHeight)).save(os.path.join("Images", "topBar.png"))
+		ImageGrab.grab(bbox=(0, macHeader, nativeW, self.topBarHeight + macHeader)).save(os.path.join("Images", "topBar.png"))
 
 	# Reset border inside dashed region
 	def resetBoundBoxNoDash(self):
-		auto.moveTo(width / 2.0, height / 2.0)
+		moveToActivePanel()
 		auto.click()
 		auto.click(button='right')
-		ImageGrab.grab().save(os.path.join("Images", "noDash.png"))
+		ImageGrab.grab(bbox=(0, macHeader, nativeW, nativeH)).save(os.path.join("Images", "noDash.png"))
 		box = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "noDash.png"))
-		(x1, y1, x2, y2) = (box[0] + (10 * scale), box[1] + (10 * scale), box[2] - (10 * scale), box[3] - (10 * scale))
+		(x1, y1, x2, y2) = (box[0] + (10 * scale), box[1] + macHeader + (10 * scale), box[2] - (10 * scale), box[3] - (10 * scale))
 		(bbndW, bbndH) = ((x2 - x1) / scale, (y2 - y1) / scale)
 		self.boundBoxNoDash = (x1, y1, x2, y2)
 		print "boundBoxNoDash: %s" % (self.boundBoxNoDash,)
 		print "boundBoxNoDash WxH: %s" % ((bbndW, bbndH),)
-		auto.press("esc")
+		auto.click()
 
 	# Reset the right click
 	def resetRightClick(self):
-		auto.moveTo(width / 2.0, height / 2.0)
+		moveToActivePanel()
 		auto.click()
 		beforeRightPath = os.path.join("Images", "RightClick", "beforeRight.png")
 		ImageGrab.grab(bbox=self.boundBoxNoDash).save(beforeRightPath)
@@ -163,13 +182,14 @@ class Calibration(object):
 		(x2, y2) = (self.rightx1 + self.rightBoxW, self.righty1 + self.rightBoxH)
 		ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(os.path.join("Images", "RightClick", "rightClick.png"))
 
-		auto.moveTo(x1, y1)
-		auto.moveTo(x2, y2)
-		auto.press("esc")
+		auto.moveTo(x1 / scale, y1 / scale)
+		auto.moveTo(x2 / scale, y2 / scale)
+		moveToActivePanel()
+		auto.click()
 
 	# Reset rightClick's presets/scaleRotateFlip
 	def resetRightOptions(self, option, offset):
-		auto.moveTo(width / 2.0, height / 2.0)
+		moveToActivePanel()
 		auto.click(button='right')
 		moveToX = (self.rightx1 + self.rightBoxW / 2.0) / scale
 		moveToY = ((self.righty1 + self.rightOffset) / scale) + (self.optionH * offset) + self.rightHR
@@ -186,36 +206,21 @@ class Calibration(object):
 		(x1, y1) = (box[0] + self.boundBoxNoDash[0], box[1] + self.boundBoxNoDash[1])
 		optionPath = os.path.join("Images", "RightClick", option + ".png")
 		ImageGrab.grab(bbox=(x1 + self.rightIcons, y1, x1 + boxW, y1 + boxH)).save(optionPath)
-		auto.press("esc")
+		auto.click()
 
 
-print "Warming up synapse system...\n"
-openWindow(viewer)
+print "\nWarming up synapse system...\n"
+#openWindow(viewer)
+auto.hotkey("command", "tab")
 
 Calibration = Calibration()
-(topBarHeight, boundBoxNoDash, optionH, rightHR, rightPlus, rightIcons, rightOffset,
-	rightBoxW, rightBoxH) = Calibration.getAll()
+getAll = Calibration.getAll()
+(topBarHeight, boundBoxNoDash, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH) = getAll
 
-openWindow(prompt)
+#openWindow(prompt)
+auto.hotkey("command", "tab")
 print "\nCompleted warm-up, make your gestures!\n"
 
-
-status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "params": "", "rulers": {"len": 0}}
-
-def resetPanelMoves():
-	status["firstW"] = (float(width) / (float(status["panel_dim"][1]) * 2.0))
-	status["firstH"] = (float(height) / (float(status["panel_dim"][0]) * 2.0))
-	status["jumpW"] = (status["firstW"] * 2.0 if status["panel_dim"][1] != 1 else 0)
-	status["jumpH"] = (status["firstH"] * 2.0 if status["panel_dim"][0] != 1 else 0)
-
-	print "Reset Panel: " + str(status["firstW"]) + " " + str(status["firstH"]) + " " + str(status["jumpW"]) + " " + str(status["jumpH"])
-
-resetPanelMoves()
-
-def moveToActivePanel():
-	moveToX = status["firstW"] + (status["active_panel"][1] - 1) * (status["jumpW"])
-	moveToY = status["firstH"] + (status["active_panel"][0] - 1) * (status["jumpH"])
-	auto.moveTo(moveToX, moveToY)
 
 actionList = [["Admin", "Quit", "Get Status", "Reset 0", "Reset 1", "Reset 2", "Reset 3", "Reset 4", "Reset 5"],
 	["Scroll", "Up", "Down"],
@@ -230,39 +235,46 @@ actionList = [["Admin", "Quit", "Get Status", "Reset 0", "Reset 1", "Reset 2", "
 	["Layout", "One-Panel", "Two-Panels", "Three-Panels", "Four-Panels"],
 	["Contrast Presets", "I", "II"]]
 
+# Report situation to command prompt, useful for debugging and for users understanding an issue.
+def promptNotify(message, sleepAmt):
+	#openWindow(prompt)
+	auto.hotkey("command", "tab")
+	print message
+	time.sleep(sleepAmt)
+
+# If the command and action are the same, meaning if a "#_0" command has been entered.
 def defaultAction(commandID, paramSizes):
+	#openWindow(prompt)
 	auto.hotkey("command", "tab")
 	try:
 		command = actionList[commandID][0]
 		commandLen = len(actionList[commandID])
 		rawInput = raw_input("Enter parameters for " + command + " <1-" + str(commandLen - 1) + "> <param1_param2_...>: ")
+		#openWindow(viewer)
 		auto.hotkey("command", "tab")
 		params = rawInput.split(" ")
 		if (len(params) == 2 or len(params) == 1):
 			if (int(params[0]) >= commandLen):
-				auto.hotkey("command", "tab")
-				print "Invalid action type given: <1-" + str(commandLen) + ">"
-				return (False, actionList[commandID][0])
+				promptNotify("Invalid action type given: <1-" + str(commandLen) + ">", 3)
+				return (False, command)
 			invalidSize = True
 			for paramSize in paramSizes:
 				if (len(params[1].split("_")) == paramSize):
 					invalidSize = False
 			if (invalidSize):
-				auto.hotkey("command", "tab")
-				print "Invalid parameter size given for " + command
-				return (False, actionList[commandID][0])
+				promptNotify("Invalid parameter size given for " + command, 3)
+				return (False, command)
 			status["params"] = params[1]
 			return (True, actionList[commandID][int(params[0])])
 		else:
-			auto.hotkey("command", "tab")
-			print "Invalid parameters given"
-			return (False, actionList[commandID][0])
+			promptNotify("Invalid parameters given", 3)
+			return (False, command)
 	except ValueError:
-		auto.hotkey("command", "tab")
-		print "Unrecognized parameters given for " + command
-		return (False, actionList[commandID][0])
+		promptNotify("Unrecognized parameters given for " + command, 3)
+		return (False, command)
 
-def rightClick(offset):
+# Find Synapse's rightClick image
+def findRightClick(offset):
 	auto.click(button='right')
 	located = auto.locateOnScreen(os.path.join("Images", "RightClick", "rightClick.png"))
 	if (located is not None):
@@ -272,18 +284,15 @@ def rightClick(offset):
 	else:
 		print "Error when performing right click function."
 		return False
-	
-def get_status():
-	print "\nStatus\n------"
-	print "Previous action: " + status["prev_action"]
-	print "Panel Dimension: " + str(status["panel_dim"][0]) + 'x' + str(status["panel_dim"][1])
-	print "Active panel: " + str(status["active_panel"][0]) + 'x' + str(status["active_panel"][1])
-	print "Patient information window: " + ("opened" if status["window_open"] else "closed")
 
 
 while (True):
 	(commandID, actionID) = (-1, -1)
-	sequence = raw_input("Gesture Command -> ")
+	if ("raw_input" in status):
+		sequence = status["raw_input"]
+		status.pop("raw_input", None)
+	else:
+		sequence = raw_input("Gesture Command -> ")
 	commandAction = sequence
 	if (sequence.find(" ") != -1):
 		commandAction = sequence[:sequence.find(" ")]
@@ -304,15 +313,21 @@ while (True):
 		print "Invalid command entered!\n"
 		continue
 
-	openWindow(viewer)
+	#openWindow(viewer)
+	auto.hotkey("command", "tab")
 
 
 	if (command == "Admin"):
 		if (action == "Quit"):
-			openWindow(prompt)
+			#openWindow(prompt)
+			auto.hotkey("command", "tab")
 			break
 		elif (action == "Get Status"):
-			get_status()
+			print "\nStatus\n------"
+			print "Previous action: " + status["prev_action"]
+			print "Panel Dimension: " + str(status["panel_dim"][0]) + 'x' + str(status["panel_dim"][1])
+			print "Active panel: " + str(status["active_panel"][0]) + 'x' + str(status["active_panel"][1])
+			print "Patient information window: " + ("opened" if status["window_open"] else "closed")
 		elif ("Reset" in action):
 			actionNum = actionID - 3
 			if (actionNum == 0):
@@ -329,6 +344,10 @@ while (True):
 				Calibration.resetRightOptions("scaleRotateFlip", 9.5)
 			(topBarHeight, boundBoxNoDash, optionH, rightHR, rightPlus, rightIcons, rightOffset,
 				rightBoxW, rightBoxH) = Calibration.getAll()
+			if ("hold_action" in status):
+				status["raw_input"] = status["hold_action"]
+				status.pop("hold_action", None)
+				continue
 	elif (command == "Scroll" and action != "Scroll"):
 		moveToActivePanel()
 		auto.click()
@@ -343,39 +362,49 @@ while (True):
 		for i in range(nums):
 			auto.press(toPress)
 		auto.PAUSE = 0.75
-		time.sleep(1)
+		auto.click()
 	elif (command == "Flip" and action != "Flip"):
 		moveToActivePanel()
-		located = rightClick(352)
+		located = findRightClick(352)
 		if (not located):
-			openWindow(prompt)
+			(status["raw_input"], status["hold_action"]) = ("0_6", commandAction)
 			continue
 		time.sleep(1)
-		(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
+		located = auto.locateOnScreen(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
+		if (located is None):
+			(status["raw_input"], status["hold_action"]) = ("0_8", commandAction)
+			continue
+		(x1, y1, w, h) = located
 		y1 = y1 / scale;
 		y1 += (rightPlus + (optionH * 0.5) if action == "Horizontal" else rightPlus + (optionH * 1.5))
 		auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
 		auto.click()
 	elif (command == "Rotate" and action != "Rotate"):
 		moveToActivePanel()
-		located = rightClick(352)
+		located = findRightClick(352)
 		if (not located):
-			openWindow(prompt)
+			(status["raw_input"], status["hold_action"]) = ("0_6", commandAction)
 			continue
 		time.sleep(1)
-		(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
+		located = auto.locateOnScreen(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
+		if (located is None):
+			(status["raw_input"], status["hold_action"]) = ("0_8", commandAction)
+			continue
+		(x1, y1, w, h) = located
 		y1 = y1 / scale
 		y1 += (rightPlus + (optionH * 2.5) if action == "Clockwise" else rightPlus + (optionH * 3.5))
 		auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
 		auto.click()
 	elif (command == "Zoom"):
 		(isValid, action) = ((True, action) if command != action else defaultAction(commandID, [0, 1]))
-		if (isValid):
+		if (not isValid):
+			continue
+		else:
 			(oldLocationX, oldLocationY) = auto.position()
 			moveToActivePanel()
-			located = rightClick(54)
+			located = findRightClick(54)
 			if (not located):
-				openWindow(prompt)
+				(status["raw_input"], status["hold_action"]) = ("0_6", commandAction)
 				continue
 			auto.click()
 			time.sleep(1)
@@ -390,20 +419,20 @@ while (True):
 	elif (command == "Switch Panel" and action != "Switch Panel"):
 		status["active_panel"][1] += (1 if action == "Right" else -1)
 		status["active_panel"][0] += (1 if action == "Down" else -1)
-		if (status["active_panel"][0] < 1):
-			status["active_panel"][0] = 1
-		if (status["active_panel"][1] < 1):
-			status["active_panel"][1] = 1
+		status["active_panel"][1] = (1 if status["active_panel"][0] < 1 else status["active_panel"][1])
+		status["active_panel"][0] = (1 if status["active_panel"][0] < 1 else status["active_panel"][0])
 		moveToActivePanel()
 		auto.click()
 	elif (command == "Pan"):
 		(isValid, action) = ((True, action) if command != action else defaultAction(commandID, [0, 1]))
-		if (isValid):
+		if (not isValid):
+			continue
+		else:
 			(oldLocationX, oldLocationY) = auto.position()
 			moveToActivePanel()
-			located = rightClick(90)
+			located = findRightClick(90)
 			if (not located):
-				openWindow(prompt)
+				(status["raw_input"], status["hold_action"]) = ("0_6", commandAction)
 				continue
 			auto.click()
 			time.sleep(1)
@@ -420,11 +449,13 @@ while (True):
 	elif (command == "Ruler"):
 		if (action == "Measure"):
 			(isValid, action) = ((True, action) if command != action else defaultAction(commandID, [2, 4]))
-			if (isValid):
+			if (not isValid):
+				continue
+			else:
 				moveToActivePanel()
-				located = rightClick(126)
+				located = findRightClick(126)
 				if (not located):
-					openWindow(prompt)
+					(status["raw_input"], status["hold_action"]) = ("0_6", commandAction)
 					continue
 				auto.click()
 				time.sleep(2)
@@ -451,10 +482,8 @@ while (True):
 					curr += 1
 		elif (action == "Delete"):
 			try:
-				popped = status["rulers"][int(status["params"])]
 				status["rulers"].pop(int(status["params"]), None)
-				print str(popped)
-				points = popped.split("_")
+				points = status["rulers"][int(status["params"])].split("_")
 				status["rulers"]["len"] -= 1
 				(moveToX, moveToY) = ((int(points[2]) + int(points[0])) / 2.0, (int(points[3]) + int(points[1])) / 2.0)
 				auto.moveTo(moveToX, moveToY)
@@ -523,11 +552,13 @@ while (True):
 		moveToActivePanel()
 		(oldLocationX, oldLocationY) = auto.position()
 		(isValid, action) = ((True, action) if command != action else defaultAction(commandID, [0, 1]))
-		if (isValid):
+		if (not isValid):
+			continue
+		else:
 			moveToActivePanel()
-			located = rightClick(18)
+			located = findRightClick(18)
 			if (not located):
-				openWindow(prompt)
+				(status["raw_input"], status["hold_action"]) = ("0_6", commandAction)
 				continue
 			auto.click()
 			time.sleep(1)
@@ -560,19 +591,16 @@ while (True):
 		(x2, y2) = (x1 + diffW, y1 + diffH)
 		ImageGrab.grab(bbox=(x1, y1, x2, y2)).save("diffLayout.png")
 		status["panel_dim"][0] = 1
+		x1 += (68.0 / 1920.0) * width
 		y1 += (95.0 / 1080.0) * height
 		jumpX = (91.0 / 1920.0) * width
 		if (action == "One-Panel"):
-			x1 += (68.0 / 1920.0) * width
 			status["panel_dim"][1] = 1
 		elif (action == "Two-Panels"):
-			x1 += (68.0 / 1920.0) * width
 			status["panel_dim"][1] = 2
 		elif (action == "Three-Panels"):
-			x1 += (68.0 / 1920.0) * width
 			status["panel_dim"][1] = 3
 		elif (action == "Four-Panels"):
-			x1 += (68.0 / 1920.0) * width
 			status["panel_dim"][1] = 4
 		x1 += (status["panel_dim"][1] - 1) * jumpX
 		auto.moveTo(x1, y1)
@@ -582,9 +610,9 @@ while (True):
 		auto.click()
 	elif (command == "Contrast Presets" and action != "Contrast Presets"):
 		moveToActivePanel()
-		located = rightClick(316)
+		located = findRightClick(316)
 		if (not located):
-			openWindow(prompt)
+			(status["raw_input"], status["hold_action"]) = ("0_6", commandAction)
 			continue
 		time.sleep(1)
 		(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "presets.png"))
@@ -599,10 +627,10 @@ while (True):
 	
 	if (command != "Admin"):
 		status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
-		status["params"] = ""
 
 
-	openWindow(prompt)
+	#openWindow(prompt)
+	auto.hotkey("command", "tab")
 
 
 # When quitting program, remove anything saved
