@@ -10,15 +10,12 @@ import sys
 
 #Remove images already saved (avoids issues with git)
 def removeImages():
-	for file in os.listdir(os.path.join("Images")):
-		if file.endswith(".png"):
-			os.remove(os.path.join(os.path.join("Images"), file))
-	for file in os.listdir(os.path.join("Images", "RightClick")):
-		if file.endswith(".png"):
-			os.remove(os.path.join(os.path.join("Images", "RightClick"), file))
-	for file in os.listdir(os.path.join("Images", "Window")):
-		if file.endswith(".png"):
-			os.remove(os.path.join(os.path.join("Images", "Window"), file))
+	paths = [os.path.join("Images", "RightClick"), os.path.join("Images", "Window", "Closes"),
+		os.path.join("Images", "Window"), os.path.join("Images")]
+	for path in paths:
+		for file in os.listdir(path):
+			if file.endswith(".png"):
+				os.remove(os.path.join(path, file))
 
 # If exiting the synapse program, remove all images before closing synapse.
 def signal_handler(sig, frame):
