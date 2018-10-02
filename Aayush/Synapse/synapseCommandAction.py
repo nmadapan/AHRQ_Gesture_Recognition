@@ -8,17 +8,21 @@ from PIL import ImageGrab
 import signal
 import sys
 
+removeImagesPrompt = "y"
 #Remove images already saved (avoids issues with git)
 def removeImages():
-	paths = [os.path.join("Images", "RightClick"), os.path.join("Images", "Window", "Closes"),
-		os.path.join("Images", "Window"), os.path.join("Images")]
-	for path in paths:
-		for file in os.listdir(path):
-			if file.endswith(".png"):
-				os.remove(os.path.join(path, file))
+	if (removeImagesPrompt == "y"):
+		paths = [os.path.join("Images", "RightClick"), os.path.join("Images", "Window", "Closes"),
+			os.path.join("Images", "Window"), os.path.join("Images", "Layout"), os.path.join("Images")]
+		for path in paths:
+			for file in os.listdir(path):
+				if file.endswith(".png"):
+					os.remove(os.path.join(path, file))
 
 # If exiting the synapse program, remove all images before closing synapse.
 def signal_handler(sig, frame):
+	#removeImagesPrompt = raw_input("Do you want to remove the images saved in the folder? (y/n)")
+	#removeImagesPrompt = removeImagesPrompt[0].lower()
 	removeImages()
 	print ""
 	sys.exit(0)
@@ -102,9 +106,10 @@ def openWindow(toOpen):
 		xef_window = auto.getWindow(xef_window_name)
 		xef_window.maximize()
 	else:
-		auto.hotkey("command", "space")
+		"""auto.hotkey("command", "space")
 		auto.typewrite(toOpen)
-		auto.press("enter")
+		auto.press("enter")"""
+		auto.hotkey("command", "tab")
 
 status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "rulers": {"len": 0}}
 
@@ -129,6 +134,10 @@ class Calibration(object):
 		self.resetRightClick()
 		self.resetRightOptions("presets", 8.5)
 		self.resetRightOptions("scaleRotateFlip", 9.5)
+		f = open("Calibration.txt", "w")
+		f.write(str(self.topBarHeight) + "\n")
+		f.write(str(self.boundBoxNoDash))
+		f.close()
 
 	def getAll(self):
 		return (self.topBarHeight, self.boundBoxNoDash, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
@@ -313,6 +322,8 @@ while (True):
 	if (command == "Admin"):
 		if (action == "Quit"):
 			openWindow(prompt)
+			removeImagesPrompt = raw_input("Do you want to remove the images saved in the folder? (y/n)")
+			removeImagesPrompt = removeImagesPrompt[0].lower()
 			break
 		elif (action == "Get Status"):
 			print "\nStatus\n------"
@@ -326,7 +337,12 @@ while (True):
 				print "\nWarming up synapse system...\n"
 				Calibration = Calibration()
 				print "\nCompleted warm-up, make your gestures!\n"
-			elif (actionNum == 1):
+			"""if (Calibration is None):
+				f = open("Calibration.txt", "r")
+				topBarHeight = float(f.readLine().strip("\n"))
+				boundBoxNoDash = tuple(float(x) for x in f.readLine()[1:-1].split(", "))
+			else:"""
+			if (actionNum == 1):
 				Calibration.resetTopBarHeight()
 			elif (actionNum == 2):
 				Calibration.resetBoundBoxNoDash()
@@ -336,8 +352,9 @@ while (True):
 				Calibration.resetRightOptions("presets", 8.5)
 			elif (actionNum == 5):
 				Calibration.resetRightOptions("scaleRotateFlip", 9.5)
+
 			(topBarHeight, boundBoxNoDash, optionH, rightHR, rightPlus, rightIcons, rightOffset,
-				rightBoxW, rightBoxH) = Calibration.getAll()
+					rightBoxW, rightBoxH) = Calibration.getAll()
 			if ("hold_action" in status):
 				status["raw_input"] = status["hold_action"]
 				status.pop("hold_action", None)
@@ -349,7 +366,7 @@ while (True):
 		nums = scrollAmount
 		scrollAmount = (-1 * scrollAmount if action == "Up" else scrollAmount)
 		#auto.scroll(scrollAmount)
-		auto.PAUSE = 0
+		auto.PAUSE = 0.1
 		print str(nums)
 		toPress = ("right" if action == "Up" else "left")
 		print toPress
@@ -386,8 +403,8 @@ while (True):
 		else:
 			auto.press("down")
 			auto.press("down")
-		auto.PAUSE = 0.75
 		auto.press("enter")
+		auto.PAUSE = 0.75
 	elif (command == "Rotate" and action != "Rotate"):
 		moveToActivePanel()
 		"""located = findRightClick(352)
@@ -467,16 +484,16 @@ while (True):
 			auto.click()
 			time.sleep(1)"""
 			auto.click(button='right')
-			auto.press("z")
+			auto.press("p")
 			auto.press("enter")
 			auto.moveTo(oldLocationX, oldLocationY)
 			if (status["params"] != ""):
 				level = (-1 * int(status["params"]) if action == "Up" or action == "Left" else int(status["params"]))
 			else:
-				level = (-20 if action == "Up" or action == "Left" else 20)
+				level = (-20.0 if action == "Up" or action == "Left" else 20.0)
 			auto.mouseDown()
-			oldLocationX += (level if action == "Left" or action == "Right" else 0)
-			oldLocationY += (level if action == "Up" or action == "Down" else 0)
+			oldLocationX += (level if action == "Left" or action == "Right" else 0.0)
+			oldLocationY += (level if action == "Up" or action == "Down" else 0.0)
 			auto.moveTo(oldLocationX, oldLocationY)
 			auto.mouseUp()
 	elif (command == "Ruler"):
@@ -502,6 +519,8 @@ while (True):
 					elif (len(points) == 2):
 						(x1, y1) = auto.position()
 						(x2, y2) = (int(points[0]), int(points[1]))
+					else:
+						print "Ruler measure parameters should include 2 or 4 non-negative integers separated by underscores."
 				except ValueError:
 					print "Ruler measure parameters should only include non-negative integers separated by underscores."
 					continue
@@ -517,18 +536,28 @@ while (True):
 						break
 					curr += 1
 				print str(status["rulers"][curr])
+				print "ID of Ruler Measurement: " + str(curr)
 		elif (action == "Delete"):
-			try:
-				points = status["rulers"][int(status["params"])].split("_")
-				status["rulers"].pop(int(status["params"]), None)
-				status["rulers"]["len"] -= 1
-				(moveToX, moveToY) = ((int(points[2]) + int(points[0])) / 2.0, (int(points[3]) + int(points[1])) / 2.0)
-				auto.moveTo(moveToX, moveToY)
-			except ValueError:
-				print "Ruler delete parameter should only be a positive integer value."
+			if (status["params"] == ""):
+				print "Ruler delete ID not specified."
 				continue
+			elif (len(status["params"].split("_")) == 1):
+				print "Ruler delete ID must only be one positive integer integer."
+				continue
+			try:
+				rulerID = int(status["params"])
+				if (rulerID not in status["rulers"]):
+					print "Ruler delete ID is not in the list of rulers."
+					continue
+			except ValueError:
+				print "Ruler delete ID should be a positive integer value."
+				continue
+			points = status["rulers"][int(status["params"])].split("_")
+			status["rulers"].pop(int(status["params"]), None)
+			status["rulers"]["len"] -= 1
+			auto.moveTo((int(points[2]) + int(points[0])) / 2.0, (int(points[3]) + int(points[1])) / 2.0)
 			auto.click(button='right')
-			auto.PAUSE = 0
+			auto.PAUSE = 0.1
 			auto.press("0")
 			for i in range(5):
 				auto.press("down")
@@ -551,15 +580,15 @@ while (True):
 		if (action == "Open" and not status["window_open"]):
 			auto.moveTo(oldLocationX, 0)
 			time.sleep(1)
-			auto.moveTo(oldLocationX, macHeader)
-			box = (b + (1 * scale) for b in boundBoxNoDash)
-			box[1] += topBarHeight
+			box = (1.0 * scale, topBarHeight, -1.0 * scale, -1.0 * scale)
+			box = tuple(boundBoxNoDash[i] + box[i] for i in range(4))
 			afterHoverPath = os.path.join("Images", "Window", "afterHover.png")
 			if (not os.path.exists(afterHoverPath)):
 				ImageGrab.grab(bbox=box).save(afterHoverPath)
-			auto.moveTo((329.0 / 1920.0) * nativeW, (82.0 / 1080.0) * nativeH + macHeader / scale)
-			#auto.moveTo((219.0 / 1440.0) * width, (77.0 / 900.0) * height)
+			#auto.moveTo((329.0 / 1920.0) * nativeW, (82.0 / 1080.0) * nativeH + macHeader / scale)
+			#auto.moveTo((218.0 / 1440.0) * width, (75.5.0 / 900.0) * height)
 			#auto.moveTo((326.0 / 1920.0) * width, (78.0 / 1080.0) * height)
+			auto.moveTo((435.0 / 2880.0) * nativeW / scale, ((107.0 + macHeader) / 1800.0) * nativeH / scale)
 			auto.click()
 			time.sleep(6)
 			seriesThumbnailPath = os.path.join("Images", "Window", "seriesThumbnail.png")
@@ -576,7 +605,7 @@ while (True):
 			#(x1, y1) = (x2 - (83.0 / 2880.0) * nativeW,  y1 + (2.0 / 2880.0) * nativeW)
 			#(x2, y2) = (x1 + (90.0 / 2880.0) * nativeW, y1 + (40.0 / 2880.0) * nativeW)
 			(x1, y1) = (x2 - (10.0 * scale) - (90.0 / 2880.0) * nativeW, y1 + (2.0 * scale))
-			(x2, y2) = (x2 - (10.0 * scale), y1 + (2.0 * scale) + (40.0 / 2880.0) * nativeW)
+			(x2, y2) = (x2 - (10.0 * scale), y1 + (2.0 * scale) + (40.0 / 1800.0) * nativeH)
 			seriesClosePath = os.path.join("Images", "Window", "Closes", "seriesClose.png")
 			seriesClose_RedPath = os.path.join("Images", "Window", "Closes", "seriesClose_Red.png")
 			seriesClose_GrayPath = os.path.join("Images", "Window", "Closes", "seriesClose_Gray.png")
@@ -592,7 +621,8 @@ while (True):
 			status["window_open"] = (not status["window_open"])
 		elif (action == "Close" and status["window_open"]):
 			for file in os.listdir(os.path.join("Images", "Window", "Closes")):
-				close = auto.locateOnScreen(file)
+				print str(file)
+				close = auto.locateOnScreen(os.path.join("Images", "Window", "Closes", file))
 				if (close is not None):
 					(x1, y1, w, h) = close
 					auto.moveTo((2 * x1 + w) / (scale * 2.0), (2 * y1 + h) / (scale * 2.0))
@@ -628,15 +658,17 @@ while (True):
 		(oldLocationX, oldLocationY) = auto.position()
 		auto.moveTo(oldLocationX, 0)
 		time.sleep(1)
-		box = (b + (1 * scale) for b in boundBoxNoDash)
-		box[1] += topBarHeight
+		box = (0.0, topBarHeight, 0.0, 0.0)
+		box = tuple(b + (1.0 * scale) for b in boundBoxNoDash)
 		afterHoverPath = os.path.join("Images", "Layout", "afterHover.png")
 		ImageGrab.grab(bbox=box).save(os.path.join("Images", "Layout", "afterHover.png"))
 		#auto.moveTo((329.0 / 1920.0) * width, (82.0 / 1080.0) * height)
-		auto.moveTo((643.0 / 1920.0) * nativeW, (82.0 / 1080.0) * nativeH)
+		#auto.moveTo((643.0 / 1920.0) * nativeW, (82.0 / 1080.0) * nativeH)
 		#auto.moveTo((428.0 / 1920.0) * width, (77.0 / 1080.0) * height)
+		#auto.moveTo((435.0 / 2880.0) * nativeW / scale, ((107.0 + macHeader) / 1800.0) * nativeH / scale)
+		auto.moveTo((857.0 / 2880.0) * nativeW / scale, ((109.0 + macHeader) / 1800.0) * nativeH / scale)
 		auto.click()
-		time.sleep(6)
+		time.sleep(5)
 		windowPath = os.path.join("Images", "Layout", "window.png")
 		ImageGrab.grab(bbox=box).save(os.path.join("Images", "Layout", "window.png"))
 		diffBox = get_bbox(afterHoverPath, windowPath)
