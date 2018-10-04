@@ -11,7 +11,7 @@ import time
 ####
 
 ## Global Static Variables
-TCP_IP = '128.46.125.209'
+TCP_IP = '128.46.125.218'
 TCP_PORT = 5000
 BUFFER_SIZE = 1024
 MAX_CLIENTS = 1

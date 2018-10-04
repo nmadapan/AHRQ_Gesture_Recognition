@@ -3,6 +3,7 @@ import os, sys, time
 import numpy as np
 import json
 from scipy.interpolate import interp1d
+import cv2
 
 def wait_for_kinect(kr):
 	# Blocking function. It waits for the all modalities (RGB, Depth, Body) of the Kinect to connect.
@@ -156,13 +157,13 @@ def json_to_dict(json_filepath):
 	return var
 
 
-def flip_skeleton(skel_path, out_path, num_joints=3):
+def flip_skeleton(skel_path, out_path, dim_per_joint=3):
 	############
 	# Flips the body skeleton along the persons vertical axis.
 	# Input argument:
-	#	* skel_path: path to skeleton file. Each line in the file has num_joints*25 elements. [x1, y1, z1 ...]
+	#	* skel_path: path to skeleton file. Each line in the file has dim_per_joint*25 elements. [x1, y1, z1 ...]
 	#	* outPath: path to place the output file.
-	#   * num_joints: the number of joints to be flipped
+	#   * dim_per_joint: the number of joints to be flipped
 	#
 	# Assumptions:
 	#	* There is only roll angle about person's veritcal axis
@@ -180,23 +181,23 @@ def flip_skeleton(skel_path, out_path, num_joints=3):
 	spine_idx = 0
 
 	for line in lines:
-		torso = np.array(line[num_joints*spine_idx:num_joints*spine_idx+num_joints] )
-		left_sh = np.array(line[num_joints*left_sh_idx:num_joints*left_sh_idx+num_joints])
-		right_sh = np.array(line[num_joints*right_sh_idx:num_joints*right_sh_idx+num_joints])
+		torso = np.array(line[dim_per_joint*spine_idx:dim_per_joint*spine_idx+dim_per_joint] )
+		left_sh = np.array(line[dim_per_joint*left_sh_idx:dim_per_joint*left_sh_idx+dim_per_joint])
+		right_sh = np.array(line[dim_per_joint*right_sh_idx:dim_per_joint*right_sh_idx+dim_per_joint])
 		
-		mat = np.reshape(line, (25, num_joints))
+		mat = np.reshape(line, (25, dim_per_joint))
 
 		# Normalize w.r.t torso
 		mat = mat - torso
 
-		if num_joints > 2:
+		if dim_per_joint > 2:
 			# Find the theta
 			zr = right_sh[-1]
 			zl = left_sh[-1]
 			shoulder_length = np.linalg.norm(left_sh-right_sh)
 			theta = np.arcsin((zr-zl)/shoulder_length)
 
-			R = np.eye(num_joints)
+			R = np.eye(dim_per_joint)
 			R[0, 0] = np.cos(theta)
 			R[0, 2] = np.sin(theta)
 			R[2, 0] = -np.sin(theta)
@@ -204,10 +205,11 @@ def flip_skeleton(skel_path, out_path, num_joints=3):
 
 			# Transform the matrix
 			mat = np.dot(R, mat.transpose())
-
-
-		mat[0, :] = -mat[0, :]
-		mat = mat.transpose() + torso
+			mat[0, :] = -mat[0, :]
+			mat = mat.transpose() + torso
+		else:
+			mat[0, :] = -mat[0, :]
+			mat = mat + torso
 
 		line = mat.flatten()
 		fp.write(' '.join(map(str, line)) + '\n')
@@ -256,10 +258,10 @@ def interpn(yp, num_points, kind = 'linear'):
 	return y
 
 def flip_video(input_video_path, out_video_path):
-	cap = cv2.VideoCapture(video_path)
+	cap = cv2.VideoCapture(input_video_path)
 	fps = cap.get(cv2.CAP_PROP_FPS)
-	width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-	height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+	width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+	height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 	# Define the codec and create VideoWriter object
 	fourcc = cv2.VideoWriter_fourcc(*'XVID')

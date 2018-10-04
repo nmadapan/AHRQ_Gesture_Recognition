@@ -17,8 +17,13 @@ import re
 
 ## Global Variables
 # Directory for reading the data that might be possibly flipped
-lex_folder = r'F:\AHRQ\Study_IV\Data\Data\L2' 
-target_folder = r'F:\AHRQ\Study_IV\Flipped_Data\L2'
+# if replace = True it means your lex_folder and target folder
+# are the same, and you want to replace the files with the flipped
+# ones. If false, the target folder is different and the original
+# files that you are reading from will not be touched
+replace = False 
+lex_folder = r'H:\AHRQ\Study_IV\Data\Data\L6' 
+target_folder = r'H:\AHRQ\Study_IV\Flipped_Data\L6'
 filename = 'flipped_files.txt' 
 fps = 120
 default_width, default_height = 1920/2, 1080/2
@@ -97,8 +102,8 @@ while(True):
 		vid_descriptor_list = videos_per_cmd[current_cmd]
 	# get a video capture for each video in the list
 	vid_list = [descriptor[0] for descriptor in vid_descriptor_list]
+	print "vid_list: ", vid_list
 	vcaps = [(os.path.basename(vid).split('_')[2], cv2.VideoCapture(vid)) for vid in vid_list]
-	print "vcaps: ", vcaps
 	while(True and (not close_flag)):
 		for idx, vcap_info in enumerate(vcaps):
 			name, vcap = vcap_info
@@ -114,7 +119,9 @@ while(True):
 				if videos_per_cmd[current_cmd][idx][2]:
 					gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 					frame = np.stack((gray_image,)*3, -1)
-				cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA) 
+					cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (50,255,0),1,cv2.LINE_AA) 
+				else :
+					cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA) 
 			else: frame = 255*np.ones((frame_h, frame_w, 3))
 			container_frame[row][col] = np.uint8(frame)
 		cframe = []
@@ -128,7 +135,7 @@ while(True):
 		if(key in [ord('n'), ord('N')]): cmd_idx += 1; break
 		if(key in [ord('p'), ord('P')]): cmd_idx -= 1; break
 	if(cmd_idx<0): cmd_idx = 0
-	if(cmd_idx>=len(cmds)): cmd_idx = len(cmds) - 1
+	if(cmd_idx>=len(cmd_key_list)): cmd_idx = len(cmd_key_list) - 1
 
 	for vcap in vcaps: vcap[1].release()
 
@@ -154,35 +161,60 @@ with open(join(target_folder, filename),'w') as csv_file:
 				row = [cmd, cmd_dict[cmd], subject, lexicon,  video_name]
 				csv_writer.writerows(row)
 
-				video_base_name = video_name
-				video_base_name.replace("_rgb.avi", "")
+				video_base_name = video_name.replace("_rgb.avi", "")
 
-				# flip rgb video (_rgb.avi)
-				flip_video(video_path,temp_video_path)
-				remove_file(video_path)
-				rename(temp_video_path, join(target_folder,video_base_name+"_rgb.avi"))
+				if replace:
+					# flip rgb video (_rgb.avi)
+					flip_video(video_path,temp_video_path)
+					remove_file(video_path)
+					rename(temp_video_path, join(target_folder,video_base_name+"_rgb.avi"))
 
-				# flip depth video (_depth.avi)
-				video_path = join(lex_folder,video_base_name+"_depth.avi")
-				flip_video(video_path,temp_video_path)
-				remove_file(video_path)
-				rename(temp_video_path, join(target_folder,video_base_name+"_depth.avi"))
+					# flip depth video (_depth.avi)
+					video_path = join(lex_folder,video_base_name+"_depth.avi")
+					flip_video(video_path,temp_video_path)
+					remove_file(video_path)
+					rename(temp_video_path, join(target_folder,video_base_name+"_depth.avi"))
 
-				# flip skeleton (*_skel.txt)
-				file_path = join(lex_folder,video_base_name+"_skel.txt")
-				flip_skeleton(file_path, temp_anot_path, num_joints=3)
-				remove_file(file_path)
-				rename(temp_anot_path, join(target_folder,video_base_name+"_text.txt"))
+					# flip skeleton (*_skel.txt)
+					file_path = join(lex_folder,video_base_name+"_skel.txt")
+					flip_skeleton(file_path, temp_anot_path, dim_per_joint=3)
+					remove_file(file_path)
+					rename(temp_anot_path, join(target_folder,video_base_name+"_skel.txt"))
 
-				# flip rgb to sklt (*_color.txt)
-				file_path = join(lex_folder,video_base_name+"_color.txt")
-				flip_skeleton(file_path, temp_anot_path, num_joints=2)
-				remove_file(file_path)
-				rename(temp_anot_path, join(target_folder,video_base_name+"_color.txt"))
+					# flip rgb to sklt (*_color.txt)
+					file_path = join(lex_folder,video_base_name+"_color.txt")
+					flip_skeleton(file_path, temp_anot_path, dim_per_joint=2)
+					remove_file(file_path)
+					rename(temp_anot_path, join(target_folder,video_base_name+"_color.txt"))
 
-				# flip depth to sklt (*_depth.txt)
-				file_path = join(lex_folder,video_base_name+"_depth.txt")
-				flip_skeleton(file_path, temp_anot_path, num_joints=2)
-				remove_file(file_path)
-				rename(temp_anot_path, join(target_folder,video_base_name+"_depth.txt"))
-				
+					# flip depth to sklt (*_depth.txt)
+					file_path = join(lex_folder,video_base_name+"_depth.txt")
+					flip_skeleton(file_path, temp_anot_path, dim_per_joint=2)
+					remove_file(file_path)
+					rename(temp_anot_path, join(target_folder,video_base_name+"_depth.txt"))
+
+				else:
+					print video_base_name
+					# flip rgb video (_rgb.avi)
+					out_path = join(target_folder,video_base_name+"_rgb.avi")
+					flip_video(video_path,out_path)
+
+					# flip depth video (_depth.avi)
+					video_path = join(lex_folder,video_base_name+"_depth.avi")
+					out_path = join(target_folder,video_base_name+"_depth.avi")
+					flip_video(video_path,out_path)
+
+					# flip skeleton (*_skel.txt)
+					file_path = join(lex_folder,video_base_name+"_skel.txt")
+					out_path = join(target_folder,video_base_name+"_skel.txt")
+					flip_skeleton(file_path, out_path, dim_per_joint=3)
+
+					# flip rgb to sklt (*_color.txt)
+					file_path = join(lex_folder,video_base_name+"_color.txt")
+					out_path = join(target_folder,video_base_name+"_color.txt")
+					flip_skeleton(file_path, out_path, dim_per_joint=2)
+
+					# flip depth to sklt (*_depth.txt)
+					file_path = join(lex_folder,video_base_name+"_depth.txt")
+					out_path = join(target_folder,video_base_name+"_depth.txt")
+					flip_skeleton(file_path, temp_anot_path, dim_per_joint=2)

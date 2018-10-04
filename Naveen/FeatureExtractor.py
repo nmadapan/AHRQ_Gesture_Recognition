@@ -132,7 +132,6 @@ class FeatureExtractor():
 
 		xf = {'left': [], 'right': []}
 
-		# Extract the required joints: Only right hand if both_hands is False, both the hands otherwise.
 		# Column reduction . .
 		dim = self.dim_per_joint
 		if(self.num_joints == 2):
@@ -202,17 +201,19 @@ class FeatureExtractor():
 			left = xf['left'][inst_id] # get left arm feature
 			right = right.reshape(self.dim_per_joint*(self.num_joints+1), -1).transpose()
 			left = left.reshape(self.dim_per_joint*(self.num_joints+1), -1).transpose()
+
 			d_reps = np.ones(right.shape[0]-2).tolist(); d_reps.append(2) # diff() reduced length by one. Using this we can fix it.
 
 			## Right arm
 			# Change reference frame to shoulder
 			# Precompute position, velocity and angles
+			dim = self.dim_per_joint
 			right = right[:,0:self.dim_per_joint*self.num_joints] - np.tile(right[:,self.dim_per_joint*self.num_joints:], (1, self.num_joints))
 			d_right = np.repeat(np.diff(right, axis = 0), d_reps, axis = 0)
 			theta_right = np.zeros(right.shape)
 			for jnt_idx in range(self.num_joints):
-				temp = d_right[:, 3*jnt_idx:3*(jnt_idx+1)]
-				theta_right[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
+				temp = d_right[:, dim*jnt_idx:dim*(jnt_idx+1)]
+				theta_right[:, dim*jnt_idx:dim*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 
 			## Position
 			if(self.type_flags['right']):
@@ -236,8 +237,8 @@ class FeatureExtractor():
 			d_left = np.repeat(np.diff(left, axis = 0), d_reps, axis = 0)
 			theta_left = np.zeros(left.shape)
 			for jnt_idx in range(self.num_joints):
-				temp = d_left[:, 3*jnt_idx:3*(jnt_idx+1)]
-				theta_left[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
+				temp = d_left[:, dim*jnt_idx:dim*(jnt_idx+1)]
+				theta_left[:, dim*jnt_idx:dim*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 			## Position
 			if(self.type_flags['left']):
 				features['left'] = left.transpose().flatten() / self.max_r
@@ -365,7 +366,6 @@ class FeatureExtractor():
 			label_to_ids[label] = class_id
 			inst_per_class[label] = raw_class_labels.count(label)
 
-		## Overwrite the keys in the return variable
 		self.num_classes = len(class_labels)
 		self.class_labels = class_labels
 		self.id_to_labels = id_to_labels
@@ -421,8 +421,10 @@ class FeatureExtractor():
 		left, right = zip(*colproc_skel_data)
 		left, right = np.array(list(left)), np.array(list(right))
 
-		right = right.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
-		left = left.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
+		## It is already in the right format. 
+		# right = right.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
+		# left = left.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
+
 		d_reps = np.ones(right.shape[0]-2).tolist(); d_reps.append(2) # diff() reduced length by one. Using this we can fix it.
 
 		## Right hand
@@ -518,10 +520,12 @@ class FeatureExtractor():
 
 		## Predict
 		pred_test_output = self.svm_clf.predict(feature_instance)
-		cname = self.label_to_name[self.id_to_labels[pred_test_output]]
+		pred_test_output
+		label = self.id_to_labels[pred_test_output[0]]
+		cname = self.label_to_name[label]
 		# print cname
 
-		return cname
+		return label, cname
 
 	###### Miscellaneous Function ########
 	def find_type_order(self, left, right):

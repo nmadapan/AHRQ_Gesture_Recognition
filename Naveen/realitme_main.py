@@ -15,7 +15,7 @@ from pprint import pprint as pp
 from fake_openpose import extract_fingers_realtime
 from helpers import sync_ts
 
-TCP_IP = '128.46.125.209' # The static IP of Ubuntu computer
+TCP_IP = '10.186.140.191' # The static IP of Ubuntu computer
 TCP_PORT = 5000 # Both server and client should have a common IP and Port
 BUFFER_SIZE = 1024 # in bytes. 1 charecter is one byte.
 INITIAL_MESSAGE = 'Handshake'
@@ -24,7 +24,8 @@ class Realtime:
 	def __init__(self):
 		## Global Constants
 		self.lexicon_name = 'L6'
-		self.data_path = '..\\Data'
+		self.data_path = r'H:\AHRQ\Study_IV\Data\Data'
+		self.trained_pkl_fpath = r'H:\AHRQ\Study_IV\Data\Data\L6_data.pickle'
 
 		self.buf_skel_size = 10
 		self.buf_rgb_size = 10
@@ -49,7 +50,6 @@ class Realtime:
 
 		self.fl_gest_started = False
 		self.fl_synapse_running = False # Synapse running, # th_synapse. If False, meaning synapse is executing a command. So stop everything else. 
-		self.dom_rhand = True # By default, right followed by left
 
 		# Initialize the Kinect
 		self.kr = kinect_reader()
@@ -64,16 +64,18 @@ class Realtime:
 		# Set the sself.fl_sock_com = True
 		##
 		## Socket communication
-		self.fl_sock_com = False # If the socket com b/w server and client is established. 
-		self.sock = None # updated in call to init_socket()
-		self.connect_status = False # updated in call to init_socket()
-		socket.setdefaulttimeout(2.0)
-		self.init_socket()
+		# self.fl_sock_com = False # If the socket com b/w server and client is established. 
+		# self.sock = None # updated in call to init_socket()
+		# self.connect_status = False # updated in call to init_socket()
+		# socket.setdefaulttimeout(2.0)
+		# self.init_socket()
 
 		self.command_to_execute = None
 
-		## Initialize Feature extractor
-		self.feat_ext = FeatureExtractor() ## LATER use a trained one. 
+		## Use trained Feature extractor
+		with open(self.trained_pkl_fpath, 'rb') as fp:
+			res = pickle.load(fp)
+			self.feat_ext = res['fe'] # res['out'] exists but we dont need training data.
 
 		## Other variables
 		self.skel_instance = None # Updated in self.th_gen_skel(). 
@@ -170,8 +172,8 @@ class Realtime:
 		self.fl_stream_ready = True
 
 		while(self.fl_alive):
-			if(self.fl_synapse_running): continue # If synapse is running, stop producing the rgb/skeleton data
-			elif(self.fl_skel_ready and self.fl_openpose_ready): continue # If previous skeleton features and op features are not used, stop producing. 
+			# if(self.fl_synapse_running): continue # If synapse is running, stop producing the rgb/skeleton data
+			# elif(self.fl_skel_ready and self.fl_openpose_ready): continue # If previous skeleton features and op features are not used, stop producing. 
 			
 			# Refreshing Frames
 			rgb_flag = self.kr.update_rgb()
@@ -183,7 +185,7 @@ class Realtime:
 				## gestures starts when previous skeleton is below the threshold and current skeleton is above the threshold. 
 				###
 
-				skel_pts = self.kr.skel_pts.tolist()
+				skel_pts = self.kr.skel_pts.tolist() # list of 75 floats.
 
 				# GESTURE SPOTTING NEEDS TO HAPPEN HERE
 				# Check if gesture started
@@ -205,7 +207,7 @@ class Realtime:
 					if(self.fl_gest_started):
 						ts = int(time.time()*100)
 						self.buf_skel.append((ts, skel_col_reduce(skel_pts)))
-						self.buf_skel.pop(0)
+						self.buf_skel.pop(0) # Buffer is of fixed length. Append an element at the end and pop the first element. 
 						tslist, _ = zip(*self.buf_skel)
 
 					# The Notify all should be outside because if not, the cosumer
@@ -213,7 +215,7 @@ class Realtime:
 					# it to enter the "consuming condition" have changed
 					self.cond_skel.notify_all()
 
-			if(rgb_flag and self.fl_gest_started):
+			if(rgb_flag): # and self.fl_gest_started. Later dont even fill the buffers when others are running. q
 				with self.cond_rgb: # Producer. Consumers need to wait for producer's 'notify' call
 					ts = int(time.time()*100)
 					self.buf_rgb.append((ts, self.kr.color_image))
@@ -238,7 +240,7 @@ class Realtime:
 		first_time = False
 		print_first_time = True
 		while(self.fl_alive):
-			if(self.fl_synapse_running): continue # If synapse is running, dont do anything
+			# if(self.fl_synapse_running): continue # If synapse is running, dont do anything
 			if(self.fl_skel_ready): continue # If previous skeleton features are not used, dont do anything.
 			if self.fl_gest_started:
 				if print_first_time:
@@ -259,8 +261,8 @@ class Realtime:
 
 				left, right = zip(*raw_frames)
 				left, right = np.array(left), np.array(right)
-				self.dom_rhand = self.feat_ext.find_type_order(left, right)[0] == 0
 
+				# Call to generate_features_realtime puts dominant hand first. 
 				self.skel_instance = (timestamps, self.feat_ext.generate_features_realtime(list(raw_frames)))
 				# pp(len(skel_frames))
 
@@ -280,7 +282,7 @@ class Realtime:
 		print_first_time = True
 		rgb_frame = None
 		while(self.fl_alive):
-			if(self.fl_synapse_running): continue # If synapse is running, dont do anything
+			# if(self.fl_synapse_running): continue # If synapse is running, dont do anything
 			if(self.fl_openpose_ready): continue # If previous openpose data is not used, dont do anything
 			if self.fl_gest_started:
 				if print_first_time:
@@ -288,10 +290,12 @@ class Realtime:
 					print_first_time = False
 				first_time = True 
 				with self.cond_rgb:
+					print 'Waiting in th_gen_openpose'
 					self.cond_rgb.wait()
 					rgb_frame = deepcopy(self.buf_rgb[-1]) # (timestamp, ndarray)
 					frame_count += 1
 				op_instance.append((rgb_frame[0], extract_fingers_realtime(rgb_frame[-1])))
+				print 'len of op_inst', len(op_instance)
 			if not self.fl_gest_started and first_time:
 				print "IN RGB THREAD, GESTURE ENDED: "
 				first_time = False
@@ -329,6 +333,8 @@ class Realtime:
 			self.prev_executed_cmds.append(pred_cmd)
 			return pred_cmd
 
+		## Temporarily
+		return pred_cmd
 		##
 		# TODO: Code to smartly select the next command goes here. 
 		##
@@ -341,15 +347,16 @@ class Realtime:
 		synapse_thread = Thread(name = 'autoclick_synapse', target = self.th_synapse) #
 
 		##########
-
+		# TODO: Incorporate the calibration information in the realtime code
+		#
 		##########
 
 		acces_kinect_thread.start()
 		gen_skel_thread.start()
 		acces_openpose_thread.start()
-		synapse_thread.start()
+		# synapse_thread.start()
 
-		# only_skeleton = True
+		only_skeleton = True
 
 		## Merger part of the code
 		while(True):
@@ -358,34 +365,34 @@ class Realtime:
 				# pp(self.skel_instance)
 				# pp(self.op_instance)
 				
-				# # Obtain timestamps
-				# skel_ts, skel_inst = self.skel_instance[0], self.skel_instance[1]
-				# op_ts, op_inst = self.op_instance[0], self.op_instance[1]
-				# _, sync_op_ts = sync_ts(skel_ts, op_ts)
+				# Obtain timestamps
+				skel_ts, skel_inst = self.skel_instance[0], self.skel_instance[1]
 
-				# ## Interpolate openpose instances
-				# op_inst = smart_interpn(op_inst, sync_op_ts, kind = 'copy') # Change kind to 'linear' for linear interpolation
-				# op_inst = interpn(op_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
-
-				# final_inst = np.append(skel_inst, op_inst).reshape(1, -1)
+				## Interpolate openpose instances
+				if(not only_skeleton):
+					op_ts, op_inst = self.op_instance[0], self.op_instance[1]
+					_, sync_op_ts = sync_ts(skel_ts, op_ts)					
+					op_inst = smart_interpn(op_inst, sync_op_ts, kind = 'copy') # Change kind to 'linear' for linear interpolation
+					op_inst = interpn(op_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
+					final_inst = np.append(skel_inst, op_inst).reshape(1, -1)
+				else: # Only skeleton
+					final_inst = skel_inst
 
 				# print'skel_inst: ', skel_inst.shape
 				# print'op_inst: ', op_inst.shape
 				# print'final_inst: ', final_inst.shape
 
-				# if(only_skeleton): final_inst = skel_inst
+				## Working until here. Debugged!!!!!!!!!!!
+				label, cname = self.feat_ext.pred_output_realtime(final_inst)
+				self.command_to_execute = self.get_next_cmd(cname)
 
-				# ## Working until here. Debugged!!!!!!!!!!!
-				# cname = self.feat_ext.pred_output_realtime(final_inst)
-				# self.command_to_execute = get_next_command(cname)
+				print 'Predicted: ', label, cname
 
 				#### Temporary ####
-				self.command_to_execute = '1_1'
-				time.sleep(0.5) 
+				time.sleep(0.5)
 				#### Temporary ####
 
 				self.fl_cmd_ready = True
-
 
 				'''
 					* Passing the feature to the actual svm:

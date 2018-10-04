@@ -6,31 +6,24 @@ from random import shuffle
 from FeatureExtractor import FeatureExtractor
 from helpers import skelfile_cmp
 import matplotlib.pyplot as plt
-
 plt.rcdefaults()
 
-skel_folder_path = 'H:\\AHRQ\\Study_IV\\Data\\Data\\L8'
-rerun = True
+skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
+
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
 dirname = os.path.dirname(skel_folder_path)
 fileprefix = os.path.basename(skel_folder_path)
 
-data_pickle = os.path.join(dirname, fileprefix+'_data.pickle')
-if(rerun or (not os.path.isfile(data_pickle))):
-	fe = FeatureExtractor(json_param_path = 'param.json')
-	out = fe.generate_io(skel_folder_path, annot_folder_path)
-	with open(data_pickle, 'wb') as fp:
-		pickle.dump({'fe': fe, 'out': out}, fp)
-else:
-	with open(data_pickle, 'rb') as fp:
-		res = pickle.load(fp)
-		fe, out = res['fe'], res['out']
+out_pkl_fname = os.path.join(dirname, fileprefix+'_data.pickle')
+
+fe = FeatureExtractor(json_param_path = 'param.json')
+out = fe.generate_io(skel_folder_path, annot_folder_path)
 
 # # ## Appending finger lengths
 
 # pickle_path1 = 'H:\\AHRQ\\Study_IV\\Data\\Data_OpenPose\\fingers_data'
 
-# with open(os.path.join(pickle_path1, 'L3_copy.pkl'), 'rb') as fp:
+# with open(os.path.join(pickle_path1, 'L6_copy.pkl'), 'rb') as fp:
 # 	fingers_data = pickle.load(fp)
 
 # data_merge=[]
@@ -51,6 +44,9 @@ if(fe.equate_dim):
 	out['data_input'] = np.array(out['data_input'])
 	out['data_output'] = np.array(out['data_output'])
 
+print fe.id_to_labels
+print fe.label_to_name
+
 ## Plotting histogram - No. of instances per class
 objects = tuple(fe.inst_per_class.keys())
 y_pos = np.arange(len(objects))
@@ -66,7 +62,5 @@ plt.grid(True)
 
 clf, _, _ = fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60)
 
-pickle_name  = fileprefix + '_obj.pickle'
-
-with open(os.path.join(dirname, pickle_name), 'wb') as fp:
-	pickle.dump(fe, fp)
+with open(out_pkl_fname, 'wb') as fp:
+	pickle.dump({'fe': fe, 'out': out}, fp)

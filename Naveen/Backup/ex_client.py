@@ -4,14 +4,14 @@ import socket, random
 import time
 
 ## Initializing Global Variables
-TCP_IP = '128.46.125.209' # The static IP of Ubuntu computer
+TCP_IP = '10.186.130.206' # The static IP of Server Computer(AHRQ Dell)
 TCP_PORT = 5000 # Both server and client should have a common IP and Port
 BUFFER_SIZE = 1024 # in bytes. 1 charecter is one byte.
 INITIAL_MESSAGE = 'Handshake'
 
 class Client():
 	def __init__(self):
-		socket.setdefaulttimeout(2.0)
+		socket.setdefaulttimeout(10.0) # this time has to set based on the time taken by synapse. If less time is set exception is raised
 		self.connect_status = False
 		self.data_received = False
 		self.init_socket(timeout = 10)
@@ -85,7 +85,7 @@ while True:
 		flag = client.send_data(value)
 		print value
 	except Exception as exp:
-		print exp
+		print 'raising exception',exp
 		client.connect_status = False
 	time.sleep(0.5)
 
