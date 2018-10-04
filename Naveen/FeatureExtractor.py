@@ -419,11 +419,7 @@ class FeatureExtractor():
 		features = {feat_type: None for feat_type in self.available_types}
 
 		left, right = zip(*colproc_skel_data)
-		left, right = np.array(list(left)), np.array(list(right))
-
-		## It is already in the right format. 
-		# right = right.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
-		# left = left.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
+		left, right = np.array(list(left)), np.array(list(right)) # left and right are (_ x 3/6) ndarrays
 
 		d_reps = np.ones(right.shape[0]-2).tolist(); d_reps.append(2) # diff() reduced length by one. Using this we can fix it.
 
@@ -506,7 +502,8 @@ class FeatureExtractor():
 					mod_feat = feature[feat_type]
 				
 				inst = inst + mod_feat.tolist()
-		return np.array([inst])
+		dom_rhand = feature['types_order'][0] == 0 # True if right hand is dominant. False otherwise. 
+		return dom_rhand, np.array([inst])
 
 	###### ONLINE Function ########
 	def pred_output_realtime(self, feature_instance):

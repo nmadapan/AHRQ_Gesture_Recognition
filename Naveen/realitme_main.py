@@ -193,6 +193,7 @@ class Realtime:
 				# When start_flag=false the hands are down and the
 				# frames don't need to be collected
 				start_y_coo = self.thresh_level * (skel_pts[3*self.neck_id+1] - skel_pts[3*self.base_id+1])
+
 				left_y = skel_pts[3*self.left_hand_id+1] - skel_pts[3*self.base_id+1]
 				right_y = skel_pts[3*self.right_hand_id+1] - skel_pts[3*self.base_id+1]
 
@@ -200,8 +201,10 @@ class Realtime:
 				with self.cond_skel: # Producer. Consumers will wait for the notify call #######
 					if (left_y >= start_y_coo or right_y >= start_y_coo) and (not self.fl_gest_started):
 						self.fl_gest_started = True
+						print 'Gesture started :)'
 					if (left_y < start_y_coo and right_y < start_y_coo) and self.fl_gest_started:
 						self.fl_gest_started = False
+						print 'Gesture ended :('
 									
 					# Update the skel buffer
 					if(self.fl_gest_started):
@@ -235,6 +238,9 @@ class Realtime:
 		# Produce: skeleton features
 		##
 
+		## Wait for kinect stream to be ready
+		while(not self.fl_stream_ready): continue
+
 		frame_count = 0 # this is zeroed internally
 		skel_frames = []
 		first_time = False
@@ -244,7 +250,7 @@ class Realtime:
 			if(self.fl_skel_ready): continue # If previous skeleton features are not used, dont do anything.
 			if self.fl_gest_started:
 				if print_first_time:
-					print "IN SKEL THREAD, GESTURE STARTED: "
+					# print "IN SKEL THREAD, GESTURE STARTED: "
 					print_first_time = False
 				first_time = True 
 				with self.cond_skel:
@@ -253,19 +259,12 @@ class Realtime:
 					skel_frames.append(deepcopy(self.buf_skel[-1])) 
 					frame_count += 1
 			if not self.fl_gest_started and first_time:
-				print "IN SKEL THREAD, GESTURE ENDED: "
+				# print "IN SKEL THREAD, GESTURE ENDED: "
 				first_time = False
 				print_first_time = True
 				frame_count = 0
-				timestamps, raw_frames = zip(*skel_frames)
 
-				left, right = zip(*raw_frames)
-				left, right = np.array(left), np.array(right)
-
-				# Call to generate_features_realtime puts dominant hand first. 
-				self.skel_instance = (timestamps, self.feat_ext.generate_features_realtime(list(raw_frames)))
-				# pp(len(skel_frames))
-
+				self.skel_instance = deepcopy(skel_frames) # [(ts1, ([left_x, y, z], [right_x, y, z])), ...]
 				skel_frames = []
 
 				self.fl_skel_ready = True ##### Think about conditioning
@@ -275,6 +274,9 @@ class Realtime:
 		# Consume: RGB data
 		# Produce: finger lengths features
 		##
+
+		## Wait for kinect stream to be ready
+		while(not self.fl_stream_ready): continue	
 
 		frame_count = 0 # this is zeroed internally
 		op_instance = []
@@ -286,25 +288,26 @@ class Realtime:
 			if(self.fl_openpose_ready): continue # If previous openpose data is not used, dont do anything
 			if self.fl_gest_started:
 				if print_first_time:
-					print "IN RGB THREAD, GESTURE STARTED: "
+					# print "IN RGB THREAD, GESTURE STARTED: "
 					print_first_time = False
 				first_time = True 
 				with self.cond_rgb:
-					print 'Waiting in th_gen_openpose'
 					self.cond_rgb.wait()
 					rgb_frame = deepcopy(self.buf_rgb[-1]) # (timestamp, ndarray)
 					frame_count += 1
 				op_instance.append((rgb_frame[0], extract_fingers_realtime(rgb_frame[-1])))
-				print 'len of op_inst', len(op_instance)
 			if not self.fl_gest_started and first_time:
-				print "IN RGB THREAD, GESTURE ENDED: "
+				# print "IN RGB THREAD, GESTURE ENDED: "
 				first_time = False
 				print_first_time = True
 				frame_count = 0
-				timestamps, raw_op_features = zip(*op_instance)
-				# pp(len(raw_op_features))
 
-				self.op_instance = (timestamps, np.array(raw_op_features))
+				self.op_instance = deepcopy(op_instance) # [(ts1, ([left_f1, f2, .., f5], [right_f1, f2, .., f5])), ...]
+
+				# timestamps, raw_op_features = zip(*op_instance)
+				# # pp(len(raw_op_features))
+
+				# self.op_instance = (timestamps, np.array(raw_op_features))
 				op_instance = []
 				self.fl_openpose_ready = True #### Think about conditioning
 
@@ -359,31 +362,46 @@ class Realtime:
 		only_skeleton = True
 
 		## Merger part of the code
-		while(True):
+		while(self.fl_alive):
 			if(self.fl_synapse_running): continue
 			if(self.fl_skel_ready and self.fl_openpose_ready):
 				# pp(self.skel_instance)
 				# pp(self.op_instance)
 				
-				# Obtain timestamps
-				skel_ts, skel_inst = self.skel_instance[0], self.skel_instance[1]
+				#####################
+				### SKEL FEATURE ####
+				#####################
+				# Detuple skel_instance
+				skel_ts, raw_skel_frames = zip(*self.skel_instance)
+				dom_rhand, final_skel_inst = self.feat_ext.generate_features_realtime(list(raw_skel_frames))
+				#####################
 
 				## Interpolate openpose instances
 				if(not only_skeleton):
-					op_ts, op_inst = self.op_instance[0], self.op_instance[1]
-					_, sync_op_ts = sync_ts(skel_ts, op_ts)					
-					op_inst = smart_interpn(op_inst, sync_op_ts, kind = 'copy') # Change kind to 'linear' for linear interpolation
-					op_inst = interpn(op_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
-					final_inst = np.append(skel_inst, op_inst).reshape(1, -1)
+					###################
+					### OP FEATURE ####
+					###################
+					# Detuple op_instance
+					op_ts, raw_op_frames = zip(*op_instance)
+					# Detuple op frames int right and left
+					right_op, left_op = zip(*raw_op_frames)
+					# Merge op features based on dom_rhand
+					if(dom_rhand): op_inst = np.append(right_op, left_op, axis = 1)
+					else: op_inst = np.append(left_op, right_op, axis = 1)
+					# Synchronize rgb and skel time stamps
+					_, sync_op_ts = sync_ts(skel_ts, op_ts)
+					# Interpolate so that rgb and skel same no. of frames
+					op_inst = smart_interpn(np.array(op_inst), sync_op_ts, kind = 'copy') # Change kind to 'linear' for linear interpolation
+					# Interpolate op features to fixed_num_frames
+					final_op_inst = interpn(op_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
+					#####################
+
+					# Append skel features followed by op features
+					final_overall_inst = np.append(final_skel_inst, final_op_inst).reshape(1, -1)
 				else: # Only skeleton
-					final_inst = skel_inst
+					final_overall_inst = final_skel_inst
 
-				# print'skel_inst: ', skel_inst.shape
-				# print'op_inst: ', op_inst.shape
-				# print'final_inst: ', final_inst.shape
-
-				## Working until here. Debugged!!!!!!!!!!!
-				label, cname = self.feat_ext.pred_output_realtime(final_inst)
+				label, cname = self.feat_ext.pred_output_realtime(final_overall_inst)
 				self.command_to_execute = self.get_next_cmd(cname)
 
 				print 'Predicted: ', label, cname
