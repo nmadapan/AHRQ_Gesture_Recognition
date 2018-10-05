@@ -15,10 +15,12 @@ from pprint import pprint as pp
 from fake_openpose import extract_fingers_realtime
 from helpers import sync_ts
 
-TCP_IP = '10.186.140.191' # The static IP of Ubuntu computer
+TCP_IP = '10.186.130.167' # The static IP of Ubuntu computer
 TCP_PORT = 5000 # Both server and client should have a common IP and Port
 BUFFER_SIZE = 1024 # in bytes. 1 charecter is one byte.
 INITIAL_MESSAGE = 'Handshake'
+
+ENABLE_SOCKET = False
 
 class Realtime:
 	def __init__(self):
@@ -64,11 +66,12 @@ class Realtime:
 		# Set the sself.fl_sock_com = True
 		##
 		## Socket communication
-		# self.fl_sock_com = False # If the socket com b/w server and client is established. 
-		# self.sock = None # updated in call to init_socket()
-		# self.connect_status = False # updated in call to init_socket()
-		# socket.setdefaulttimeout(2.0)
-		# self.init_socket()
+		if(ENABLE_SOCKET):
+			self.fl_sock_com = False # If the socket com b/w server and client is established. 
+			self.sock = None # updated in call to init_socket()
+			self.connect_status = False # updated in call to init_socket()
+			socket.setdefaulttimeout(2.0)
+			self.init_socket()
 
 		self.command_to_execute = None
 
@@ -171,6 +174,10 @@ class Realtime:
 		# Now this thread is ready
 		self.fl_stream_ready = True
 
+		prev_left_y = None
+		prev_right_y = None
+		first_time = True
+
 		while(self.fl_alive):
 			# if(self.fl_synapse_running): continue # If synapse is running, stop producing the rgb/skeleton data
 			# elif(self.fl_skel_ready and self.fl_openpose_ready): continue # If previous skeleton features and op features are not used, stop producing. 
@@ -193,16 +200,28 @@ class Realtime:
 				# When start_flag=false the hands are down and the
 				# frames don't need to be collected
 				start_y_coo = self.thresh_level * (skel_pts[3*self.neck_id+1] - skel_pts[3*self.base_id+1])
-
 				left_y = skel_pts[3*self.left_hand_id+1] - skel_pts[3*self.base_id+1]
 				right_y = skel_pts[3*self.right_hand_id+1] - skel_pts[3*self.base_id+1]
 
+				## To incorporate the direction of hand motion to identify start/end of gesture
+				if(first_time):
+					prev_left_y = left_y
+					prev_right_y = right_y
+					first_time = False
+					continue
+
+				left_motion_direc = left_y - prev_left_y
+				right_motion_direc = right_y - prev_right_y
+				thresh_movement = 0.01
+				overall_motion_direc = (left_motion_direc > thresh_movement) or (right_motion_direc > thresh_movement)
+				print overall_motion_direc
+
 				## When you want to wait() based on a shared variables, make sure to include them in the thread.Condition. 
 				with self.cond_skel: # Producer. Consumers will wait for the notify call #######
-					if (left_y >= start_y_coo or right_y >= start_y_coo) and (not self.fl_gest_started):
+					if (left_y >= start_y_coo or right_y >= start_y_coo) and (not self.fl_gest_started) and overall_motion_direc:
 						self.fl_gest_started = True
 						print 'Gesture started :)'
-					if (left_y < start_y_coo and right_y < start_y_coo) and self.fl_gest_started:
+					if (left_y < start_y_coo and right_y < start_y_coo) and self.fl_gest_started and (not overall_motion_direc):
 						self.fl_gest_started = False
 						print 'Gesture ended :('
 									
@@ -218,6 +237,10 @@ class Realtime:
 					# it to enter the "consuming condition" have changed
 					self.cond_skel.notify_all()
 
+				## resetting
+				prev_left_y = left_y
+				prev_right_y = right_y
+
 			if(rgb_flag): # and self.fl_gest_started. Later dont even fill the buffers when others are running. q
 				with self.cond_rgb: # Producer. Consumers need to wait for producer's 'notify' call
 					ts = int(time.time()*100)
@@ -229,8 +252,6 @@ class Realtime:
 
 			if(cv2.waitKey(1) == ord('q')):
 				self.fl_alive = False
-				self.kr.close()
-				exit()
 
 	def th_gen_skel(self):		
 		##
@@ -357,7 +378,7 @@ class Realtime:
 		acces_kinect_thread.start()
 		gen_skel_thread.start()
 		acces_openpose_thread.start()
-		# synapse_thread.start()
+		if(ENABLE_SOCKET): synapse_thread.start()
 
 		only_skeleton = True
 
@@ -426,6 +447,10 @@ class Realtime:
 
 				self.fl_skel_ready = False
 				self.fl_openpose_ready = False
+
+		# If anything fails do the following
+		self.kr.close()
+		if(ENABLE_SOCKET): self.sock.close()
 
 
 if(__name__ == '__main__'):

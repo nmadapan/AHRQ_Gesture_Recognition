@@ -4,7 +4,7 @@ import socket, random
 import time
 
 ## Initializing Global Variables
-TCP_IP = '10.186.130.206' # The static IP of Server Computer(AHRQ Dell)
+TCP_IP = '10.186.130.167' # The static IP of Server Computer(AHRQ Dell)
 TCP_PORT = 5000 # Both server and client should have a common IP and Port
 BUFFER_SIZE = 1024 # in bytes. 1 charecter is one byte.
 INITIAL_MESSAGE = 'Handshake'
@@ -78,7 +78,9 @@ start = time.time()
 client = Client()
 print 'Wait time: ', time.time()- start
 
-while True:
+idx = 0
+
+while(idx < 3):
 	if(not client.connect_status): client.init_socket()
 	try:
 		value = str(random.randint(0, 100))
@@ -88,6 +90,7 @@ while True:
 		print 'raising exception',exp
 		client.connect_status = False
 	time.sleep(0.5)
+	idx += 1
 
 print 'Closing the client'
-client.close()
+client.sock.close()
