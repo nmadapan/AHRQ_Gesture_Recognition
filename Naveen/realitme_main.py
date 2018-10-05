@@ -214,7 +214,6 @@ class Realtime:
 				right_motion_direc = right_y - prev_right_y
 				thresh_movement = 0.01
 				overall_motion_direc = (left_motion_direc > thresh_movement) or (right_motion_direc > thresh_movement)
-				print overall_motion_direc
 
 				## When you want to wait() based on a shared variables, make sure to include them in the thread.Condition. 
 				with self.cond_skel: # Producer. Consumers will wait for the notify call #######
