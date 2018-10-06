@@ -135,8 +135,8 @@ class Calibration(object):
 		self.resetRightOptions("presets", 8.5)
 		self.resetRightOptions("scaleRotateFlip", 9.5)
 		f = open("Calibration.txt", "w")
-		f.write(str(self.topBarHeight) + "\n")
-		f.write(str(self.boundBoxNoDash))
+		for e in self.getAll():
+			f.write(str(e) + "\n")
 		f.close()
 
 	def getAll(self):
@@ -199,8 +199,6 @@ class Calibration(object):
 		(x2, y2) = (self.rightx1 + self.rightBoxW, self.righty1 + self.rightBoxH)
 		ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(os.path.join("Images", "RightClick", "rightClick.png"))
 
-		auto.moveTo(x1 / scale, y1 / scale)
-		auto.moveTo(x2 / scale, y2 / scale)
 		moveToActivePanel()
 		auto.click()
 
@@ -239,7 +237,7 @@ actionList = [["Admin", "Quit", "Get Status", "Reset 0", "Reset 1", "Reset 2", "
 	["Window", "Open", "Close"],
 	["Manual Contrast", "Increase", "Decrease"],
 	["Layout", "One-Panel", "Two-Panels", "Three-Panels", "Four-Panels"],
-	["Contrast Presets", "I", "II"]]
+	["Contrast Presets", "1", "2"]]
 
 # Report situation to command prompt, useful for debugging and for users understanding an issue.
 def promptNotify(message, sleepAmt):
