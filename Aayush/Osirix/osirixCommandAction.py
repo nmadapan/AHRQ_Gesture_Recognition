@@ -9,14 +9,16 @@ from PIL import ImageGrab
 import signal
 import sys
 
+removeImagesPrompt = "y"
 #Remove images already saved (avoids issues with git)
 def removeImages():
-	for file in os.listdir(os.path.join("Images")):
-		if file.endswith(".png"):
-			os.remove(os.path.join(os.path.join("Images"), file))
-	for file in os.listdir(os.path.join("Images", "RightClick")):
-		if file.endswith(".png"):
-			os.remove(os.path.join(os.path.join("Images", "RightClick"), file))
+	if (removeImagesPrompt == "y"):
+		paths = [os.path.join("Images", "RightClick"), os.path.join("Images", "Window", "Closes"),
+			os.path.join("Images", "Window"), os.path.join("Images", "Layout"), os.path.join("Images")]
+		for path in paths:
+			for file in os.listdir(path):
+				if file.endswith(".png"):
+					os.remove(os.path.join(path, file))
 
 # If exiting the synapse program, remove all images before closing synapse.
 def signal_handler(sig, frame):
@@ -83,40 +85,39 @@ def get_bbox(before, after, thresholds = None, draw = False):
 
 	return (x1, y1, x2, y2)
 
-macHeader = (44.0 / 2880.0) * (nativeH)
+macHeader = (44.0 / 2880.0) * (nativeW)
 (viewer, prompt) = ("Citrix Viewer", "Teminal")
 
+# Close all other windows and open either command prompt or the Citrix Viewer
 def openWindow(toOpen):
-	window_names = auto.getWindows().keys()
-	print "window_names: "
-	print window_names
-	print ""
-	for window_name in window_names:
-		auto.getWindow(window_name).close()
-		if (toOpen in window_name):
-			xef_window_name = window_name
-			print "xef_window_name:"
-			print xef_window_name
-			print ""
-	#matched_keys = [window_name for window_name in window_names if toOpen in window_name]
-	#if (len(matched_keys) != 0):
-		#xef_window_name = matched_keys[0]
-	xef_window = auto.getWindow(xef_window_name)
-	xef_window.maximize()
+	if (platform.system() == "Windows"):
+		window_names = auto.getWindows().keys()
+		for window_name in window_names:
+			auto.getWindow(window_name).close()
+		for window_name in window_names:
+			auto.getWindow(window_name).close()
+			if (toOpen in window_name):
+				xef_window_name = window_name
+		xef_window = auto.getWindow(xef_window_name)
+		xef_window.maximize()
+	else:
+		"""auto.hotkey("command", "space")
+		auto.typewrite(toOpen)
+		auto.press("enter")"""
+		auto.hotkey("command", "tab")
 
 
 print "Warming up osirix system...\n"
 openWindow(viewer)
 
 
-status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "params": ""}
+status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "rulers": {"len": 0}}
 
 def resetPanelMoves():
-	status["firstW"] = ((float(width) - 110.0) / (float(status["panel_dim"][1]) * 2.0))
-	status["firstH"] = ((float(height) - 100.0 - float(status["panel_dim"][0]) * 38.0) / (float(status["panel_dim"][0]) * 2.0))
+	status["firstW"] = (float(width) / (float(status["panel_dim"][1]) * 2.0))
+	status["firstH"] = (float(height) / (float(status["panel_dim"][0]) * 2.0))
 	status["jumpW"] = (status["firstW"] * 2.0 if status["panel_dim"][1] != 1 else 0)
 	status["jumpH"] = (status["firstH"] * 2.0 if status["panel_dim"][0] != 1 else 0)
-
 resetPanelMoves()
 
 def moveToActivePanel():
@@ -135,7 +136,7 @@ actionList = [["Admin", "Quit", "Get Status"],
 	["Window", "Open", "Close"],
 	["Manual Contrast", "Increase", "Decrease"],
 	["Layout", "One-Panel", "Two-Panels", "Three-Panels", "Four-Panels"],
-	["Contrast Presets", "I", "II"]]
+	["Contrast Presets"]]
 
 def defaultAction(commandID, paramSizes):
 	auto.hotkey("command", "tab")
@@ -175,13 +176,6 @@ def rightClick(offset):
 	(x1, y1, w, h) = auto.locateOnScreen("Images/RightClick/rightClick.png")
 	auto.moveTo((2 * x1 + w) / 4, (y1 + (offset / 1000.0) * rightBoxH) / 2)
 
-def get_status():
-	print "\nStatus\n------"
-	print "Previous action: " + status["prev_action"]
-	print "Panel Dimension: " + str(status["panel_dim"][0]) + 'x' + str(status["panel_dim"][1])
-	print "Active panel: " + str(status["active_panel"][0]) + 'x' + str(status["active_panel"][1])
-	print "Patient information window: " + ("opened" if status["window_open"] else "closed")
-
 
 openWindow(prompt)
 print "\nCompleted warm-up, make your gestures!\n"
@@ -199,7 +193,10 @@ while (True):
 			commandID = int(commandAction[:commandAction.find("_")])
 			actionID = int(commandAction[commandAction.find("_") + 1:])
 			command = actionList[commandID][0]
-			action = actionList[commandID][actionID]
+			if (commandID == 11 and actionID >= 0 and actionID <= 9):
+				action = str(actionID)
+			else:
+				action = actionList[commandID][actionID]
 		except ValueError:
 			print "Unrecognized sequence of commands!\n"
 			continue
@@ -217,15 +214,18 @@ while (True):
 			openWindow(prompt)
 			break
 		elif (action == "Get Status"):
-			get_status()
+			print "\nStatus\n------"
+			print "Previous action: " + status["prev_action"]
+			print "Panel Dimension: " + str(status["panel_dim"][0]) + 'x' + str(status["panel_dim"][1])
+			print "Active panel: " + str(status["active_panel"][0]) + 'x' + str(status["active_panel"][1])
+			print "Patient information window: " + ("opened" if status["window_open"] else "closed")
 	elif (command == "Scroll" and action != "Scroll"):
 		scrollAmount = (10 if status["params"] == "" else int(status["params"]))
 		auto.scroll((-1 * scrollAmount if action == "Up" else scrollAmount))
 	elif (command == "Flip" and action != "Flip"):
 		moveToActivePanel()
 		auto.click()
-		toPress = ("h" if action == "Horizontal" else "v")
-		auto.press(toPress)
+		auto.press("h" if action == "Horizontal" else "v")
 	elif (command == "Rotate" and action != "Rotate"):
 		moveToActivePanel()
 		auto.click()
@@ -303,12 +303,40 @@ while (True):
 				auto.mouseDown()
 				auto.moveTo(x2, y2)
 				auto.mouseUp()
+				status["rulers"]["len"] += 1
+				curr = 1
+				while (curr <= status["rulers"]["len"]):
+					if (curr not in status["rulers"]):
+						status["rulers"][curr] = status["params"]
+						break
+					curr += 1
+				print str(status["rulers"][curr])
+				print "ID of Ruler Measurement: " + str(curr)
 		elif (action == "Delete"):
-			(x, y) = auto.position()
-			auto.click()
-			auto.click(button="right")
-			auto.moveTo(x + 79, y + 85)
-			auto.click()
+			if (status["params"] == ""):
+				print "Ruler delete ID not specified."
+				continue
+			elif (len(status["params"].split("_")) == 1):
+				print "Ruler delete ID must only be one positive integer integer."
+				continue
+			try:
+				if (int(status["params"]) not in status["rulers"]):
+					print "Ruler delete ID is not in the list of rulers."
+					continue
+			except ValueError:
+				print "Ruler delete ID should be a positive integer value."
+				continue
+			points = status["rulers"][int(status["params"])].split("_")
+			status["rulers"].pop(int(status["params"]), None)
+			status["rulers"]["len"] -= 1
+			auto.moveTo((int(points[2]) + int(points[0])) / 2.0, (int(points[3]) + int(points[1])) / 2.0)
+			auto.click(button='right')
+			auto.PAUSE = 0.1
+			auto.press("0")
+			for i in range(5):
+				auto.press("down")
+			auto.press("enter")
+			auto.pause = 0.75
 	elif (command == "Window" and action != "Window"):
 		(oldLocationX, oldLocationY) = auto.position()
 		if (action == "Open" and not status["window_open"]):
@@ -392,13 +420,8 @@ while (True):
 		(status["active_panel"][0], status["active_panel"][1]) = (1, 1)
 		moveToActivePanel()
 		auto.click()
-	elif (command == "Contrast Presets" and action != "Contrast Presets"):
-		# much easier if contrast presets parameters were just the numbers, not the Roman numerals
-		if (action == "I"):
-			toPress = "1"
-		elif (action == "II"):
-			toPress = "2"
-		auto.press(toPress)
+	elif (command == "Contrast Presets"):
+		auto.press(action)
 
 	if (command != "Admin"):
 		status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
