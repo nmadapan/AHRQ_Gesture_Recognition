@@ -54,22 +54,6 @@ def get_lhand_info(color_skel_pts, des_size = 300):
 
 def get_rhand_info(color_skel_pts, des_size = 300):
 	hand = np.array(color_skel_pts[2*HandRight:2*HandRight+2])
-	# wrist = np.array(color_skel_pts[2*WristRight:2*WristRight+2])
-	# tip = np.array(color_skel_pts[2*HandTipRight:2*HandTipRight+2])
-	# thumb = np.array(color_skel_pts[2*ThumbRight:2*ThumbRight+2])
-
-	# height = np.int32(3.5 * (wrist - tip)[1])
-	# width = height 
-
-	# corner = np.int32(wrist - np.array([width/2, height/2]))
-
-	# if(height >= 0):
-	# 	bbox = [corner[0], corner[1], np.abs(width), np.abs(height)]
-	# else:
-	# 	bbox = [corner[0] - width, corner[1] - height, np.abs(width), np.abs(height)]
-
-	# # print bbox
-
 	return [np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
 
 color_img = None
