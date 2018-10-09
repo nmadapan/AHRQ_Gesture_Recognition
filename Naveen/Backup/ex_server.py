@@ -5,7 +5,7 @@ from threading import Thread
 import time
 
 ## Global Static Variables
-TCP_IP = '128.46.125.209'
+TCP_IP = 'localhost'
 TCP_PORT = 5000
 BUFFER_SIZE = 1024
 MAX_CLIENTS = 1
@@ -55,6 +55,7 @@ class Server():
 
 print '--------- Server ---------'
 server = Server()
-server_thread = Thread(name='server_thread', target=server.run)
+# server_thread = Thread(name='server_thread', target=server.run)
+# server_thread.start()
 
-server_thread.start()
+server.run()
