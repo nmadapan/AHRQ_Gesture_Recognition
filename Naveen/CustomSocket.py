@@ -24,57 +24,77 @@ class Server():
 
         self.client, self.addr = None, None
         ## Waiting for establishing the connection between server and client
-        # self.wait_for_connection()
+        # self.wait_for_connection() # In realtime, call wait_for_connection from outside. 
 
     def recv_image(self, buf_sz = 200000):
-        data = self.client.recv(buf_sz)
+        #####################
+        # When a large image is sent in the form of a string, it will be sent in multiple parts. 
+        # IMPORTANT: The image string is expected to end with '!' 
+        # This function puts the parts together and returns the full image string. 
+        # Format of image string:
+        #   256_256_3_126_68_56...34!
+        #   First three numbers (256, 256, 3) is the shape of RGB image. 
+        # Return:
+        #   A string of the form: 256_256_3_126_68_56...34
+        #####################
+        data = self.client.recv(buf_sz) # Obtain each part
         if(len(data) == 0): return None
 
         flag = False
         if(data[-1] != '!'): flag = True
         num_chunks = 1
-        while(flag):
+        while(flag): # Loop until the a part ends with '!'
             num_chunks += 1
-            data += self.client.recv(buf_sz)
+            data += self.client.recv(buf_sz) # Append parts together
             if(data[-1] == '!'): flag = False
         print('No. of chunks: ', num_chunks)
         return data[:-1]
 
-    def run_image(self):
+    def example_run_image(self, only_once = True):
+        ########################
+        # Receives an image string from a client, converts it into an ndarray, sends True/False to the client
+        # If only_once is True, it will receive only one image. Otherwise, it will receive infinitely. 
+        ########################
         print('--------- Server ---------')
         while True:
             if(not self.connect_status): self.wait_for_connection()
             try:
-                data = self.recv_image()
-                # print 'Len. of data: ', len(data)
-                flag = self.process_data(data)
-                self.client.send(str(flag is not None))
+                data = self.recv_image() # Obtain the image
+                flag = self.process_data(data) # Reformat the image string into a np.ndarray
+                self.client.send(str(flag is not None)) # Return a delivery message. 
                 time.sleep(0.5)
             except Exception as exp:
                 print(exp)
                 print('Connection Closed')
                 self.connect_status = False
                 self.client.close()
-                break ########## Remove it later on
+                if(only_once): break 
 
-    def run(self):
+    def run(self, only_once = True):
+        ########################
+        # Receives a data string from a client, prints it, sends True/False to the client
+        # If only_once is True, it will receive only one data string. Otherwise, it will receive infinitely. 
+        ########################        
         print('--------- Server ---------')
         while True:
             if(not self.connect_status): self.wait_for_connection()
             try:
                 data = self.client.recv(self.buffer_size)
-                print(data[:20])
-                finger_lengths = self.process_data(data)
-                self.client.send(str(finger_lengths is not None))
+                print(data)
+                if(len(data) != 0): self.client.send(b'True')
+                else: self.client.send(b'False')
                 time.sleep(0.5)
             except Exception as exp:
                 print(exp)
                 print('Connection Closed')
                 self.connect_status = False
                 self.client.close()
-                break ########## Remove it later on
+                if(only_once): break 
 
     def wait_for_connection(self):
+        ######################
+        # This function established connection with the client.
+        ######################
         print('Server: Waiting for connection:')
         self.client, self.addr = (self.sock.accept())
         data = self.client.recv(self.buffer_size)
@@ -89,20 +109,29 @@ class Server():
             self.client.send(b'False')
 
     def process_data(self, data):
+        ###########################
+        # Input:
+        #   data is of form: 256_256_3_126_68_56...34
+        #   Convert the image string into an RGB image
+        #   Image string is joined with '_'. 
+        #   (256, 256, 3) is the shape of the image. The 
+        # Return:
+        #   An ndarray which is an RGB image. 
+        ###########################
         if(data is None or len(data) == 0): return None
-        ## TODO: Handle empty strings
 
         data = data.split('_')
         print(len(data))
-        img_shape = tuple(map(int, data[:3]))
-        data = data[3:]
+        img_shape = tuple(map(int, data[:3])) # Shape of the image
+        data = data[3:] 
         B = np.reshape(map(np.uint8, data), img_shape)
-        # cv2.imshow('Received Image', B)
-        # cv2.waitKey(0)        
-
         return B
 
     def send_data(self, data):
+        ###################
+        # Purpose: sends data to the client. 
+        # If connect_status is True, return True. Else, return None
+        ###################
         if self.connect_status:
             self.client.send(data)
             return True
@@ -110,6 +139,10 @@ class Server():
             return None
 
     def recv_data(self):
+        ###################
+        # Purpose: receive data from the client. 
+        # It will return timeout exception on timeout. 
+        ###################        
         return self.client.recv(self.buffer_size)
 
 class Client():
@@ -120,17 +153,19 @@ class Client():
         self.TCP_IP = tcp_ip
         self.TCP_PORT = port
         self.buffer_size = buffer_size
-
-        # self.init_socket(timeout = 10)
+        # self.init_socket(timeout = 10) # In realtime, call wait_for_connection from outside. 
 
     def sock_connect(self, timeout = 30):
+        ######################
         # Description:
-        #   If connected, return as is
-        #   Else, keep trying to connect forever. 
-        print('Client: Connecting to server .', )
+        #   If already connected, return True
+        #   Else, keep trying to connect forever until timeout.
+        #   This functions sends 'Handshake' to the server.
+        ######################
+        print('Client: Connecting to server .', end= '')
         if(self.connect_status): 
             print('Connected!')
-            return
+            return True
 
         start = time.time()
         while(not self.connect_status):
@@ -139,16 +174,21 @@ class Client():
                 self.sock.connect((self.TCP_IP, self.TCP_PORT)) ## Blocking call. Gives time out exception on time out.
                 self.connect_status = True
                 self.sock.send(INITIAL_MESSAGE)
-                print('. ',)
+                print('. ', end= '')
                 time.sleep(0.5)                 
             except Exception as exp:
-                print('. ',)
+                print('. ', end= '')
                 time.sleep(0.5)
             if(time.time()-start > timeout):
                 print('Connection Failed! Waited for more than ' + str(timeout) + ' seconds.')
                 sys.exit(0)
 
     def sock_recv(self, timeout = 30):
+        ######################
+        # Description: 
+        #   Infinitely wait for a delivery message after sending 'Handshake' to the server
+        #   It releases when server sends 'True' back
+        ######################
         print('\nWaiting for delivery message: .', )
         data = None
         start = time.time()
@@ -160,11 +200,10 @@ class Client():
                     print('Handshake successfull ! ! !')
                     self.data_received = True
                     break
-                print('. ',)
+                print('. ', end= '')
             except Exception as exp:
-                print('. ',)
+                print('. ', end= '')
                 time.sleep(0.5)
-
             if(time.time()-start > timeout):
                 print('No delivery message! Waited for more than ' + str(timeout) + ' seconds.')
                 sys.exit(0)     
@@ -172,10 +211,15 @@ class Client():
         return data
 
     def init_socket(self, timeout = 30):
+        ## After creating instance of Server class. Call init_socket() for establishing the connection.
         self.sock_connect()
         self.sock_recv()
 
     def send_data(self, data):  
+        ###################
+        # Purpose: sends data to the server. 
+        # If connect_status is True, return the delivery message of the server. Else, return None
+        ###################        
         if self.connect_status:
             self.sock.send(data)
             return self.sock.recv(self.buffer_size)
@@ -183,6 +227,7 @@ class Client():
             return None
 
     def close(self):
+        ## Close the connection with the server. 
         self.sock.close()
 
 if __name__ == '__main__':
@@ -202,15 +247,17 @@ if __name__ == '__main__':
         print('idx: ', idx)
         if(not client.connect_status): client.init_socket()
         try:
-            A = np.random.randint(0, 255, (80, 80, 3))
-            astr = '_'.join(map(str, list(A.shape) + A.flatten().tolist()))
-            flag = client.send_data(astr)
-            # print flag
+            ## When you call server.example_run_image
+            # A = np.random.randint(0, 255, (80, 80, 3))
+            # astr = '_'.join(map(str, list(A.shape) + A.flatten().tolist()))
+            # flag = client.send_data(astr)
+
+            ## When you call server.run
+            flag = client.send_data('Hello World')
         except Exception as exp:
             print('raising exception', exp)
             client.connect_status = False
             break
-        # time.sleep(0.5)
         idx += 1
 
     print('Closing the client')
