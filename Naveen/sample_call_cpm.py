@@ -105,7 +105,7 @@ while(True):
 		if(socket_flag and write_flag):
 			# lstr = '_'.join(map(str, list(lcropped_image.shape) + lcropped_image.flatten().tolist()))
 			lfinger_lengths = client.send_data(lfname)
-			print('Left: ', lfinger_lengths)
+			print('Left: ', str_to_nparray(lfinger_lengths))
 
 		# # Right image
 		# if(socket_flag and write_flag):

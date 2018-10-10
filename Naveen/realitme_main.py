@@ -4,23 +4,30 @@ import os, sys, time
 from threading import Thread, Condition
 from copy import copy, deepcopy
 import pickle
-import socket
 
 from FeatureExtractor import FeatureExtractor
 from KinectReader import kinect_reader
 from helpers import *
 from pprint import pprint as pp
 
-# Fake openpose
-from fake_openpose import extract_fingers_realtime
 from helpers import sync_ts
 
-TCP_IP = '10.186.130.167' # The static IP of Ubuntu computer
-TCP_PORT = 5000 # Both server and client should have a common IP and Port
-BUFFER_SIZE = 1024 # in bytes. 1 charecter is one byte.
-INITIAL_MESSAGE = 'Handshake'
+## Socket
+import socket
+from CustomSocket import Client
 
-ENABLE_SOCKET = False
+## TCP/IP of Synapse Computer
+IP_SYNAPSE = '10.186.130.21' # IP of computer that is running Synapse
+PORT_SYNAPSE = 5000 # Both server and client should have a common IP and Port
+
+## TCP/IP of CPM Computer
+IP_CPM = 'localhost'
+PORT_CPM = 3000
+
+ENABLE_SYNAPSE_SOCKET = False
+ENABLE_CPM_SOCKET = False
+
+#TODO: What happens when there are more people. 
 
 class Realtime:
 	def __init__(self):
@@ -29,19 +36,22 @@ class Realtime:
 		self.data_path = r'H:\AHRQ\Study_IV\Data\Data'
 		self.trained_pkl_fpath = r'H:\AHRQ\Study_IV\Data\Data\L6_data.pickle'
 
-		self.buf_skel_size = 10
-		self.buf_rgb_size = 10
+		self.base_write_dir = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
+
+		self.buf_size = 10
 
 		## Buffers
-		self.buf_skel = [(None, None) for _ in range(self.buf_skel_size)] # timestamp, frame_list # [..., t-3, t-2, t-1, t]
-		self.buf_rgb = [(None, None) for _ in range(self.buf_rgb_size)] # timestamp, frame_nparray
-		self.buf_finglen = [(None, None) for _ in range(self.buf_rgb_size)] # timestamp, frame_list
+		self.buf_body_skel = [(None, None) for _ in range(self.buf_size)] # timestamp, frame_list (75 elements) # [..., t-3, t-2, t-1, t] 
+		self.buf_rgb = [(None, None) for _ in range(self.buf_size)] # timestamp, frame_nparray
+		self.buf_rgb_skel = [(None, None) for _ in range(self.buf_size)] # timestamp, frame_list (50 elements) # [..., t-3, t-2, t-1, t]
+		
+		self.buf_finglen = [(None, None) for _ in range(self.buf_size)] # timestamp, frame_list
 
 		## Flags
 		self.fl_alive = True
 		self.fl_stream_ready = False # th_access_kinect
 		self.fl_skel_ready = False # th_gen_skel
-		self.fl_openpose_ready = False # th_gen_openpose
+		self.fl_cpm_ready = False # th_gen_cpm
 
 		##
 		# TODO: If synapse breaks down, we should restart. So we need to save the current state info. 
@@ -57,7 +67,7 @@ class Realtime:
 		self.kr = kinect_reader()
 
 		## thread conditions
-		self.cond_skel = Condition()
+		self.cond_body_skel = Condition()
 		self.cond_rgb = Condition()
 
 		## Socket initialization
@@ -66,12 +76,21 @@ class Realtime:
 		# Set the sself.fl_sock_com = True
 		##
 		## Socket communication
-		if(ENABLE_SOCKET):
-			self.fl_sock_com = False # If the socket com b/w server and client is established. 
-			self.sock = None # updated in call to init_socket()
-			self.connect_status = False # updated in call to init_socket()
-			socket.setdefaulttimeout(2.0)
-			self.init_socket()
+		if(ENABLE_SYNAPSE_SOCKET):
+			self.client_synapse = Client(IP_SYNAPSE, PORT_SYNAPSE)
+		
+		# CPM Initialization takes up to one minute. Dont initialize any socket 
+		#	(by calling init_socket) before creating object of CPM Client.
+		if(ENABLE_CPM_SOCKET):
+			self.client_cpm = Client(IP_CPM, PORT_CPM)
+
+		if(ENABLE_SYNAPSE_SOCKET):
+			self.client_synapse.init_socket()
+		
+		if(ENABLE_CPM_SOCKET):
+			self.client_cpm.init_socket()
+
+			#socket.setdefaulttimeout(2.0) ######### Need to be tuned depending ont the delays. 
 
 		self.command_to_execute = None
 
@@ -84,7 +103,7 @@ class Realtime:
 		self.skel_instance = None # Updated in self.th_gen_skel(). 
 		# It is a tuple (timestamp, feature_vector of skeleton - ndarray(1 x _)). It is a flattened array.
 
-		self.op_instance = None # Updated in self.th_gen_openpose(). 
+		self.op_instance = None # Updated in self.th_gen_cpm(). 
 		# It is a tuple (timestamp, feature_vector of finger lengths - ndarray(num_frames, 10)).
 
 		# Previously executed command
@@ -98,58 +117,6 @@ class Realtime:
 		self.left_hand_id = 7
 		self.right_hand_id = 11
 		self.thresh_level = 0.2 #TODO: It seems to be working. 
-
-	def sock_connect(self, timeout = 30):
-		# Description:
-		#	If connected, return as is
-		#	Else, keep trying to connect forever. 
-		print 'Connecting to server .', 
-		if(self.connect_status): 
-			print 'Connected!'
-			return
-
-		start = time.time()
-		while(not self.connect_status):
-			try:
-				self.sock = socket.socket()
-				self.sock.connect((TCP_IP, TCP_PORT)) ## Blocking call. Gives time out exception on time out.
-				self.connect_status = True
-				self.sock.send(INITIAL_MESSAGE)
-				print '. ',
-				time.sleep(0.5)					
-			except Exception as exp:
-				print '. ',
-				time.sleep(0.5)
-			if(time.time()-start > timeout):
-				print 'Connection Failed! Waited for more than ' + str(timeout) + ' seconds.'
-				sys.exit(0)
-
-	def sock_recv(self, timeout = 30):
-		print '\nWaiting for delivery message: .', 
-		data_received = False
-		data = None
-		start = time.time()
-		while(not data_received):
-			try:
-				data = self.sock.recv(32) # Blocking call # Gives time out exception
-				if data:
-					print('Success!')
-					data_received = True
-					break
-				print '. ',
-			except Exception as exp:
-				print '. ',
-				time.sleep(0.5)
-
-			if(time.time()-start > timeout):
-				print 'No delivery message! Waited for more than ' + str(timeout) + ' seconds.'
-				sys.exit(0)		
-
-		return data
-
-	def init_socket(self, timeout = 10):
-		self.sock_connect(timeout = timeout)
-		self.sock_recv(timeout = timeout)
 
 	def update_cmd_reps(self):
 		rep_path = os.path.join(self.data_path, self.lexicon_name+'_reps.txt')
@@ -174,13 +141,11 @@ class Realtime:
 		# Now this thread is ready
 		self.fl_stream_ready = True
 
-		prev_left_y = None
-		prev_right_y = None
-		first_time = True
+		first_time = False
 
 		while(self.fl_alive):
 			# if(self.fl_synapse_running): continue # If synapse is running, stop producing the rgb/skeleton data
-			# elif(self.fl_skel_ready and self.fl_openpose_ready): continue # If previous skeleton features and op features are not used, stop producing. 
+			# elif(self.fl_skel_ready and self.fl_cpm_ready): continue # If previous skeleton features and op features are not used, stop producing. 
 			
 			# Refreshing Frames
 			rgb_flag = self.kr.update_rgb()
@@ -193,6 +158,7 @@ class Realtime:
 				###
 
 				skel_pts = self.kr.skel_pts.tolist() # list of 75 floats.
+				color_skel_pts = self.kr.color_skel_pts.tolist() # list of 50 floats
 
 				# GESTURE SPOTTING NEEDS TO HAPPEN HERE
 				# Check if gesture started
@@ -203,42 +169,34 @@ class Realtime:
 				left_y = skel_pts[3*self.left_hand_id+1] - skel_pts[3*self.base_id+1]
 				right_y = skel_pts[3*self.right_hand_id+1] - skel_pts[3*self.base_id+1]
 
-				## To incorporate the direction of hand motion to identify start/end of gesture
-				if(first_time):
-					prev_left_y = left_y
-					prev_right_y = right_y
-					first_time = False
-					continue
-
-				left_motion_direc = left_y - prev_left_y
-				right_motion_direc = right_y - prev_right_y
-				thresh_movement = 0.01
-				overall_motion_direc = (left_motion_direc > thresh_movement) or (right_motion_direc > thresh_movement)
+				if(not first_time):
+					fl_hands_position = (left_y < start_y_coo) and (right_y < start_y_coo)
+					if(fl_hands_position): first_time = True
 
 				## When you want to wait() based on a shared variables, make sure to include them in the thread.Condition. 
-				with self.cond_skel: # Producer. Consumers will wait for the notify call #######
-					if (left_y >= start_y_coo or right_y >= start_y_coo) and (not self.fl_gest_started) and overall_motion_direc:
+				with self.cond_body_skel: # Producer. Consumers will wait for the notify call #######
+					if (left_y >= start_y_coo or right_y >= start_y_coo) and (not self.fl_gest_started) and first_time:
 						self.fl_gest_started = True
 						print 'Gesture started :)'
-					if (left_y < start_y_coo and right_y < start_y_coo) and self.fl_gest_started and (not overall_motion_direc):
+					if (left_y < start_y_coo and right_y < start_y_coo) and self.fl_gest_started:
 						self.fl_gest_started = False
 						print 'Gesture ended :('
 									
 					# Update the skel buffer
 					if(self.fl_gest_started):
 						ts = int(time.time()*100)
-						self.buf_skel.append((ts, skel_col_reduce(skel_pts)))
-						self.buf_skel.pop(0) # Buffer is of fixed length. Append an element at the end and pop the first element. 
-						tslist, _ = zip(*self.buf_skel)
+						# Update body skel buffers
+						self.buf_body_skel.append((ts, skel_col_reduce(skel_pts)))
+						self.buf_body_skel.pop(0) # Buffer is of fixed length. Append an element at the end and pop the first element. 
+						# tslist, _ = zip(*self.buf_body_skel)
+						# Update rgb skel buffers
+						self.buf_rgb_skel.append((ts, skel_col_reduce(color_skel_pts, dim=2, wrt_shoulder = False)))
+						self.buf_rgb_skel.pop(0) # Buffer is of fixed length. Append an element at the end and pop the first element. 						
 
 					# The Notify all should be outside because if not, the cosumer
 					# can wait for this call just after the flags that allow
 					# it to enter the "consuming condition" have changed
-					self.cond_skel.notify_all()
-
-				## resetting
-				prev_left_y = left_y
-				prev_right_y = right_y
+					self.cond_body_skel.notify_all()
 
 			if(rgb_flag): # and self.fl_gest_started. Later dont even fill the buffers when others are running. q
 				with self.cond_rgb: # Producer. Consumers need to wait for producer's 'notify' call
@@ -246,7 +204,7 @@ class Realtime:
 					self.buf_rgb.append((ts, self.kr.color_image))
 					self.buf_rgb.pop(0)
 					self.cond_rgb.notify_all()
-					tslist, _ = zip(*self.buf_rgb)
+					# tslist, _ = zip(*self.buf_rgb)
 					cv2.imshow('RGB', cv2.resize(self.kr.color_image, None, fx=0.5, fy=0.5))
 
 			if(cv2.waitKey(1) == ord('q')):
@@ -273,10 +231,10 @@ class Realtime:
 					# print "IN SKEL THREAD, GESTURE STARTED: "
 					print_first_time = False
 				first_time = True 
-				with self.cond_skel:
-					self.cond_skel.wait()
+				with self.cond_body_skel:
+					self.cond_body_skel.wait()
 					# reduce -> append
-					skel_frames.append(deepcopy(self.buf_skel[-1])) 
+					skel_frames.append(deepcopy(self.buf_body_skel[-1])) 
 					frame_count += 1
 			if not self.fl_gest_started and first_time:
 				# print "IN SKEL THREAD, GESTURE ENDED: "
@@ -289,9 +247,26 @@ class Realtime:
 
 				self.fl_skel_ready = True ##### Think about conditioning
 
-	def th_gen_openpose(self):
+	def save_hand_bbox(self, img, hand_pixel_coo, out_fname):
+		################
+		# 'img': An RGB image. np.ndarray of shape (H x W x 3). 
+		# 'bbox': list of four values. [x, y, w, h]. 
+		#		(x, y): pixel coordinates of top left corner of the bbox
+		#		(w, h): width and height of the boox. 
+		#
+		# Description:
+		#	Writes the bbox to self.base_write_dir
+		################
+		if(img is None): return
+
+		bbox = get_hand_bbox(hand_pixel_coo)
+		rx, ry, rw, rh = tuple(bbox)
+		cropped_img = img[ry:ry+rh, rx:rx+rw]
+		cv2.imwrite(os.path.join(self.base_write_dir, out_fname), cropped_img)
+
+	def th_gen_cpm(self):
 		##
-		# Consume: RGB data
+		# Consume: RGB data, RGB Skeletons
 		# Produce: finger lengths features
 		##
 
@@ -302,10 +277,12 @@ class Realtime:
 		op_instance = []
 		first_time = False
 		print_first_time = True
+		
 		rgb_frame = None
+		rgb_hand_coo = None
 		while(self.fl_alive):
 			# if(self.fl_synapse_running): continue # If synapse is running, dont do anything
-			if(self.fl_openpose_ready): continue # If previous openpose data is not used, dont do anything
+			if(self.fl_cpm_ready): continue # If previous cpm data is not used, dont do anything
 			if self.fl_gest_started:
 				if print_first_time:
 					# print "IN RGB THREAD, GESTURE STARTED: "
@@ -314,8 +291,36 @@ class Realtime:
 				with self.cond_rgb:
 					self.cond_rgb.wait()
 					rgb_frame = deepcopy(self.buf_rgb[-1]) # (timestamp, ndarray)
+					_, rgb_hand_coo = deepcopy(self.buf_rgb_skel[-1]) # (timestamp, ([rx1, ry1], [lx1, ly1]))
 					frame_count += 1
-				op_instance.append((rgb_frame[0], extract_fingers_realtime(rgb_frame[-1])))
+				
+				## Key assumptions: TODO:
+				# When we fill the buffers (buf_body_skel and buf_rgb_skel), we assume that body_skel and rgb_skel are in sync
+				# When we access the buffers (buf_rgb_skel and buf_rgb), we assume that both of them are in sync which maynot be the case
+				# Be cautious
+
+				## Step 1: Crop left and right hands
+				## Step 2: Write both the images to the disk
+				# Right hand
+				r_fname = str(frame_count) + '_r.jpg'
+				self.save_hand_bbox(rgb_frame[1], rgb_hand_coo[0], r_fname)
+				# Left hand
+				l_fname = str(frame_count) + '_l.jpg'
+				self.save_hand_bbox(rgb_frame[1], rgb_hand_coo[1], l_fname)	
+
+				## Step 3: Socket send image names for both images. This will return finger lengths. 
+				# Right hand
+				self.client_cpm.sock.send(r_fname)
+				r_fing_data = self.client_cpm.sock_recv(display = False)
+				r_finger_lengths = str_to_nparray(r_fing_data, dlim = '_').tolist()
+				# Left hand
+				self.client_cpm.sock.send(l_fname)
+				l_fing_data = self.client_cpm.sock_recv(display = False)	
+				l_finger_lengths = str_to_nparray(l_fing_data, dlim = '_').tolist()
+				## Step 4: Put the finger lengths of right and left hand together and append it to op_instance.
+				op_instance.append((rgb_frame[0], (r_finger_lengths, l_finger_lengths)))
+				# op_instance.append((rgb_frame[0], (r_finger_lengths, [])))
+				print op_instance[-1]
 			if not self.fl_gest_started and first_time:
 				# print "IN RGB THREAD, GESTURE ENDED: "
 				first_time = False
@@ -329,7 +334,7 @@ class Realtime:
 
 				# self.op_instance = (timestamps, np.array(raw_op_features))
 				op_instance = []
-				self.fl_openpose_ready = True #### Think about conditioning
+				self.fl_cpm_ready = True #### Think about conditioning
 
 	def th_synapse(self):
 		#
@@ -338,8 +343,10 @@ class Realtime:
 			self.fl_synapse_running = True
 
 			# If command is ready: Do the following:
-			self.sock.send(self.command_to_execute)
-			data = self.sock_recv(timeout = 5)
+			# Wait for five seconds for the delivery message. 
+			print self.client_synapse.sock.send(self.command_to_execute) 
+			data = self.client_synapse.sock_recv(display = False)
+			print 'Received: ', data
 			if(data): 
 				self.fl_cmd_ready = False
 				self.fl_synapse_running = False
@@ -366,7 +373,7 @@ class Realtime:
 		# Main thread
 		acces_kinect_thread = Thread(name = 'access_kinect', target = self.th_access_kinect) # P: RGB, skel
 		gen_skel_thread = Thread(name = 'gen_skel', target = self.th_gen_skel) # C: skel ; P: skel_features
-		acces_openpose_thread = Thread(name = 'access_openpose', target = self.th_gen_openpose) # C: RGB ; P: finger_lengths
+		acces_cpm_thread = Thread(name = 'access_cpm', target = self.th_gen_cpm) # C: RGB ; P: finger_lengths
 		synapse_thread = Thread(name = 'autoclick_synapse', target = self.th_synapse) #
 
 		##########
@@ -376,15 +383,15 @@ class Realtime:
 
 		acces_kinect_thread.start()
 		gen_skel_thread.start()
-		acces_openpose_thread.start()
-		if(ENABLE_SOCKET): synapse_thread.start()
+		acces_cpm_thread.start()
+		if(ENABLE_SYNAPSE_SOCKET): synapse_thread.start()
 
 		only_skeleton = True
 
 		## Merger part of the code
 		while(self.fl_alive):
 			if(self.fl_synapse_running): continue
-			if(self.fl_skel_ready and self.fl_openpose_ready):
+			if(self.fl_skel_ready and self.fl_cpm_ready):
 				# pp(self.skel_instance)
 				# pp(self.op_instance)
 				
@@ -396,7 +403,7 @@ class Realtime:
 				dom_rhand, final_skel_inst = self.feat_ext.generate_features_realtime(list(raw_skel_frames))
 				#####################
 
-				## Interpolate openpose instances
+				## Interpolate cpm instances
 				if(not only_skeleton):
 					###################
 					### OP FEATURE ####
@@ -445,11 +452,14 @@ class Realtime:
 				'''
 
 				self.fl_skel_ready = False
-				self.fl_openpose_ready = False
+				self.fl_cpm_ready = False
 
 		# If anything fails do the following
 		self.kr.close()
-		if(ENABLE_SOCKET): self.sock.close()
+		if(ENABLE_SYNAPSE_SOCKET): 
+			self.client_synapse.close()
+		if(ENABLE_CPM_SOCKET):
+			self.client_cpm.close()
 
 
 if(__name__ == '__main__'):

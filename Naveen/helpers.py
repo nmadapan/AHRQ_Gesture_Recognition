@@ -5,6 +5,25 @@ import json
 from scipy.interpolate import interp1d
 import cv2
 
+#######################
+### Kinect Joint IDs ##
+#######################
+## Left hand
+left_hand_id = 7
+left_elbow_id = 5
+left_shoulder_id = 4
+left_wrist_id = 6
+left_handtip_id = 21
+left_thumb_id = 22
+
+## Right hand
+right_hand_id = 11
+right_elbow_id = 9
+right_shoulder_id = 8
+right_wrist_id = 10
+right_handtip_id = 23
+right_thumb_id = 24
+
 def wait_for_kinect(kr):
 	# Blocking function. It waits for the all modalities (RGB, Depth, Body) of the Kinect to connect.
 	# kr is an object to the kinect_reader
@@ -34,6 +53,59 @@ def wait_for_kinect(kr):
 		if(time.time()-init_start_time > 30):
 			sys.exit('Waited for more than 30 seconds. Exiting')
 	print '\nAll Kinect modules connected !!'
+
+def get_lhand_bbox(color_skel_pts, des_size = 300):
+	############
+	# Input arguments:
+	#	'color_skel_pts': A list of 50 elements. Pixel coordinates of 25 Kinect joints. 
+	#		Format: [x1, y1, x2, y2, ...]
+	#	'des_size': Size of the bounding box
+	#
+	# Return:
+	#	'bbox': list of four values. [x, y, w, h]. 
+	#		(x, y): pixel coordinates of top left corner of the bbox
+	#		(w, h): width and height of the boox. 
+	############
+	## Return left hand bounding box
+	hand = np.array(color_skel_pts[2*left_hand_id:2*left_hand_id+2])
+	return [np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
+
+def get_rhand_bbox(color_skel_pts, des_size = 300):
+	############
+	# Input arguments:
+	#	'color_skel_pts': A list of 50 elements. Pixel coordinates of 25 Kinect joints. 
+	#		Format: [x1, y1, x2, y2, ...]
+	#	'des_size': Size of the bounding box
+	#
+	# Return:
+	#	'bbox': list of four values. [x, y, w, h]. 
+	#		(x, y): pixel coordinates of top left corner of the bbox
+	#		(w, h): width and height of the boox. 
+	############	
+	## Return right hand bounding box
+	hand = np.array(color_skel_pts[2*right_hand_id:2*right_hand_id+2])
+	return [np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
+
+def get_hand_bbox(hand_pixel_coo, des_size = 300):
+	############
+	# Input arguments:
+	#	'hand_pixel_coo': A list of two elements. Pixel coordinates of hand.
+	#		Format: [x1, y1]
+	#	'des_size': Size of the bounding box
+	#
+	# Return:
+	#	'bbox': list of four values. [x, y, w, h]. 
+	#		(x, y): pixel coordinates of top left corner of the bbox
+	#		(w, h): width and height of the boox. 
+	############	
+	hand = hand_pixel_coo
+	return [np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
+
+def nparray_to_str(arr, dlim = '_'):
+	return dlim.join(map(str, np.array(arr).flatten().tolist()))
+
+def str_to_nparray(arr_str, dlim = '_'):
+	return np.array(map(float, arr_str.split(dlim)))
 
 def sync_ts(skel_ts, rgb_ts):
 	# skel_ts: List of skeleton time stamps. [t1, t2, ...]
@@ -73,16 +145,19 @@ def class_str_cmp(str1, str2):
 	if(c1==c2): return m1 - m2
 	else: return c1 - c2
 
-def skel_col_reduce(line, num_joints = 1):
+def skel_col_reduce(line, dim = 3, num_joints = 1, wrt_shoulder = True):
 	# Input arguments:
-	#	'line' is a list of 75 elements (25 Kinect joints x 3 XYZ)
+	#	'line' is a list of 75/50 elements (25 Kinect joints x 3 XYZ)
 	#	'num_joints': 1 - only hand, 2 - both hands and the elbow
+	#	'dim': 3 if 'line' consists of 3D x,y,z. 2 if 'line' consists of pixel coordinates. 
+	#	'wrt_shoulder': If True, return hand/elbow coordinates w.r.t shoulder. 
+	#		If False, return actual corrdinates of hand/elbow.
 	#
 	# Return arguments:
 	#	A tuple (r1, l1)
 	#	r1 - list of right hand and elbow xyz in the same order
 	#	l1 - list of left hand ane elbow xyz in the same order
-	#	NOTE: hand and elbow xyz are wrt shoulder
+	#	NOTE: hand and elbow xyz are wrt shoulder if 'wrt_shoulder' is True.
 	#
 	# Initialize joint IDs
 	left_hand_id = 7
@@ -92,15 +167,19 @@ def skel_col_reduce(line, num_joints = 1):
 	right_elbow_id = 9
 	right_shoulder_id = 8
 
-	dim = 3
-
 	left_shoulder =  np.array(line[dim*left_shoulder_id:dim*left_shoulder_id+dim])
-	left_hand = np.array(line[dim*left_hand_id:dim*left_hand_id+dim]) - left_shoulder
-	left_elbow = np.array(line[dim*left_elbow_id:dim*left_elbow_id+dim]) - left_shoulder
+	left_hand = np.array(line[dim*left_hand_id:dim*left_hand_id+dim])
+	left_elbow = np.array(line[dim*left_elbow_id:dim*left_elbow_id+dim])
 
 	right_shoulder =  np.array(line[dim*right_shoulder_id:dim*right_shoulder_id+dim])
-	right_hand = np.array(line[dim*right_hand_id:dim*right_hand_id+dim]) - right_shoulder
-	right_elbow = np.array(line[dim*right_elbow_id:dim*right_elbow_id+dim]) - right_shoulder
+	right_hand = np.array(line[dim*right_hand_id:dim*right_hand_id+dim])
+	right_elbow = np.array(line[dim*right_elbow_id:dim*right_elbow_id+dim])
+
+	if(wrt_shoulder): 
+		left_hand -= left_shoulder
+		left_elbow -= left_shoulder	
+		right_hand -= right_shoulder
+		right_elbow -= right_shoulder	
 
 	if(num_joints == 2):
 		return np.append(right_hand, right_elbow).tolist(), np.append(left_hand, left_elbow).tolist()

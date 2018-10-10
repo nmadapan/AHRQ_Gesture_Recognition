@@ -149,7 +149,6 @@ class Client():
     def __init__(self, tcp_ip, port = 6000, buffer_size = 1024):
         socket.setdefaulttimeout(10.0) # this time has to set based on the time taken by synapse. If less time is set exception is raised
         self.connect_status = False
-        self.data_received = False
         self.TCP_IP = tcp_ip
         self.TCP_PORT = port
         self.buffer_size = buffer_size
@@ -183,7 +182,7 @@ class Client():
                 print('Connection Failed! Waited for more than ' + str(timeout) + ' seconds.')
                 sys.exit(0)
 
-    def sock_recv(self, timeout = 30):
+    def sock_recv(self, timeout = 30, display = True):
         ######################
         # Description: 
         #   Infinitely wait for a delivery message after sending 'Handshake' to the server
@@ -191,22 +190,23 @@ class Client():
         ######################
         print('\nWaiting for delivery message: .', )
         data = None
+        data_received = False
         start = time.time()
-        while(not self.data_received):
+        while(not data_received):
             try:
                 data = self.sock.recv(self.buffer_size) # Blocking call # Gives time out exception
-                print('Received: ', data)
+                if(display): print('Received: ', data)
                 if data:
-                    print('Handshake successfull ! ! !')
-                    self.data_received = True
+                    if(display): print('Success!')
+                    data_received = True
                     break
-                print('. ', end= '')
+                if(display): print('. ', end= '')
             except Exception as exp:
-                print('. ', end= '')
+                if(display):print('. ', end= '')
                 time.sleep(0.5)
             if(time.time()-start > timeout):
                 print('No delivery message! Waited for more than ' + str(timeout) + ' seconds.')
-                sys.exit(0)     
+                sys.exit(0)
 
         return data
 
