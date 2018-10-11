@@ -304,14 +304,13 @@ def findRightClick(offset):
 		print "Error when performing right click function."
 		return False
 
-
-while (True):
+def gestureCommands(sequence):
 	(commandID, actionID) = (-1, -1)
 	if ("raw_input" in status):
 		sequence = status["raw_input"]
 		status.pop("raw_input", None)
-	else:
-		sequence = raw_input("Gesture Command -> ")
+	#else:
+	#	sequence = raw_input("Gesture Command -> ")
 	commandAction = sequence
 	if (sequence.find(" ") != -1):
 		commandAction = sequence[:sequence.find(" ")]
@@ -338,8 +337,8 @@ while (True):
 	if (command == "Admin"):
 		if (action == "Quit"):
 			openWindow(prompt)
-			removeImagesPrompt = raw_input("Do you want to remove the images saved in the folder? (y/n)")
-			removeImagesPrompt = removeImagesPrompt[0].lower()
+			#removeImagesPrompt = raw_input("Do you want to remove the images saved in the folder? (y/n)")
+			#removeImagesPrompt = removeImagesPrompt[0].lower()
 			break
 		elif (action == "Get Status"):
 			print "\nStatus\n------"
@@ -748,6 +747,5 @@ while (True):
 
 	openWindow(prompt)
 
-
 # When quitting program, remove anything saved
-removeImages()
+#removeImages()
