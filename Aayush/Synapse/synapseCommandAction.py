@@ -89,9 +89,13 @@ def get_bbox(before, after, thresholds = None, draw = False):
 
 
 if (platform.system() == "Windows"):
-	(macHeader, viewer, prompt) = (0, "\\\\Remote", "Command Prompt")
+	(macH, viewer, prompt) = (0, "\\\\Remote", "Command Prompt")
 else:
-	(macHeader, viewer, prompt) = ((44.0 / 2880.0) * (nativeW), "Citrix Viewer", "Teminal")
+	(macH, viewer, prompt) = (44.0 * nativeW / 2880.0, "Citrix Viewer", "Teminal")
+
+border = (16.0 * nativeW / 2880.0) + (4.0 * scale)
+boundBoxNoDash = (border, macH + border, nativeW - border, nativeH - border)
+
 
 # Close all other windows and open either command prompt or the Citrix Viewer
 def openWindow(toOpen):
@@ -129,74 +133,79 @@ def moveToActivePanel():
 
 class Calibration(object):
 	def __init__(self):
+		if (os.path.exists("Calibration.txt")):
+			f = open("Calibration.txt", "r")
+			#self.boundBoxNoDash = tuple(float(e) for e in f.readline()[1:-2].split(", "))
+			(self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons, self.rightOffset,
+				 self.rightBoxW, self.rightBoxH) = tuple(float(f.readline()) for i in range(8))
+			f.close()
+		else:
+			(self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
+				self.rightOffset, self.rightBoxW, self.rightBoxH) = (0 for i in range(8))
+
+	def getAll(self):
+		return (self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
+			self.rightOffset, self.rightBoxW, self.rightBoxH)
+	
+	def resetAll(self):
+		print "\nWarming up synapse system...\n"
 		self.resetTopBarHeight()
-		self.resetBoundBoxNoDash()
 		self.resetRightClick()
 		self.resetRightOptions("presets", 8.5)
 		self.resetRightOptions("scaleRotateFlip", 9.5)
 		f = open("Calibration.txt", "w")
-		for e in self.getAll():
-			f.write(str(e) + "\n")
+		f.write("\n".join(list(str(e) for e in self.getAll())))
 		f.close()
+		print "\nCompleted warm-up, make your gestures!\n"
 
-	def getAll(self):
-		return (self.topBarHeight, self.boundBoxNoDash, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
-			self.rightOffset, self.rightBoxW, self.rightBoxH)
+	"""
+	# Reset border inside dashed region
+	def resetBoundBoxNoDash(self):
+		moveToActivePanel()
+		auto.click()
+		border = (16.0 * nativeW / 2880.0) + (4.0 * scale)
+		self.boundBoxNoDash = (border, macH + border, nativeW - border, nativeH - border)
+		ImageGrab.grab(bbox=self.boundBoxNoDash).save(os.path.join("Images", "boundBoxNoDash.png"))
+		print "boundBoxNoDash: %s" % (self.boundBoxNoDash,)
+		auto.click()
+	"""
 
 	# Reset height of top bar and save it
 	def resetTopBarHeight(self):
 		moveToActivePanel()
 		auto.click()
-		ImageGrab.grab(bbox=(0, macHeader, nativeW, nativeH)).save(os.path.join("Images", "fullscreen.png"))
+		ImageGrab.grab(bbox=(0, macH, nativeW, nativeH)).save(os.path.join("Images", "fullscreen.png"))
 		auto.moveTo(auto.position()[0], 0)
 		time.sleep(1)
-		ImageGrab.grab(bbox=(0, macHeader, nativeW, nativeH)).save(os.path.join("Images", "afterTopBar.png"))
+		ImageGrab.grab(bbox=(0, macH, nativeW, nativeH)).save(os.path.join("Images", "afterTopBar.png"))
 		topBarBox = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "afterTopBar.png"))
 		self.topBarHeight = topBarBox[3] - topBarBox[1] + 1
-		ImageGrab.grab(bbox=(0, macHeader, nativeW, self.topBarHeight + macHeader)).save(os.path.join("Images", "topBar.png"))
-
-	# Reset border inside dashed region
-	def resetBoundBoxNoDash(self):
-		moveToActivePanel()
-		auto.click()
-		"""auto.click(button='right')
-		ImageGrab.grab(bbox=(0, macHeader, nativeW, nativeH)).save(os.path.join("Images", "noDash.png"))
-		box = get_bbox(os.path.join("Images", "fullscreen.png"), os.path.join("Images", "noDash.png"))
-		box = (box[0], box[1] + macHeader, box[2], box[3] + macHeader)
-		ImageGrab.grab(bbox=box).save(os.path.join("Images", "diffBox.png"))
-		self.boundBoxNoDash = (box[0] + (10 * scale), box[1] + (10 * scale), box[2] - (10 * scale), box[3] - (10 * scale))
-		ImageGrab.grab(bbox=self.boundBoxNoDash).save(os.path.join("Images", "boundBoxNoDash.png"))"""
-		border = ((16.0 / 2880.0) * nativeW) + (2.0 * scale) + 1.0
-		self.boundBoxNoDash = (border, macHeader + border, nativeW - border, nativeH - border)
-		ImageGrab.grab(bbox=self.boundBoxNoDash).save(os.path.join("Images", "boundBoxNoDash.png"))
-		print "boundBoxNoDash: %s" % (self.boundBoxNoDash,)
-		#print "boundBoxNoDash WxH: %s" % ((x2 - x1, y2 - y1),)
-		auto.click()
+		ImageGrab.grab(bbox=(0, macH, nativeW, self.topBarHeight + macH)).save(os.path.join("Images", "topBar.png"))
 
 	# Reset the right click
 	def resetRightClick(self):
 		moveToActivePanel()
 		auto.click()
 		beforeRightPath = os.path.join("Images", "RightClick", "beforeRight.png")
-		ImageGrab.grab(bbox=self.boundBoxNoDash).save(beforeRightPath)
+		ImageGrab.grab(bbox=boundBoxNoDash).save(beforeRightPath)
 		auto.click(button='right')
 		time.sleep(1)
 		afterRightPath = os.path.join("Images", "RightClick", "afterRight.png")
-		ImageGrab.grab(bbox=self.boundBoxNoDash).save(afterRightPath)
+		ImageGrab.grab(bbox=boundBoxNoDash).save(afterRightPath)
 		rightBox = get_bbox(beforeRightPath, afterRightPath)
 		print "rightBox: %s" % (rightBox,)
 		(self.rightBoxW, self.rightBoxH) = (rightBox[2] - rightBox[0] + 1, rightBox[3] - rightBox[1] + 1)
 		print "rightBox WxH: %s" % ((self.rightBoxW, self.rightBoxH),)
 
-		self.optionH = ((self.rightBoxH / 1000.0) * 36.0) / scale
-		self.rightHR = ((self.rightBoxH / 1000.0) * 10.0) / scale
-		self.rightPlus = ((self.rightBoxH / 1000.0) * 8.0) / scale
-		self.rightIcons = ((self.rightBoxH / 1000.0) * 50.0)
-		self.rightOffset = ((self.rightBoxH / 1000.0) * 58.0)
+		self.optionH = (self.rightBoxH * 36.0 / 1000.0) / scale
+		self.rightHR = (self.rightBoxH * 10.0 / 1000.0) / scale
+		self.rightPlus = (self.rightBoxH * 8.0 / 1000.0) / scale
+		self.rightIcons = (self.rightBoxH * 50.0 / 1000.0)
+		self.rightOffset = (self.rightBoxH * 58.0 / 1000.0)
 
-		(self.rightx1, self.righty1) = (rightBox[0] + self.boundBoxNoDash[0], rightBox[1] + self.boundBoxNoDash[1])
-		(x1, y1) = (self.rightx1 + self.rightIcons, self.righty1 + self.rightOffset)
-		(x2, y2) = (self.rightx1 + self.rightBoxW, self.righty1 + self.rightBoxH)
+		(rightx1, righty1) = (rightBox[0] + boundBoxNoDash[0], rightBox[1] + boundBoxNoDash[1])
+		(x1, y1) = (rightx1 + self.rightIcons, righty1 + self.rightOffset)
+		(x2, y2) = (rightx1 + self.rightBoxW, righty1 + self.rightBoxH)
 		ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(os.path.join("Images", "RightClick", "rightClick.png"))
 
 		moveToActivePanel()
@@ -205,28 +214,37 @@ class Calibration(object):
 	# Reset rightClick's presets/scaleRotateFlip
 	def resetRightOptions(self, option, offset):
 		moveToActivePanel()
+		auto.click()
 		auto.click(button='right')
-		moveToX = (self.rightx1 + self.rightBoxW / 2.0) / scale
-		moveToY = ((self.righty1 + self.rightOffset) / scale) + (self.optionH * offset) + self.rightHR
+		located = auto.locateOnScreen(os.path.join("Images", "RightClick", "rightClick.png"))
+		if (located is not None):
+			(rightx1, righty1, w, h) = located
+		else:
+			print "Cannot find rightClick image, resetting."
+			return
+		moveToX = (rightx1 + self.rightBoxW / 2.0) / scale
+		moveToY = ((righty1 + self.rightOffset) / scale) + (self.optionH * offset) + self.rightHR
 		auto.moveTo(moveToX, moveToY)
 		time.sleep(1)
-		#auto.moveTo(self.rightx1 / scale, (self.righty1 + self.rightOffset) / scale)
 		moveToActivePanel()
 		auto.press("0")
 		afterRightPath = os.path.join("Images", "RightClick", "afterRight.png")
 		afterOptionPath = os.path.join("Images", "RightClick", "after" + option + ".png")
-		ImageGrab.grab(bbox=self.boundBoxNoDash).save(afterOptionPath)
+		ImageGrab.grab(bbox=boundBoxNoDash).save(afterOptionPath)
 		box = get_bbox(afterRightPath, afterOptionPath)
 		print option + " box: %s" % (box,)
 		(boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
 		print option + " box WxH: %s" % ((boxW, boxH),)
-		(x1, y1) = (box[0] + self.boundBoxNoDash[0], box[1] + self.boundBoxNoDash[1])
+		(x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
 		optionPath = os.path.join("Images", "RightClick", option + ".png")
 		ImageGrab.grab(bbox=(x1 + self.rightIcons, y1, x1 + boxW, y1 + boxH)).save(optionPath)
 		auto.click()
 
+Calibration = Calibration()
+(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH) = Calibration.getAll()
 
-actionList = [["Admin", "Quit", "Get Status", "Reset 0", "Reset 1", "Reset 2", "Reset 3", "Reset 4", "Reset 5"],
+
+actionList = [["Admin", "Quit", "Get Status", "Reset 0", "Reset 1", "Reset 2", "Reset 3", "Reset 4"],
 	["Scroll", "Up", "Down"],
 	["Flip", "Horizontal", "Vertical"],
 	["Rotate", "Clockwise", "Counter-Clockwise"],
@@ -329,30 +347,21 @@ while (True):
 			print "Panel Dimension: " + str(status["panel_dim"][0]) + 'x' + str(status["panel_dim"][1])
 			print "Active panel: " + str(status["active_panel"][0]) + 'x' + str(status["active_panel"][1])
 			print "Patient information window: " + ("opened" if status["window_open"] else "closed")
+			print "%s\n" % str(Calibration.getAll())
 		elif ("Reset" in action):
 			actionNum = actionID - 3
 			if (actionNum == 0):
-				print "\nWarming up synapse system...\n"
-				Calibration = Calibration()
-				print "\nCompleted warm-up, make your gestures!\n"
-			"""if (Calibration is None):
-				f = open("Calibration.txt", "r")
-				topBarHeight = float(f.readLine().strip("\n"))
-				boundBoxNoDash = tuple(float(x) for x in f.readLine()[1:-1].split(", "))
-			else:"""
+				Calibration = Calibration.resetAll()
 			if (actionNum == 1):
 				Calibration.resetTopBarHeight()
 			elif (actionNum == 2):
-				Calibration.resetBoundBoxNoDash()
-			elif (actionNum == 3):
 				Calibration.resetRightClick()
-			elif (actionNum == 4):
+			elif (actionNum == 3):
 				Calibration.resetRightOptions("presets", 8.5)
-			elif (actionNum == 5):
+			elif (actionNum == 4):
 				Calibration.resetRightOptions("scaleRotateFlip", 9.5)
-
-			(topBarHeight, boundBoxNoDash, optionH, rightHR, rightPlus, rightIcons, rightOffset,
-					rightBoxW, rightBoxH) = Calibration.getAll()
+			(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset,
+				rightBoxW, rightBoxH) = Calibration.getAll()
 			if ("hold_action" in status):
 				status["raw_input"] = status["hold_action"]
 				status.pop("hold_action", None)
@@ -538,17 +547,21 @@ while (True):
 		elif (action == "Delete"):
 			if (status["params"] == ""):
 				print "Ruler delete ID not specified."
+				openWindow(prompt)
 				continue
-			elif (len(status["params"].split("_")) == 1):
-				print "Ruler delete ID must only be one positive integer integer."
+			elif (len(status["params"].split("_")) != 1):
+				print "Ruler delete ID must only be one positive integer."
+				openWindow(prompt)
 				continue
 			try:
 				rulerID = int(status["params"])
 				if (rulerID not in status["rulers"]):
 					print "Ruler delete ID is not in the list of rulers."
+					openWindow(prompt)
 					continue
 			except ValueError:
 				print "Ruler delete ID should be a positive integer value."
+				openWindow(prompt)
 				continue
 			points = status["rulers"][int(status["params"])].split("_")
 			status["rulers"].pop(int(status["params"]), None)
@@ -583,10 +596,10 @@ while (True):
 			afterHoverPath = os.path.join("Images", "Window", "afterHover.png")
 			if (not os.path.exists(afterHoverPath)):
 				ImageGrab.grab(bbox=box).save(afterHoverPath)
-			#auto.moveTo((329.0 / 1920.0) * nativeW, (82.0 / 1080.0) * nativeH + macHeader / scale)
+			#auto.moveTo((329.0 / 1920.0) * nativeW, (82.0 / 1080.0) * nativeH + macH / scale)
 			#auto.moveTo((218.0 / 1440.0) * width, (75.5.0 / 900.0) * height)
 			#auto.moveTo((326.0 / 1920.0) * width, (78.0 / 1080.0) * height)
-			auto.moveTo((435.0 / 2880.0) * nativeW / scale, ((107.0 + macHeader) / 1800.0) * nativeH / scale)
+			auto.moveTo((435.0 / 2880.0) * nativeW / scale, ((107.0 + macH) / 1800.0) * nativeH / scale)
 			auto.click()
 			time.sleep(6)
 			seriesThumbnailPath = os.path.join("Images", "Window", "seriesThumbnail.png")
@@ -656,23 +669,27 @@ while (True):
 		(oldLocationX, oldLocationY) = auto.position()
 		auto.moveTo(oldLocationX, 0)
 		time.sleep(1)
-		box = (0.0, topBarHeight, 0.0, 0.0)
-		box = tuple(b + (1.0 * scale) for b in boundBoxNoDash)
+		box = (1.0 * scale, topBarHeight, -1.0 * scale, -1.0 * scale)
+		box = tuple(boundBoxNoDash[i] + box[i] for i in range(4))
 		afterHoverPath = os.path.join("Images", "Layout", "afterHover.png")
-		ImageGrab.grab(bbox=box).save(os.path.join("Images", "Layout", "afterHover.png"))
+		if (not os.path.exists(afterHoverPath)):
+			ImageGrab.grab(bbox=box).save(os.path.join("Images", "Layout", "afterHover.png"))
 		#auto.moveTo((329.0 / 1920.0) * width, (82.0 / 1080.0) * height)
 		#auto.moveTo((643.0 / 1920.0) * nativeW, (82.0 / 1080.0) * nativeH)
 		#auto.moveTo((428.0 / 1920.0) * width, (77.0 / 1080.0) * height)
-		#auto.moveTo((435.0 / 2880.0) * nativeW / scale, ((107.0 + macHeader) / 1800.0) * nativeH / scale)
-		auto.moveTo((857.0 / 2880.0) * nativeW / scale, ((109.0 + macHeader) / 1800.0) * nativeH / scale)
+		#auto.moveTo((435.0 / 2880.0) * nativeW / scale, ((107.0 + macH) / 1800.0) * nativeH / scale)
+		#moveToY = (61.0 * nativeW / 2880.0)
+		auto.moveTo((857.0 / 2880.0) * nativeW / scale, ((109.0 + macH) / 1800.0) * nativeH / scale)
 		auto.click()
 		time.sleep(5)
 		windowPath = os.path.join("Images", "Layout", "window.png")
-		ImageGrab.grab(bbox=box).save(os.path.join("Images", "Layout", "window.png"))
+		if (not os.path.exists(windowPath)):
+			ImageGrab.grab(bbox=box).save(os.path.join("Images", "Layout", "window.png"))
 		diffBox = get_bbox(afterHoverPath, windowPath)
 		(x1, y1, x2, y2) = (diffBox[i] + box[(i % 2)] for i in range(4))
 		diffLayoutPath = os.path.join("Images", "Layout", "diffLayout.png")
-		ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffLayoutPath)
+		if (not os.path.exists(diffLayoutPath)):
+			ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffLayoutPath)
 		status["panel_dim"][0] = 1
 		x1 += (68.0 / 1920.0) * nativeW
 		y1 += (95.0 / 1080.0) * nativeH
