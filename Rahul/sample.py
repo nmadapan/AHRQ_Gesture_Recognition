@@ -1,12 +1,20 @@
-from opnepose_realtime_routines import extract_fingers_realtime
-import os, time
-print os.getcwd()
+import numpy as np
 
-fing_rt = extract_fingers_realtime
+A=np.random.rand(2,3)
+# B=np.random.rand(1,4)
+B=[]
+B.append(A.flatten().tolist())
+B.append(A.flatten().tolist())
+print np.array(B).shape
+print B
+# def match_ts(A,B):
+#     rgb_ts=A
+#     skel_ts=B
+#     s_to_r=np.argmin(abs(rgb_ts.reshape(-1,1)-skel_ts.reshape(1,-1)),axis=1)
+#     r_to_s=np.argmin(abs(rgb_ts.reshape(-1,1)-skel_ts.reshape(1,-1)),axis=0)
+#     return s_to_r,r_to_s
 
-img_dir = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\openpose\\Open_Pose_Demo\\temp_dir'
+# x,y=match_ts(A,B)
+# print x
+# print y
 
-st = time.time()
-fing_rt(img_dir,dom_hand=1,num_fingers=10)
-st2 = time.time()
-print st2 - st
