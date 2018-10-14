@@ -11,14 +11,14 @@ This project aims to develop realtime gesture recognition for browsing medical i
 
 Overall, it requires *two computers*.
 1. **Main Computer**
-	i. Windows 10.
-	ii. Install everything that is described in [*Installation*](#installation)
-	iii. This computer MUST have Nvidia GPU RAM >= 4.0 GB
+	1. Windows 10.
+	2. Install everything that is described in [*Installation*](#installation)
+	3. This computer MUST have Nvidia GPU RAM >= 4.0 GB
 2. **Synapse Computer**
-	i. Medical image manipulation software known as *Synapse* runs in this computer.
-	ii. Install Python 2.7
-	iii. Install [pyautogui](https://pyautogui.readthedocs.io/en/latest/install.html).
-	iv. Install [OpenCV](https://docs.opencv.org/3.3.1/d5/de5/tutorial_py_setup_in_windows.html) and [Pillow](https://pypi.org/project/Pillow/2.2.1/).
+	1. Medical image manipulation software known as *Synapse* runs in this computer.
+	2. Install Python 2.7
+	3. Install [pyautogui](https://pyautogui.readthedocs.io/en/latest/install.html).
+	4. Install [OpenCV](https://docs.opencv.org/3.3.1/d5/de5/tutorial_py_setup_in_windows.html) and [Pillow](https://pypi.org/project/Pillow/2.2.1/).
 
 ## System Requirements
 1. Microsoft Kinect V2 Sensor
