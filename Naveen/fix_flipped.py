@@ -21,22 +21,22 @@ import re
 # are the same, and you want to replace the files with the flipped
 # ones. If false, the target folder is different and the original
 # files that you are reading from will not be touched
-replace = False 
-lex_folder = r'H:\AHRQ\Study_IV\Data\Data\L6' 
-target_folder = r'H:\AHRQ\Study_IV\Flipped_Data\L6'
-filename = 'flipped_files.txt' 
+replace = False
+lex_folder = r'F:\AHRQ\Study_IV\Data\Data\L3'
+target_folder = r'F:\AHRQ\Study_IV\Flipped_Data\L3'
+filename = 'flipped_files.txt'
 fps = 120
 default_width, default_height = 1920/2, 1080/2
 # Initialize the dictionary where the video paths and location information
 # will be stored
 videos_per_cmd = {}
 # The current command being evaluated
-current_cmd = None 
+current_cmd = None
 
 ## Functions
 
 # Stores the clicks triggered by mouse events
-# event: mouse event
+# event: mouse evento
 # x: x coorninate of the click
 # y: y coordinate if the click
 def store_clicks(event, x, y, flags, param):
@@ -45,7 +45,7 @@ def store_clicks(event, x, y, flags, param):
 	global current_cmd
 	frame_w, frame_h, max_win_size = param
 	# if the left mouse button was clicked, toggle the video
-	# selector to true 
+	# selector to true
 	if event == cv2.EVENT_LBUTTONDOWN and \
 		isinstance(vid_descriptor_list[0],(list,)):
 		# Get video number
@@ -53,7 +53,7 @@ def store_clicks(event, x, y, flags, param):
 		row = y/frame_h
 		index = row*max_win_size+col
 		if index < len(videos_per_cmd[current_cmd]):
-				videos_per_cmd[current_cmd][index][2] = not videos_per_cmd[current_cmd][index][2] 
+				videos_per_cmd[current_cmd][index][2] = not videos_per_cmd[current_cmd][index][2]
 
 ## Initialization
 cmd_dict = json_to_dict('commands.json')
@@ -72,8 +72,8 @@ max_num_inst = max(map(len,videos_per_cmd.values()))
 # Fix the size of the window that will display the videos
 max_win_size = int(math.ceil(math.sqrt(max_num_inst)))
 
-# get the frame size for each video 
-frame_w = default_width/(max_win_size) 
+# get the frame size for each video
+frame_w = default_width/(max_win_size)
 frame_h = default_height/(max_win_size)
 
 # Initialize the window so we can attach the
@@ -93,12 +93,12 @@ while(True):
 	if(close_flag): break
 	current_cmd = cmd_key_list[cmd_idx]
 	cmd_name = cmd_dict[current_cmd]
-	vid_descriptor_list = videos_per_cmd[current_cmd] 
-	# Add a variable for the position in the image and if the video 
+	vid_descriptor_list = videos_per_cmd[current_cmd]
+	# Add a variable for the position in the image and if the video
 	# was selected next to the video path
-	if not isinstance(vid_descriptor_list[0],(list,)): 
+	if not isinstance(vid_descriptor_list[0],(list,)):
 		videos_per_cmd[current_cmd] = [[vid_path, None, False] \
-		for vid_path in vid_descriptor_list]	
+		for vid_path in vid_descriptor_list]
 		vid_descriptor_list = videos_per_cmd[current_cmd]
 	# get a video capture for each video in the list
 	vid_list = [descriptor[0] for descriptor in vid_descriptor_list]
@@ -108,20 +108,20 @@ while(True):
 		for idx, vcap_info in enumerate(vcaps):
 			name, vcap = vcap_info
 			# get row and column position of the element
-			row = idx/max_win_size 
-			col = idx%max_win_size 
+			row = idx/max_win_size
+			col = idx%max_win_size
 			# record the position of the video in the frame descriptor
 			videos_per_cmd[current_cmd][idx][1] = (row,col)
 			ret, frame = vcap.read()
-			if ret: 
+			if ret:
 				frame = cv2.resize(frame, dsize=(frame_w, frame_h))
 				# if the video was selected
 				if videos_per_cmd[current_cmd][idx][2]:
 					gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 					frame = np.stack((gray_image,)*3, -1)
-					cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (50,255,0),1,cv2.LINE_AA) 
+					cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (50,255,0),1,cv2.LINE_AA)
 				else :
-					cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA) 
+					cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA)
 			else: frame = 255*np.ones((frame_h, frame_w, 3))
 			container_frame[row][col] = np.uint8(frame)
 		cframe = []
@@ -139,7 +139,7 @@ while(True):
 
 	for vcap in vcaps: vcap[1].release()
 
-# Compile regular expression to find subject number	
+# Compile regular expression to find subject number
 re_subject = re.compile("_S[0-9]+_")
 re_lexicon = re.compile("_L[0-9]{1}_")
 temp_video_path = join(target_folder,"temp.avi")
