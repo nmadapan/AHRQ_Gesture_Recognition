@@ -11,6 +11,8 @@ right_hand_id = 11
 right_wrist_id = 10
 blur_nondom_hand=False
 
+skip_existing_folder = True
+
 
 read_base_path = "H:\AHRQ\Study_IV\Flipped_Data"
 write_base_path = "H:\AHRQ\Study_IV\Data\Data_cpm"
@@ -142,11 +144,14 @@ def get_gesture_names(skel_files):
         gesture_names.append('_'.join(strings_[:-1]))
     return gesture_names
 
+
+
 def generate_data():
     for lexicon in lexicons:
         lexicon_name=os.path.basename(lexicon)
         write_base_folder=os.path.join(frames_dir,lexicon_name)
-        if not os.path.isdir(write_base_folder): create_writefolder_dir(write_base_folder)
+
+        if not os.path.isdir(write_base_folder): create_writefolder_dir(write_base_folder)  
         rgb_skel_files=glob.glob(os.path.join(lexicon,"*color.txt"))
         rgb_skel_files=sort_filenames(rgb_skel_files)
         rgb_ts_files=glob.glob(os.path.join(lexicon,"*rgbts.txt"))
@@ -155,8 +160,10 @@ def generate_data():
         rgb_videos=glob.glob(os.path.join(lexicon,"*rgb.avi"))
 
         for gesture in gestures:
+            # if gesture in missing_gestures:
             gesture_folder=os.path.join(write_base_folder,gesture)
             if not os.path.isdir(gesture_folder): create_writefolder_dir(gesture_folder)
+            print 'extracting frames from the gesture', gesture
             gesture_video=[video for video in rgb_videos if gesture in video][0]
             rgb_skel_file=[file for file in rgb_skel_files if gesture in file][0]
             rgb_ts_file=[file for file in rgb_ts_files if gesture in file][0]
