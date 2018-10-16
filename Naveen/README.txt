@@ -1,3 +1,10 @@
+Requirements:
+	1. Add kinectstudio to the Path:
+		Go to to the installation path of kinect studio,
+		it will look something like: C:\Program Files\Microsoft SDKs\Kinect\v2.0_1409\Tools\KinectStudio.
+		And add that directory to the system enviroment variable called PATH
+
+
 File naming convention:
 	PascalCase: classes
 		Ex: KinectReader.py and XefParser.py
