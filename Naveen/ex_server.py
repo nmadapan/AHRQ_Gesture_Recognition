@@ -62,9 +62,8 @@ class Server():
     def th_socket(self):
         # Call Aayush's Synapse command script
 
-        if (not os.path.exists("Calibration.txt")):
-            sca.gestureCommands("0_3")
-            time.sleep(20)
+        if (not os.path.exists("calibration.txt")):
+            synapse_Flag = sca.gestureCommands("0_3")
         while True:
             # if(not self.connect_status): self.wait_for_connection() # This is not relevant beccause
             #    wait_for_connection expects to receive INITIAL_MESSAGE
@@ -75,9 +74,8 @@ class Server():
                 # Find a way to monitor synapse. when we should we send False ?
                 # synapse_Flag = synapse(data) #Aayush's code should be executed from here. Output shall be True or False
                 # Pass in data to raw_input in Aayush's script
-                synapse_flag=sca.gestureCommands(data[0], data[1]) #it should return TRUE if command is executed properly
+                synapse_Flag=sca.gestureCommands(data[0], data[1]) #it should return TRUE if command is executed properly
 
-                #synapse_Flag=True
                 if synapse_Flag:
                     print data,'has been executed'
                     self.client.send(str(True)) # Send True once the execuction is done.
