@@ -8,26 +8,6 @@ from PIL import ImageGrab
 import signal
 import sys
 
-removeImagesPrompt = "y"
-#Remove images already saved (avoids issues with git)
-def removeImages():
-	if (removeImagesPrompt == "y"):
-		paths = [os.path.join("Images", "RightClick"), os.path.join("Images", "Window", "Closes"),
-			os.path.join("Images", "Window"), os.path.join("Images", "Layout"), os.path.join("Images")]
-		for path in paths:
-			if (not os.path.exists(path)):
-				continue
-			for file in os.listdir(path):
-				if file.endswith(".png"):
-					os.remove(os.path.join(path, file))
-
-# If exiting the synapse program, remove all images before closing synapse.
-def signal_handler(sig, frame):
-	#removeImagesPrompt = raw_input("Do you want to remove the images saved in the folder? (y/n)")
-	#removeImagesPrompt = removeImagesPrompt[0].lower()
-	print ""
-	sys.exit(0)
-signal.signal(signal.SIGINT, signal_handler)
 
 auto.FAILSAFE = True
 auto.PAUSE = 0.75
@@ -38,6 +18,60 @@ scale = nativeW / width
 print "WxH: %s" % ((width, height),)
 print "nativeW, nativeH: %s" % ((nativeW, nativeH),)
 print str(scale)
+
+(macH, viewer, prompt) = ((0, "\\\\Remote", "Command Prompt") if platform.system() == "Windows" else (44.0 * nativeW / 2880.0, "Citrix Viewer", "Terminal"))
+
+border = (20.0 * nativeW / 2880.0) + (4.0 * scale)
+boundBoxNoDash = (border, macH + border, nativeW - border, nativeH - border)
+
+
+# Close all other windows and open either command prompt or the Citrix Viewer
+def openWindow(toOpen):
+	if (platform.system() == "Windows"):
+		window_names = auto.getWindows().keys()
+		for window_name in window_names:
+			auto.getWindow(window_name).minimize()
+			if (toOpen in window_name):
+				xef_window_name = window_name
+		xef_window = auto.getWindow(xef_window_name)
+		xef_window.maximize()
+	else:
+		auto.hotkey("command", "space")
+		auto.typewrite(toOpen)
+		auto.press("enter")
+		#auto.hotkey("command", "tab")
+
+#Remove images already saved (avoids issues with git)
+def removeImages():
+	paths = [os.path.join("Images", "RightClick"), os.path.join("Images", "Window", "Closes"),
+		os.path.join("Images", "Window"), os.path.join("Images", "Layout"), os.path.join("Images")]
+	for path in paths:
+		if (not os.path.exists(path)):
+			continue
+		for file in os.listdir(path):
+			if file.endswith(".png"):
+				os.remove(os.path.join(path, file))
+
+# Prompt notification if choosing to remove the images
+def removeImagesPrompt():
+	openWindow(prompt)
+	while True:
+		ans = raw_input("Do you want to remove the images saved in the folder? (y/n)")
+		if (len(ans) == 1 and ans.lower() == "y"):
+			removeImages()
+			break
+		elif (len(ans) != 1 or ans.lower() != "n"):
+			print "Unrecognized request, please enter either 'y' or 'n'"
+		else:
+			break
+	print ""
+
+# If exiting the synapse program, remove all images before closing synapse.
+def signal_handler(sig, frame):
+	removeImagesPrompt()
+	sys.exit(0)
+signal.signal(signal.SIGINT, signal_handler)
+
 
 """
 	Input Arguments:
@@ -89,34 +123,7 @@ def get_bbox(before, after, thresholds = None, draw = False):
 	return (x1, y1, x2, y2)
 
 
-if (platform.system() == "Windows"):
-	(macH, viewer, prompt) = (0, "\\\\Remote", "Command Prompt")
-else:
-	(macH, viewer, prompt) = (44.0 * nativeW / 2880.0, "Citrix Viewer", "Terminal")
-
-border = (20.0 * nativeW / 2880.0) + (4.0 * scale)
-boundBoxNoDash = (border, macH + border, nativeW - border, nativeH - border)
-
-# Close all other windows and open either command prompt or the Citrix Viewer
-def openWindow(toOpen):
-	if (platform.system() == "Windows"):
-		window_names = auto.getWindows().keys()
-		for window_name in window_names:
-			auto.getWindow(window_name).close()
-		for window_name in window_names:
-			auto.getWindow(window_name).close()
-			if (toOpen in window_name):
-				xef_window_name = window_name
-		xef_window = auto.getWindow(xef_window_name)
-		xef_window.maximize()
-	else:
-		auto.hotkey("command", "space")
-		auto.typewrite(toOpen)
-		auto.press("enter")
-		#auto.hotkey("command", "tab")
-
-status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "rulers": {"len": 0},
-	"toUse": "Keyboard"}
+status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "rulers": {"len": 0}, "toUse": "Keyboard"}
 
 def resetPanelMoves():
 	status["firstW"] = (float(width) / (float(status["panel_dim"][1]) * 2.0))
@@ -124,7 +131,6 @@ def resetPanelMoves():
 	status["jumpW"] = (status["firstW"] * 2.0 if status["panel_dim"][1] != 1 else 0)
 	status["jumpH"] = (status["firstH"] * 2.0 if status["panel_dim"][0] != 1 else 0)
 resetPanelMoves()
-
 
 def moveToActivePanel():
 	moveToX = status["firstW"] + (status["active_panel"][1] - 1) * (status["jumpW"])
@@ -141,9 +147,8 @@ class Calibration(object):
 				self.rightBoxW, self.rightBoxH) = tuple(float(f.readline()) for i in range(8))
 			f.close()
 		else:
-			#(self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
-			#	self.rightOffset, self.rightBoxW, self.rightBoxH) = (0 for i in range(8))
-			self.resetAll()
+			(self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
+				self.rightOffset, self.rightBoxW, self.rightBoxH) = (0 for i in range(8))
 
 	def getAll(self):
 		return (self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
@@ -246,7 +251,7 @@ calibration = Calibration()
 (topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH) = calibration.getAll()
 
 
-actionList = [["Admin", "Quit", "Get Status", "Reset 0", "Reset 1", "Reset 2", "Reset 3", "Reset 4"],
+actionList = [["Admin", "Quit", "Get Status", "Switch Fetch", "Reset All", "Reset TopBar", "Reset RightClick", "Reset Presets", "Reset ScaleRotateFlip"],
 	["Scroll", "Up", "Down"],
 	["Flip", "Horizontal", "Vertical"],
 	["Rotate", "Clockwise", "Counter-Clockwise"],
@@ -257,7 +262,7 @@ actionList = [["Admin", "Quit", "Get Status", "Reset 0", "Reset 1", "Reset 2", "
 	["Window", "Open", "Close"],
 	["Manual Contrast", "Increase", "Decrease"],
 	["Layout", "One-Panel", "Two-Panels", "Three-Panels", "Four-Panels"],
-	["Contrast Presets", "1", "2"]]
+	["Contrast Presets", "I", "II"]]
 
 # Report situation to command prompt, useful for debugging and for users understanding an issue.
 def promptNotify(message, sleepAmt):
@@ -292,7 +297,7 @@ def defaultAction(commandID, paramSizes):
 
 # Find Synapse's rightClick image
 def findRightClick(offset):
-	auto.click(button='right')
+	#auto.click(button='right')
 	located = auto.locateOnScreen(os.path.join("Images", "RightClick", "rightClick.png"))
 	if (located is not None):
 		(x1, y1, w, h) = located
@@ -303,15 +308,16 @@ def findRightClick(offset):
 		return False
 
 
-def gestureCommands(commandAction):
-	"""(commandID, actionID) = (-1, -1)
+openWindow(viewer)
+
+def gestureCommands(sequence):
+	(commandID, actionID) = (-1, -1)
 	commandAction = sequence
 	if (sequence.find(" ") != -1):
 		commandAction = sequence[:sequence.find(" ")]
 		status["params"] = sequence[sequence.find(" ") + 1:]
 	else:
 		status["params"] = ""
-	"""
 	if (commandAction.find("_") != -1):
 		try:
 			commandID = int(commandAction[:commandAction.find("_")])
@@ -328,14 +334,11 @@ def gestureCommands(commandAction):
 		print "Invalid command entered!\n"
 		return False
 
-	openWindow(viewer)
-
 
 	if (command == "Admin"):
 		if (action == "Quit"):
-			openWindow(prompt)
-			#removeImagesPrompt = raw_input("Do you want to remove the images saved in the folder? (y/n)")
-			#removeImagesPrompt = removeImagesPrompt[0].lower()
+			removeImagesPrompt()
+			sys.exit(0)
 		elif (action == "Get Status"):
 			print "------\nStatus\n------"
 			print "Previous action: " + status["prev_action"]
@@ -343,24 +346,24 @@ def gestureCommands(commandAction):
 			print "Active panel: " + str(status["active_panel"][0]) + 'x' + str(status["active_panel"][1])
 			print "Patient information window: " + ("opened" if status["window_open"] else "closed")
 			print "Rulers: " + ("\n\t" + str(c) + ": " + status["rulers"][c] for c in status["rulers"] if c != "len")
-			print "(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH)"
-				+ str(calibration.getAll())
+			print "(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH)",str(calibration.getAll())
 			print ""
-		elif ("Reset" in action):
-			actionNum = actionID - 3
-			if (actionNum == 0):
-				calibration = Calibration()
+		elif (action == "Switch Fetch"):
+			status["toUse"] = ("Keyboard" if status["toUse"] == "Images" else "Images")
+		elif ("Reset " in action):
+			action = action[6:]
+			calibration = Calibration()
+			if (action == "All"):
 				calibration.resetAll()
-			if (actionNum == 1):
+			if (action == "TopBar"):
 				calibration.resetTopBarHeight()
-			elif (actionNum == 2):
+			elif (action == "RightClick"):
 				calibration.resetRightClick()
-			elif (actionNum == 3):
+			elif (action == "Presets"):
 				calibration.resetRightOptions("presets", 8.5)
-			elif (actionNum == 4):
+			elif (action == "ScaleRotateFlip"):
 				calibration.resetRightOptions("scaleRotateFlip", 9.5)
-			(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset,
-				rightBoxW, rightBoxH) = calibration.getAll()
+			(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH) = calibration.getAll()
 			if ("hold_action" in status):
 				sequence = status["hold_action"]
 				status.pop("hold_action", None)
@@ -369,8 +372,8 @@ def gestureCommands(commandAction):
 		moveToActivePanel()
 		auto.click()
 		scrollAmount = (10 if status["params"] == "" else int(status["params"]))
-		scrollAmount = (-1 * scrollAmount if action == "Up" else scrollAmount)
 		if (status["toUse"] != "Keyboard" and platform.system() != "Windows"):
+			scrollAmount = (-1 * scrollAmount if action == "Up" else scrollAmount)
 			auto.scroll(scrollAmount)
 		else:
 			auto.PAUSE = 0.1
@@ -385,20 +388,20 @@ def gestureCommands(commandAction):
 		if (status["toUse"] == "Images"):
 			located = findRightClick(352)
 			if (not located):
-				(status["raw_input"], status["hold_action"]) = ("0_6", commandAction)
-				return False
+				status["hold_action"] = commandAction
+				return gestureCommands("0_6")
 			time.sleep(1)
 			located = auto.locateOnScreen(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
 			if (located is None):
-				(status["raw_input"], status["hold_action"]) = ("0_8", commandAction)
-				return False
+				status["hold_action"] = commandAction
+				return gestureCommands("0_8")
 			(x1, y1, w, h) = located
 			y1 = y1 / scale;
 			y1 += (rightPlus + (optionH * 0.5) if action == "Horizontal" else rightPlus + (optionH * 1.5))
 			auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
 			auto.click()
 		else:
-			auto.PAUSE = 0.1
+			auto.PAUSE = 0.2
 			auto.press("0")
 			for i in range(10):
 				auto.press("down")
@@ -418,20 +421,20 @@ def gestureCommands(commandAction):
 		if (status["toUse"] == "Images"):
 			located = findRightClick(352)
 			if (not located):
-				(status["raw_input"], status["hold_action"]) = ("0_6", commandAction)
-				return False
+				status["hold_action"] = commandAction
+				return gestureCommands("0_6")
 			time.sleep(1)
 			located = auto.locateOnScreen(os.path.join("Images", "RightClick", "scaleRotateFlip.png"))
 			if (located is None):
-				(status["raw_input"], status["hold_action"]) = ("0_8", commandAction)
-				return False
+				status["hold_action"] = commandAction
+				return gestureCommands("0_8")
 			(x1, y1, w, h) = located
 			y1 = y1 / scale
 			y1 += (rightPlus + (optionH * 2.5) if action == "Clockwise" else rightPlus + (optionH * 3.5))
 			auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
 			auto.click()
 		else:
-			auto.PAUSE = 0.1
+			auto.PAUSE = 0.2
 			auto.press("0")
 			for i in range(10):
 				auto.press("down")
@@ -455,7 +458,7 @@ def gestureCommands(commandAction):
 			return False
 		else:
 			splitParams = status["params"].split("_")
-			if (len(splitParams) % 2 == 1):
+			if (len(splitParams) % 2 == 1 and status["params"] != ""):
 				level = (-1 * int(splitParams[0]) if action == "Out" else int(splitParams[0]))
 			else:
 				level = (-20 if action == "Out" else 20)
@@ -469,7 +472,10 @@ def gestureCommands(commandAction):
 				auto.click()
 			else:
 				auto.press("z")
-			(moveToX, moveToY) = (auto.position() if len(splitParams) < 3 else tuple(splitParams[1], splitParams[2]))
+			if (len(splitParams) >= 2):
+				(moveToX, moveToY) = auto.position()
+			else:
+				(moveToX, moveToY) = (int(splitParams[len(splitParams) - 2]), int(splitParams[len(splitParams) - 1]))
 			auto.moveTo(moveToX, moveToY)
 			auto.mouseDown()
 			auto.moveTo(moveToX, moveToY + level)
@@ -487,7 +493,7 @@ def gestureCommands(commandAction):
 			return False
 		else:
 			splitParams = status["params"].split("_")
-			if (len(splitParams) % 2 == 1):
+			if (len(splitParams) % 2 == 1 and status["params"] != ""):
 				level = (-1 * int(splitParams[0]) if action == "Left" or action == "Up" else int(splitParams[0]))
 			else:
 				level = (-20 if action == "Left" or action == "Up" else 20)
@@ -502,7 +508,10 @@ def gestureCommands(commandAction):
 			else:
 				auto.press("p")
 				auto.press("enter")
-			(moveToX, moveToY) = (auto.position() if len(splitParams) < 3 else tuple(splitParams[1], splitParams[2]))
+			if (len(splitParams) >= 2 or status["params"] == ""):
+				(moveToX, moveToY) = auto.position()
+			else:
+				(moveToX, moveToY) = (int(splitParams[len(splitParams) - 2]), int(splitParams[len(splitParams) - 1]))
 			auto.moveTo(moveToX, moveToY)
 			auto.mouseDown()
 			auto.moveTo(moveToX, moveToY + level)
@@ -518,8 +527,8 @@ def gestureCommands(commandAction):
 				if (status["toUse"] == "Images"):
 					located = findRightClick(126)
 					if (not located):
-						(status["raw_input"], status["hold_action"]) = ("0_6", commandAction)
-						return False
+						status["hold_action"] = commandAction
+						return gestureCommands("0_6")
 					auto.click()
 					time.sleep(2)
 				else:
@@ -636,7 +645,6 @@ def gestureCommands(commandAction):
 			status["window_open"] = (not status["window_open"])
 		elif (action == "Close" and status["window_open"]):
 			for file in os.listdir(os.path.join("Images", "Window", "Closes")):
-				print str(file)
 				close = auto.locateOnScreen(os.path.join("Images", "Window", "Closes", file))
 				if (close is not None):
 					(x1, y1, w, h) = close
@@ -696,18 +704,10 @@ def gestureCommands(commandAction):
 		diffLayoutPath = os.path.join("Images", "Layout", "diffLayout.png")
 		if (not os.path.exists(diffLayoutPath)):
 			ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffLayoutPath)
-		status["panel_dim"][0] = 1
 		x1 += (68.0 / 1920.0) * nativeW
 		y1 += (95.0 / 1080.0) * nativeH
 		jumpX = (91.0 / 1920.0) * nativeW
-		if (action == "One-Panel"):
-			status["panel_dim"][1] = 1
-		elif (action == "Two-Panels"):
-			status["panel_dim"][1] = 2
-		elif (action == "Three-Panels"):
-			status["panel_dim"][1] = 3
-		elif (action == "Four-Panels"):
-			status["panel_dim"][1] = 4
+		(status["panel_dim"][0], status["panel_dim"][1]) = (1, actionID)
 		x1 += (status["panel_dim"][1] - 1) * jumpX
 		auto.moveTo(x1, y1)
 		auto.click()
@@ -723,9 +723,13 @@ def gestureCommands(commandAction):
 			if (not located):
 				status["hold_action"] = commandAction
 				return gestureCommands("0_6")
-			(x1, y1, w, h) = auto.locateOnScreen(os.path.join("Images", "RightClick", "presets.png"))
+			located = auto.locateOnScreen(os.path.join("Images", "RightClick", "presets.png"))
+			if (located is None):
+				status["hold_action"] = commandAction
+				return gestureCommands("0_7")
+			(x1, y1, w, h) = located
 			y1 = y1 / scale
-			y1 += rightPlus + (optionH * (int(action) + 0.5))
+			y1 += rightPlus + (optionH * (actionID + 0.5))
 			auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
 			auto.click()
 		else:
@@ -737,7 +741,7 @@ def gestureCommands(commandAction):
 			time.sleep(0.5)
 			auto.press("0")
 			auto.press("down")
-			for i in range(int(action)):
+			for i in range(actionID):
 				auto.press("down")
 			auto.press("enter")
 			auto.PAUSE = 0.75
@@ -746,13 +750,9 @@ def gestureCommands(commandAction):
 		status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
 
 
-	openWindow(prompt)
+	#openWindow(prompt)
 	
 	return True
-
-def gestureCommands(commandAction, params):
-	status["params"] = ("" if params is None or params == "" else params)
-	return gestureCommands(commandAction)
 
 # When quitting program, remove anything saved
 #removeImages()
