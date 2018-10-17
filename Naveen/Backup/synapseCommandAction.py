@@ -5,6 +5,7 @@ import platform
 import time
 import pyautogui as auto
 from PIL import ImageGrab
+from PIL import ImageChops
 import signal
 import sys
 
@@ -82,7 +83,7 @@ signal.signal(signal.SIGINT, signal_handler)
 	Output Arguments:
 		(x1, y1, x2, y2): where x1, y1 are top left corner and x2, y2 are bottom right corner
 """
-def get_bbox(before, after, thresholds = None, draw = False):
+"""def get_bbox(before, after, thresholds = None, draw = False):
 	if (type(before) != type(after)):
 		return ValueError('before and after should have same type')
 	if (isinstance(before, str)):
@@ -122,6 +123,11 @@ def get_bbox(before, after, thresholds = None, draw = False):
 		cv2.waitKey(0)
 
 	return (x1, y1, x2, y2)
+"""
+
+def get_bbox(before, after):
+	ImageChops.difference(Image.open(before), Image.open(after)).save("tempDiff.png")
+	return auto.locateOnScreen("tempDiff.png")
 
 
 status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "rulers": {"len": 0},
@@ -250,7 +256,8 @@ class Calibration(object):
 		print option + " box: %s" % (box,)
 		(boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
 		print option + " box WxH: %s" % ((boxW, boxH),)
-		(x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
+		#(x1, y1) = (box[0] + boundBoxNoDash[0], box[1] + boundBoxNoDash[1])
+		(x1, y1) = (box[0], box[1])
 		optionPath = os.path.join("Images", "RightClick", option + ".png")
 		ImageGrab.grab(bbox=(x1 + self.rightIcons, y1, x1 + boxW, y1 + boxH)).save(optionPath)
 		auto.click()
