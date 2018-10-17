@@ -94,6 +94,20 @@ class FeatureExtractor():
 			# Each sublist = [1 0 0 1 0], 1-> right is dominant, left otherwise.
 
 	###### OFFLINE Function ########
+	def init_calib_params(self, json_param_path):
+		########################
+		# Description:
+		#		Given the json params file, initialize all of the 
+		#		class variables with those values	
+		#		i.e. trajectories of hand, elbow, shoulder of both hands.
+		# Input arguments:
+		########################
+		
+		# Initialize variables from json param path
+		param_dict = json_to_dict(json_param_path)
+		for key, value in param_dict.items(): setattr(self, key, value)
+
+	###### OFFLINE Function ########
 	def extract_raw_features(self, skel_filepath, annot_filepath):
 		########################
 		# Description:

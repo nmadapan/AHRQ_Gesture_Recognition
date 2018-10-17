@@ -1,3 +1,4 @@
+from __future__ import print_function
 from glob import glob
 import os, sys, time
 import numpy as np
@@ -5,9 +6,10 @@ import json
 from scipy.interpolate import interp1d
 import cv2
 
-#######################
-### Kinect Joint IDs ##
-#######################
+########################
+### Kinect Joint IDs ###
+########################
+## Refer to kinect_joint_names.json for all joint IDs
 ## Left hand
 left_hand_id = 7
 left_elbow_id = 5
@@ -15,7 +17,6 @@ left_shoulder_id = 4
 left_wrist_id = 6
 left_handtip_id = 21
 left_thumb_id = 22
-
 ## Right hand
 right_hand_id = 11
 right_elbow_id = 9
@@ -23,93 +24,128 @@ right_shoulder_id = 8
 right_wrist_id = 10
 right_handtip_id = 23
 right_thumb_id = 24
+## Torso
+torso_id = 0
+neck_id = 2
 
-def wait_for_kinect(kr):
-	# Blocking function. It waits for the all modalities (RGB, Depth, Body) of the Kinect to connect.
-	# kr is an object to the kinect_reader
-	# from KinectReader import kinect_reader
-	# kr = kinect_reader()
-	spin = True
+def wait_for_kinect(kr, timeout = 30):
+	'''
+	Description:
+		* This function waits for the all modalities (RGB, Depth, Body) of the Kinect to connect. It is a blocking function.
+	Input arguments:
+		* kr is an object of kinect_reader class present in KinectReader module
+		* timeout is time in seconds. How long to wait for connection.
+	How to call:
+		from KinectReader import kinect_reader
+		kr = kinect_reader()
+		wait_for_kinect(kr)
+	'''
+
+	## Initialization
 	first_rgb, first_depth, first_body = False, False, False
 	init_start_time = time.time()
-	print 'Connecting to Kinect . ',
-	# Wait for all modules (rgb, depth, skeleton) to connect
+	print('Connecting to Kinect . ', end = '')
+
+	## Wait for all modules (rgb, depth, skeleton) to connect for timeout secs.
 	while True:
 		try:
-			# Refreshing Frames
+			# Refreshing RGB Frames
 			if first_rgb: kr.update_rgb()
 			else: first_rgb = kr.update_rgb()
+			# Refreshing Depth Frames
 			if first_depth: kr.update_depth()
 			else: first_depth = kr.update_depth()
+			# Refreshing Body Frames
 			if first_body: kr.update_body()
 			else: first_body = kr.update_body()
 			if (first_rgb and first_depth and first_body): break
 			time.sleep(0.5)
-			print '. ',
+			print('. ', end = '')
 		except Exception as exp:
-			print exp
+			print(exp)
 			time.sleep(0.5)
-			print '. ',
-		if(time.time()-init_start_time > 30):
-			sys.exit('Waited for more than 30 seconds. Exiting')
-	print '\nAll Kinect modules connected !!'
+			print('. ', end = '')
+		if(time.time()-init_start_time > timeout):
+			sys.exit('Waited for more than ' + str(timeout) + ' seconds. Exiting')
+	print('\nAll Kinect modules connected !!')
 
 def get_lhand_bbox(color_skel_pts, des_size = 300):
-	############
-	# Input arguments:
-	#	'color_skel_pts': A list of 50 elements. Pixel coordinates of 25 Kinect joints. 
-	#		Format: [x1, y1, x2, y2, ...]
-	#	'des_size': Size of the bounding box
-	#
-	# Return:
-	#	'bbox': list of four values. [x, y, w, h]. 
-	#		(x, y): pixel coordinates of top left corner of the bbox
-	#		(w, h): width and height of the boox. 
-	############
+	'''
+	Input arguments:
+		* color_skel_pts: A list of 50 elements. Pixel coordinates of 25 Kinect joints. Format: [x1, y1, x2, y2, ...]
+		* des_size: Size of the square bounding box
+	Return:
+		* bbox: list of four values. [x, y, w, h].
+			(x, y): pixel coordinates of top LEFT corner of the bbox
+			(w, h): width and height of the bounding box.
+	'''
 	## Return left hand bounding box
 	hand = np.array(color_skel_pts[2*left_hand_id:2*left_hand_id+2])
 	return [np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
 
 def get_rhand_bbox(color_skel_pts, des_size = 300):
-	############
-	# Input arguments:
-	#	'color_skel_pts': A list of 50 elements. Pixel coordinates of 25 Kinect joints. 
-	#		Format: [x1, y1, x2, y2, ...]
-	#	'des_size': Size of the bounding box
-	#
-	# Return:
-	#	'bbox': list of four values. [x, y, w, h]. 
-	#		(x, y): pixel coordinates of top left corner of the bbox
-	#		(w, h): width and height of the boox. 
-	############	
+	'''
+	Input arguments:
+		* color_skel_pts: A list of 50 elements. Pixel coordinates of 25 Kinect joints. Format: [x1, y1, x2, y2, ...]
+		* des_size: Size of the square bounding box
+	Return:
+		* bbox: list of four values. [x, y, w, h].
+			(x, y): pixel coordinates of top RIGHT corner of the bbox
+			(w, h): width and height of the bounding box.
+	'''
 	## Return right hand bounding box
 	hand = np.array(color_skel_pts[2*right_hand_id:2*right_hand_id+2])
 	return [np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
 
 def get_hand_bbox(hand_pixel_coo, des_size = 300):
-	############
-	# Input arguments:
-	#	'hand_pixel_coo': A list of two elements. Pixel coordinates of hand.
-	#		Format: [x1, y1]
-	#	'des_size': Size of the bounding box
-	#
-	# Return:
-	#	'bbox': list of four values. [x, y, w, h]. 
-	#		(x, y): pixel coordinates of top left corner of the bbox
-	#		(w, h): width and height of the boox. 
-	############	
+	'''
+	Input arguments:
+		* hand_pixel_coo: A list/tuple of two elements. Pixel coordinates of hand. Format: [x1, y1] or (x1, y1)
+		* des_size: Size of the bounding box
+	Return:
+		* bbox: list of four values. [x, y, w, h].
+			(x, y): pixel coordinates of top left corner of the bbox
+			(w, h): width and height of the boox.
+	'''
 	hand = hand_pixel_coo
 	return [np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
 
 def nparray_to_str(arr, dlim = '_'):
+	'''
+	Description:
+		Convert a np.ndarray of ints/floats to string with a given delimiter.
+	Input arguments:
+		* arr: np.ndarray of any dimension
+		* dlim: delimiter. It is a string.
+	Return:
+		* String of elements in the np.ndarray joined using the given delimiter.
+	'''
 	return dlim.join(map(str, np.array(arr).flatten().tolist()))
 
 def str_to_nparray(arr_str, dlim = '_'):
+	'''
+	Description:
+		Convert a string consisting of ints/floats concatenated using the given delimiter into a flattened np.ndarray.
+	Input arguments:
+		* arr_str: string
+		* dlim: delimiter. It is a string.
+	Return:
+		* np.ndarray of ints/floats.
+	'''
 	return np.array(map(float, arr_str.split(dlim)))
 
 def sync_ts(skel_ts, rgb_ts):
-	# skel_ts: List of skeleton time stamps. [t1, t2, ...]
-	# rgb_ts: list of rgb timestams. [t1, t2, t3, ...]
+	'''
+	Description:
+		Synchronize two lists of time stamps.
+	Input arguments:
+		* skel_ts: list of skeleton time stamps. [t1, t2, ..., ta]
+		* rgb_ts: list of rgb times tamps. [t1, t2, t3, ..., tb]
+	Return:
+		* A tuple (apply_on_skel, apply_on_rgb)
+			apply_on_skel: What is the corresponding rgb time stamp for every skeleton time stamp.
+			apply_on_rgb: What is the corresponding skeleton time stamp for every rgb time stamp.
+	'''
 	skel_ts = np.reshape(skel_ts, (-1, 1))
 	rgb_ts = np.reshape(rgb_ts, (1, -1))
 	M = np.abs(skel_ts - rgb_ts)
@@ -118,26 +154,49 @@ def sync_ts(skel_ts, rgb_ts):
 	return apply_on_skel.tolist(), apply_on_rgb.tolist()
 
 def get_body_length(line):
-	# line is a list of 75 elements. [x, y, z, so on for all of the kinect joints]
-
-	torso_id = 0
-	neck_id = 2
-
+	'''
+	Description:
+		Given the body skeleton, compute the distance between torso and neck.
+	Input arguments:
+		* line: a list of 75 elements. [x, y, z, so on for all of the 25 kinect joints]. Refer to kinect_joint_names.json for full list of joint ids.
+	Return:
+		* The distance between neck and the torso in meters.
+	'''
 	torso = np.array(line[3*torso_id:3*torso_id+3])
 	neck = np.array(line[3*neck_id:3*neck_id+3])
-
 	return np.linalg.norm(neck-torso)
 
 def skelfile_cmp(path1, path2):
-	# Example usage:
+	'''
+	Description:
+		Compare two skeleton file paths. Format of the path is the following ('a/b/4_1_S*_L*_Context_Modifier_skel.txt)
+	Input arguments:
+		* path1: string. Path to a skeleton file.
+		* path2: string. Path to a skeleton file.
+	Return:
+		* Negative number if path2 is smaller than path1, positive number otherwise.
+	Example usage:
 		# skelfile_cmp('4_1_S2_L2_Zoom_In_skel.txt', '3_0_S2_L2_Rotate_X_skel.txt')
 		# 4_1 is supposed to come after 3_0. So it returns a negative number
+	'''
 	c1, m1 = tuple(map(int, os.path.basename(path1).split('_')[:2]))
 	c2, m2 = tuple(map(int, os.path.basename(path2).split('_')[:2]))
 	if(c1==c2): return m1 - m2
 	else: return c1 - c2
 
 def class_str_cmp(str1, str2):
+	'''
+	Description:
+		Compare two class_strings. Format of the class_string is the following: ('4_1'). Refer to commands.json for all available class_strings.
+	Input arguments:
+		* str1: a class string.
+		* str2: a class string.
+	Return:
+		* Negative number if str2 is smaller than str1, positive number otherwise.
+	Example usage:
+		# class_str_cmp('4_1', '3_0')
+		# 4_1 is supposed to come after 3_0. So it returns a negative number
+	'''
 	# str1 - 3_2, str_2 - 7_1
 	# So 3_2 < 7_1
 	c1, m1 = tuple(map(int, str1.split('_')))
@@ -146,26 +205,21 @@ def class_str_cmp(str1, str2):
 	else: return c1 - c2
 
 def skel_col_reduce(line, dim = 3, num_joints = 1, wrt_shoulder = True):
-	# Input arguments:
-	#	'line' is a list of 75/50 elements (25 Kinect joints x 3 XYZ)
-	#	'num_joints': 1 - only hand, 2 - both hands and the elbow
-	#	'dim': 3 if 'line' consists of 3D x,y,z. 2 if 'line' consists of pixel coordinates. 
-	#	'wrt_shoulder': If True, return hand/elbow coordinates w.r.t shoulder. 
-	#		If False, return actual corrdinates of hand/elbow.
-	#
-	# Return arguments:
-	#	A tuple (r1, l1)
-	#	r1 - list of right hand and elbow xyz in the same order
-	#	l1 - list of left hand ane elbow xyz in the same order
-	#	NOTE: hand and elbow xyz are wrt shoulder if 'wrt_shoulder' is True.
-	#
-	# Initialize joint IDs
-	left_hand_id = 7
-	left_elbow_id = 5
-	left_shoulder_id = 4
-	right_hand_id = 11
-	right_elbow_id = 9
-	right_shoulder_id = 8
+	'''
+	Description:
+		Given the skeleton frame of body or rgb from kinect (list of 75/50 elements), return hand and elbow coordinates of both the hands w.r.t the shoulder.
+	Input arguments:
+		* line is a list of 75/50 elements (25 Kinect joints x 3 XYZ)
+		* num_joints: 1 - only hand, 2 - both hands and the elbow
+		* dim: 3 if 'line' consists of 3D x,y,z. 2 if 'line' consists of pixel coordinates.
+		* wrt_shoulder: If True, return hand/elbow coordinates w.r.t shoulder.
+			If False, return actual corrdinates of hand/elbow.
+	Return:
+		A tuple (r1, l1)
+		r1 - list of right hand and elbow xyz in the same order. [x, y, z]
+		l1 - list of left hand ane elbow xyz in the same order. [x, y, z]
+		NOTE: hand and elbow xyz are wrt shoulder if 'wrt_shoulder' is True.
+	'''
 
 	left_shoulder =  np.array(line[dim*left_shoulder_id:dim*left_shoulder_id+dim])
 	left_hand = np.array(line[dim*left_hand_id:dim*left_hand_id+dim])
@@ -175,11 +229,11 @@ def skel_col_reduce(line, dim = 3, num_joints = 1, wrt_shoulder = True):
 	right_hand = np.array(line[dim*right_hand_id:dim*right_hand_id+dim])
 	right_elbow = np.array(line[dim*right_elbow_id:dim*right_elbow_id+dim])
 
-	if(wrt_shoulder): 
+	if(wrt_shoulder):
 		left_hand -= left_shoulder
-		left_elbow -= left_shoulder	
+		left_elbow -= left_shoulder
 		right_hand -= right_shoulder
-		right_elbow -= right_shoulder	
+		right_elbow -= right_shoulder
 
 	if(num_joints == 2):
 		return np.append(right_hand, right_elbow).tolist(), np.append(left_hand, left_elbow).tolist()
@@ -187,9 +241,19 @@ def skel_col_reduce(line, dim = 3, num_joints = 1, wrt_shoulder = True):
 		return right_hand.tolist(), left_hand.tolist()
 
 def check_consis(xef_folder_path):
-	# 'xef_folder_path' --> points to the folder containing folders of XEF files
-	# Checks if the files in the subfolders are in correct format.
-	# For instance: xef_folder_path = '.\\ABC', where folder ABC contains S1_L3, S2_L3, S3_L3, etc., while each of these folders contain the xef files in a specific format.
+	'''
+	Description:
+		Check if the files present in the folders of 'xef_folder_path' are consistent.
+		Say 'xef_folder_path' consists of following folders with the names 'S1_L2' and 'S1_L6'. Now 'S1_L2' folder is expected to contain files in the following format: '*_*_S1_L2_*_*.xef'. Similarly, 'S1_L2' folder is expected to contain files in the following format: '*_*_S1_L6_*_*.xef'. This functions if the filenames are consistent w.r.t the folder names.
+	Input arguments:
+		* xef_folder_path: path to the directory consisting of folders which contain xef files.
+	Return:
+		A tuple (flag, error_strs)
+			* if flag is True, all folders are consistent. If False, look at error_strs to find inconsistent XEF filenames.
+			* error_strs is a list of inconsitent XEF filenames.
+	Example:
+		xef_folder_path = '.\\ABC', where folder ABC contains S1_L3, S2_L3, S3_L3, etc., while each of these folders contain the xef files in a specific format.
+	'''
 	folder_paths = glob(xef_folder_path+'\\') # Get only directories
 	if(len(folder_paths) == 0):
 		raise IOError('There are NO folders in this path')
@@ -204,12 +268,30 @@ def check_consis(xef_folder_path):
 	return len(error_strs)==0, error_strs
 
 def get_file_size(filepath):
-	# return file size in KB
+	'''
+	Description:
+		Return the estimated the size of the .xef file in KB
+	Input arugments:
+		* filepath: absolute path to the .xef file.
+	Return:
+		* Return the estimated the size of the .xef file in KB
+	'''
 	if(not os.path.isfile(filepath)):
 		raise IOError('file: '+filepath+' does NOT exist')
 	return float('%.1f'%(os.stat(filepath).st_size/1024.0))
 
 def file_filter(xef_files_paths, base_write_folder, in_format_flag, xef_rgb_factor):
+	'''
+	Description:
+		Filter the list of .xef file paths. Only retail those xef file paths whose corresponding rgb video size is less than a particular threshold. This threshold depends on the size of the xef file.
+	Input arguments:
+		* xef_file_paths: a list of xef file paths. Each file path points to a .xef file. Format of the file path: 'a/b/*_*_*_*_*_*.xef'
+		* base_write_folder: path consisting of folders containing data (rgb video file, depth video file, skeleton timestamps, etc.) obtained from the .xef files.
+		* in_format_flag: If True, file paths must be in the predetermined format. If False, file paths need not be in a specific format.
+		* xef_rgb_factor: An factor that approximately maps the size of .xef file to the size of the rgb video.
+	Return:
+		A list of xef files paths whose size of rgb files is less than the predicted size.
+	'''
 	final_file_paths = []
 	# Include only xef files that were not completely read before
 	for xef_file_path in xef_files_paths:
@@ -248,12 +330,12 @@ def flip_skeleton(skel_path, out_path, dim_per_joint=3):
 	#	* There is only roll angle about person's veritcal axis
 	#	* Kinect is not tilted.
 	###########
-	
+
 	with open(skel_path, 'r') as fp:
 		lines = fp.readlines()
 		lines = [map(float, line.strip().split(' ')) for line in lines]
 
-	fp = open(out_path, 'w') 
+	fp = open(out_path, 'w')
 
 	left_sh_idx = 4
 	right_sh_idx = 8
@@ -263,7 +345,7 @@ def flip_skeleton(skel_path, out_path, dim_per_joint=3):
 		torso = np.array(line[dim_per_joint*spine_idx:dim_per_joint*spine_idx+dim_per_joint] )
 		left_sh = np.array(line[dim_per_joint*left_sh_idx:dim_per_joint*left_sh_idx+dim_per_joint])
 		right_sh = np.array(line[dim_per_joint*right_sh_idx:dim_per_joint*right_sh_idx+dim_per_joint])
-		
+
 		mat = np.reshape(line, (25, dim_per_joint))
 
 		# Normalize w.r.t torso
@@ -303,7 +385,7 @@ def smart_interpn(yp, reps, kind = 'copy'):
 	# reps:
 	#	1D numpy array whose elements range from [0, num_frames-1]. Note that the size of reps is usually larger than num_frames
 	#
-	# kind: 
+	# kind:
 	#	'linear'	- linear interpolation
 	#	'copy'		- do the copy
 
