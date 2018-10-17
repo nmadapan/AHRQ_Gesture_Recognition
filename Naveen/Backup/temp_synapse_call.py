@@ -51,3 +51,6 @@ while True and i < len(dataList):
         traceback.print_exc(file=sys.stdout)
         #self.connect_status = False
         #self.client.close()
+
+# Open command prompt when finished with synapse commands
+sca.openWindows("Command Prompt")
