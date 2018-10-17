@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-import os
+import os, sys
 
 def get_bbox(before, after, thresholds = None, draw = False):
 	########
@@ -56,8 +56,8 @@ def get_bbox(before, after, thresholds = None, draw = False):
 
 	return (x1, y1, x2, y2)
 
-before, after = os.path.join('.', 'Images', 'beforeRight.png'), os.path.join('.', 'Images', 'afterRight.png')
-x1, y1, x2, y2 = get_bbox(before, after, thresholds = (100, 30), draw = False)
+before, after = os.path.join('.', 'Images', 'RightClick','beforeRight.png'), os.path.join('.', 'Images', 'RightClick', 'afterRight.png')
+x1, y1, x2, y2 = get_bbox(before, after, thresholds = (100, 30), draw = True)
 # print get_bbox(before, after)
 
 # before = cv2.imread(before)
