@@ -27,14 +27,16 @@ PORT_CPM = 3000
 ENABLE_SYNAPSE_SOCKET = False
 ENABLE_CPM_SOCKET = False
 
+ONLY_SKELETON = True
+
 #TODO: What happens when there are more people. 
 
 class Realtime:
 	def __init__(self):
 		## Global Constants
 		self.lexicon_name = 'L6'
-		self.data_path = r'H:\AHRQ\Study_IV\Data\Data'
-		self.trained_pkl_fpath = r'H:\AHRQ\Study_IV\Data\Data\L6_data.pickle'
+		self.data_path = r'H:\AHRQ\Study_IV\Data\Data' # Path where _reps.txt file is present. 
+		self.trained_pkl_fpath = r'H:\AHRQ\Study_IV\Flipped_Data\L6_0_data.pickle' # path to trained .pickle file. 
 
 		self.base_write_dir = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
 
@@ -242,6 +244,7 @@ class Realtime:
 				print_first_time = True
 				frame_count = 0
 
+				## TODO: Condition it on cond_rgb, otherwise, we might run into race conditions
 				self.skel_instance = deepcopy(skel_frames) # [(ts1, ([left_x, y, z], [right_x, y, z])), ...]
 				skel_frames = []
 
@@ -327,6 +330,7 @@ class Realtime:
 				print_first_time = True
 				frame_count = 0
 
+				## TODO: Condition it on cond_rgb, otherwise, we might run into race conditions
 				self.op_instance = deepcopy(op_instance) # [(ts1, ([left_f1, f2, .., f5], [right_f1, f2, .., f5])), ...]
 
 				# timestamps, raw_op_features = zip(*op_instance)
@@ -383,17 +387,15 @@ class Realtime:
 
 		acces_kinect_thread.start()
 		gen_skel_thread.start()
-		acces_cpm_thread.start()
+		if(ENABLE_CPM_SOCKET): acces_cpm_thread.start()
 		if(ENABLE_SYNAPSE_SOCKET): synapse_thread.start()
-
-		only_skeleton = True
 
 		## Merger part of the code
 		while(self.fl_alive):
 			if(self.fl_synapse_running): continue
 			if(self.fl_skel_ready and self.fl_cpm_ready):
 				# pp(self.skel_instance)
-				# pp(self.op_instance)
+				# pp(self.opq_instance)
 				
 				#####################
 				### SKEL FEATURE ####
@@ -404,12 +406,12 @@ class Realtime:
 				#####################
 
 				## Interpolate cpm instances
-				if(not only_skeleton):
+				if(not ONLY_SKELETON):
 					###################
 					### OP FEATURE ####
 					###################
 					# Detuple op_instance
-					op_ts, raw_op_frames = zip(*op_instance)
+					op_ts, raw_op_frames = zip(*self.op_instance)
 					# Detuple op frames int right and left
 					right_op, left_op = zip(*raw_op_frames)
 					# Merge op features based on dom_rhand

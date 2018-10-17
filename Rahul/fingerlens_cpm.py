@@ -257,7 +257,7 @@ for lexicon in lexicons:
 
     gestures=get_gesture_names(annot_rgb_files)
 
-    with open(os.path.join(write_base_folder,lexicon_name+'_fingers.pkl'),'wb') as pkl_file:
+    with open(os.path.join(write_base_folder,lexicon_name+'_fingers_n.pkl'),'wb') as pkl_file:
         gest_dict = {}
 
         for gesture in gestures:
