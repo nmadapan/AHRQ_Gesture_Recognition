@@ -37,6 +37,7 @@ class Realtime:
 		self.lexicon_name = 'L6'
 		self.data_path = r'H:\AHRQ\Study_IV\Data\Data' # Path where _reps.txt file is present. 
 		self.trained_pkl_fpath = r'H:\AHRQ\Study_IV\Flipped_Data\L6_0_data.pickle' # path to trained .pickle file. 
+		# self.trained_pkl_fpath = r'H:\AHRQ\Study_IV\Data\Data\L6_0_data.pickle' # path to trained .pickle file. 
 
 		self.base_write_dir = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
 
@@ -118,7 +119,7 @@ class Realtime:
 		self.neck_id = 2
 		self.left_hand_id = 7
 		self.right_hand_id = 11
-		self.thresh_level = 0.2 #TODO: It seems to be working. 
+		self.thresh_level = 0.3 #TODO: It seems to be working. 
 
 	def update_cmd_reps(self):
 		rep_path = os.path.join(self.data_path, self.lexicon_name+'_reps.txt')
@@ -246,6 +247,7 @@ class Realtime:
 
 				## TODO: Condition it on cond_rgb, otherwise, we might run into race conditions
 				self.skel_instance = deepcopy(skel_frames) # [(ts1, ([left_x, y, z], [right_x, y, z])), ...]
+				## TODO: If length of skel_instance is less than a certain number, ignore that gesture. 
 				skel_frames = []
 
 				self.fl_skel_ready = True ##### Think about conditioning
@@ -393,7 +395,11 @@ class Realtime:
 		## Merger part of the code
 		while(self.fl_alive):
 			if(self.fl_synapse_running): continue
-			if(self.fl_skel_ready and self.fl_cpm_ready):
+
+			if(ENABLE_CPM_SOCKET): flag = self.fl_skel_ready and self.fl_cpm_ready
+			else: flag = self.fl_skel_ready
+			
+			if(flag):
 				# pp(self.skel_instance)
 				# pp(self.opq_instance)
 				
@@ -454,7 +460,7 @@ class Realtime:
 				'''
 
 				self.fl_skel_ready = False
-				self.fl_cpm_ready = False
+				if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False
 
 		# If anything fails do the following
 		self.kr.close()
