@@ -61,7 +61,6 @@ class Server():
 
     def th_socket(self):
         # Call Aayush's Synapse command script
-
         if (not os.path.exists("calibration.txt")):
             synapse_Flag = sca.gestureCommands("0_3")
         while True:
@@ -79,7 +78,6 @@ class Server():
                 if synapse_Flag:
                     print data,'has been executed'
                     self.client.send(str(True)) # Send True once the execuction is done.
-                
             except Exception as exp:
                 print exp
                 print 'Connection Closed'

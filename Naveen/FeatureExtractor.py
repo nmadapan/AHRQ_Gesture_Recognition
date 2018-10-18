@@ -2,7 +2,6 @@ import numpy as np
 import os, sys
 from glob import glob
 import pickle
-from scipy.interpolate import interp1d
 from copy import deepcopy
 from random import shuffle
 from sklearn import svm
@@ -36,7 +35,7 @@ from helpers import *
 #####################
 
 class FeatureExtractor():
-	def __init__(self, json_param_path = 'param.json'):
+	def __init__(self, json_param_path = 'param.json', subject_param_path = 'subject_params.json'):
 		## Private variables
 		self.available_types = ['right', 'd_right', 'theta_right', 'd_theta_right',\
 							 	'left', 'd_left', 'theta_left', 'd_theta_left']
@@ -47,6 +46,9 @@ class FeatureExtractor():
 		# Initialize variables from json param path
 		param_dict = json_to_dict(json_param_path)
 		for key, value in param_dict.items(): setattr(self, key, value)
+
+		subject_param_dict = json_to_dict(subject_param_path)
+		for key, value in subject_param_dict.items(): setattr(self, key, value)
 
 		# Initialize the label to class name
 		self.label_to_name = json_to_dict(self.commands_filepath)
@@ -95,6 +97,20 @@ class FeatureExtractor():
 			# Each sublist = [1 0 0 1 0], 1-> right is dominant, left otherwise.
 
 	###### OFFLINE Function ########
+	def init_calib_params(self, json_param_path):
+		########################
+		# Description:
+		#		Given the json params file, initialize all of the 
+		#		class variables with those values	
+		#		i.e. trajectories of hand, elbow, shoulder of both hands.
+		# Input arguments:
+		########################
+		
+		# Initialize variables from json param path
+		param_dict = json_to_dict(json_param_path)
+		for key, value in param_dict.items(): setattr(self, key, value)
+
+	###### OFFLINE Function ########
 	def extract_raw_features(self, skel_filepath, annot_filepath):
 		########################
 		# Description:
@@ -133,7 +149,6 @@ class FeatureExtractor():
 
 		xf = {'left': [], 'right': []}
 
-		# Extract the required joints: Only right hand if both_hands is False, both the hands otherwise.
 		# Column reduction . .
 		dim = self.dim_per_joint
 		if(self.num_joints == 2):
@@ -193,6 +208,11 @@ class FeatureExtractor():
 		## Obtain raw features
 		xf = self.extract_raw_features(skel_filepath, annot_filepath)
 
+		## Expected format 1_0_S*_L*_Scroll_X.txt
+		skel_fname = os.path.basename(skel_filepath)
+		subject_id = skel_fname.split('_')[2] # S*
+		lexicon_id = skel_fname.split('_')[3] # L*
+
 		for inst_id in range(len(xf['right'])):
 			## Initialize the feature instance. Also, put a label
 			features = {feat_type: None for feat_type in self.available_types}
@@ -203,21 +223,23 @@ class FeatureExtractor():
 			left = xf['left'][inst_id] # get left arm feature
 			right = right.reshape(self.dim_per_joint*(self.num_joints+1), -1).transpose()
 			left = left.reshape(self.dim_per_joint*(self.num_joints+1), -1).transpose()
+
 			d_reps = np.ones(right.shape[0]-2).tolist(); d_reps.append(2) # diff() reduced length by one. Using this we can fix it.
 
 			## Right arm
 			# Change reference frame to shoulder
 			# Precompute position, velocity and angles
+			dim = self.dim_per_joint
 			right = right[:,0:self.dim_per_joint*self.num_joints] - np.tile(right[:,self.dim_per_joint*self.num_joints:], (1, self.num_joints))
 			d_right = np.repeat(np.diff(right, axis = 0), d_reps, axis = 0)
 			theta_right = np.zeros(right.shape)
 			for jnt_idx in range(self.num_joints):
-				temp = d_right[:, 3*jnt_idx:3*(jnt_idx+1)]
-				theta_right[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
+				temp = d_right[:, dim*jnt_idx:dim*(jnt_idx+1)]
+				theta_right[:, dim*jnt_idx:dim*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 
 			## Position
 			if(self.type_flags['right']):
-				features['right'] = right.transpose().flatten() / self.max_r
+				features['right'] = right.transpose().flatten() / self.subject_params[lexicon_id][subject_id] / 1.5
 			## Velocity
 			if(self.type_flags['d_right']):
 				features['d_right'] = d_right.transpose().flatten() / self.max_dr
@@ -237,8 +259,8 @@ class FeatureExtractor():
 			d_left = np.repeat(np.diff(left, axis = 0), d_reps, axis = 0)
 			theta_left = np.zeros(left.shape)
 			for jnt_idx in range(self.num_joints):
-				temp = d_left[:, 3*jnt_idx:3*(jnt_idx+1)]
-				theta_left[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
+				temp = d_left[:, dim*jnt_idx:dim*(jnt_idx+1)]
+				theta_left[:, dim*jnt_idx:dim*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 			## Position
 			if(self.type_flags['left']):
 				features['left'] = left.transpose().flatten() / self.max_r
@@ -366,7 +388,6 @@ class FeatureExtractor():
 			label_to_ids[label] = class_id
 			inst_per_class[label] = raw_class_labels.count(label)
 
-		## Overwrite the keys in the return variable
 		self.num_classes = len(class_labels)
 		self.class_labels = class_labels
 		self.id_to_labels = id_to_labels
@@ -385,7 +406,7 @@ class FeatureExtractor():
 					if(self.equate_dim):
 						# Interpolate or Extrapolate to fixed dimension
 						mod_feat = feature[feat_type].reshape(self.dim_per_joint*self.num_joints, -1).transpose()
-						mod_feat = self.interpn(mod_feat, self.fixed_num_frames)
+						mod_feat = interpn(mod_feat, self.fixed_num_frames)
 						mod_feat = mod_feat.transpose().flatten()
 					else:
 						mod_feat = feature[feat_type]
@@ -404,6 +425,13 @@ class FeatureExtractor():
 		return out
 
 	###### ONLINE Function ########
+	def update_rt_params(self, subject_id = None, lexicon_id = None):
+		if subject_id is None or lexicon_id is None:
+			return ValueError('subject_id and lexicon_id CAN NOT BE None')
+		self.rt_subject_id = subject_id
+		self.rt_lexicon_id = lexicon_id
+
+	###### ONLINE Function ########
 	def process_data_realtime(self, colproc_skel_data):
 		########################
 		# Input arguments:
@@ -420,10 +448,8 @@ class FeatureExtractor():
 		features = {feat_type: None for feat_type in self.available_types}
 
 		left, right = zip(*colproc_skel_data)
-		left, right = np.array(list(left)), np.array(list(right))
+		left, right = np.array(list(left)), np.array(list(right)) # left and right are (_ x 3/6) ndarrays
 
-		right = right.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
-		left = left.reshape(self.dim_per_joint*(self.num_joints), -1).transpose()
 		d_reps = np.ones(right.shape[0]-2).tolist(); d_reps.append(2) # diff() reduced length by one. Using this we can fix it.
 
 		## Right hand
@@ -436,7 +462,7 @@ class FeatureExtractor():
 
 		## Position
 		if(self.type_flags['right']):
-			features['right'] = right.transpose().flatten() / self.max_r
+			features['right'] = right.transpose().flatten() / self.subject_params[self.rt_lexicon_id][self.rt_subject_id]
 		## Velocity
 		if(self.type_flags['d_right']):
 			features['d_right'] = d_right.transpose().flatten() / self.max_dr
@@ -499,12 +525,14 @@ class FeatureExtractor():
 					# Interpolate or Extrapolate to fixed dimension
 					# print feature[feat_type].shape
 					mod_feat = feature[feat_type].reshape(self.dim_per_joint*self.num_joints, -1).transpose()
-					mod_feat = self.interpn(mod_feat, self.fixed_num_frames)
+					mod_feat = interpn(mod_feat, self.fixed_num_frames)
 					mod_feat = mod_feat.transpose().flatten()
 				else:
 					mod_feat = feature[feat_type]
+				
 				inst = inst + mod_feat.tolist()
-		return np.array([inst])
+		dom_rhand = feature['types_order'][0] == 0 # True if right hand is dominant. False otherwise. 
+		return dom_rhand, np.array([inst])
 
 	###### ONLINE Function ########
 	def pred_output_realtime(self, feature_instance):
@@ -516,14 +544,14 @@ class FeatureExtractor():
 		#	class label <string>. for instance, '3_0'
 		########################
 
-		# inst = self.generate_features_realtime(colproc_skel_data)
-
 		## Predict
 		pred_test_output = self.svm_clf.predict(feature_instance)
-		cname = self.label_to_name[self.id_to_labels[pred_test_output]]
-		print cname
+		pred_test_output
+		label = self.id_to_labels[pred_test_output[0]]
+		cname = self.label_to_name[label]
+		# print cname
 
-		return cname
+		return label, cname
 
 	###### Miscellaneous Function ########
 	def find_type_order(self, left, right):
@@ -547,19 +575,6 @@ class FeatureExtractor():
 		if((right_std - left_std) >= self.dominant_first_thresh): return right_order+left_order
 		elif((left_std - right_std) >= self.dominant_first_thresh): return left_order+right_order
 		else: return right_order+left_order
-
-	###### Miscellaneous Function ########
-	def interpn(self, yp, num_points, kind = 'linear'):
-		# yp is a gesture instance
-		# yp is 2D numpy array of size num_frames x 3 if num_joints = 1
-		# No. of frames will be increased/reduced to num_points
-		xp = np.linspace(0, 1, num = yp.shape[0])
-		x = np.linspace(0, 1, num = num_points)
-		y = np.zeros((x.size, yp.shape[1]))
-		for dim in range(yp.shape[1]):
-			f = interp1d(xp, yp[:, dim], kind = kind)
-			y[:, dim] = f(x)
-		return y
 
 	###### Miscellaneous Function ########
 	def plot_confusion_matrix(self, cm, classes, normalize=False, title='Confusion matrix',cmap=plt.cm.Blues):

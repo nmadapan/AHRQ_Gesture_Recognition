@@ -12,7 +12,7 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lex_folder = 'H:\AHRQ\Study_IV\Data\Data\L8' # Where to write the files
+lex_folder = r'H:\AHRQ\Study_IV\Flipped_Data\L8' # Where to write the files
 fps = 120
 default_width, default_height = 1920, 1080
 
@@ -70,9 +70,9 @@ while(True):
 			j = idx/M
 			i = idx - M * j
 			ret, frame = vcap.read()
-			if ret: 
+			if ret:
 				frame = cv2.resize(frame, dsize=(des_w, des_h))
-				cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA) 
+				cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA)
 			else: frame = 255*np.ones((des_h, des_w, 3))
 			bframe[i][j] = np.uint8(frame)
 		cframe = []

@@ -251,3 +251,4 @@ for lexicon in lexicons[-1:]:
                 data_to_write_list.append(line.tolist())
             gest_dict[gesture] = data_to_write_list
         pickle.dump(gest_dict,pkl_file)
+        break
