@@ -5,6 +5,7 @@ from threading import Thread
 import time
 import traceback
 
+
 ####
 # Sometimes it 'Connection closes' saying timed out. Look into it. 
 # 
@@ -15,7 +16,9 @@ import traceback
 
 # 0_3 to toggle between keyboard and images...the first 0_3 switches from keyboard to images
 #"4_1 400", "4_2 30", "6_1", "6_2 900_630", "6_3 80", "6_4 40", "9_1 60", "9_2 30", "11_1", "11_2"
-dataList = ["0_3", "0_8", "2_1", "2_2", "3_1", "3_2"]
+#"1_1 40", "1_2 30", "2_1", "2_2", "3_1", "3_2", "4_1 250_600_450", "4_2 30", "6_1 100", "6_2 100", "6_3 100", "6_4 100", "7_1 500_600_700_800", "7_1 400_300_900_500", "7_2 2", "7_2 1"
+#"8_1", "8_2", "9_1 60", "9_2 30", 
+dataList = ["10_3", "10_4", "5_3", "5_2", "0_2"]
 
 ## Global Static Variables
 # Call Aayush's Synapse command script
@@ -52,5 +55,5 @@ while True and i < len(dataList):
         #self.connect_status = False
         #self.client.close()
 
-# Open command prompt when finished with synapse commands
-sca.openWindows("Command Prompt")
+# Open command prompt or Terminal when finished with synapse commands
+sca.openWindow("Terminal")
