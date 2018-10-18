@@ -30,9 +30,6 @@ out_pkl_fname = os.path.join(dirname, fileprefix+'_'+str(num_fingers)+'_data.pic
 fe = FeatureExtractor(json_param_path = 'param.json')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
 
-print fe.skel_file_order
-sys.exit()
-
 if(ENABLE_FINGERS):
 	# # ## Appending finger lengths
 	with open(os.path.join(pickle_path1, fingers_pkl_fname), 'rb') as fp:

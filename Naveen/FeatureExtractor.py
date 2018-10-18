@@ -35,7 +35,7 @@ from helpers import *
 #####################
 
 class FeatureExtractor():
-	def __init__(self, json_param_path = 'param.json'):
+	def __init__(self, json_param_path = 'param.json', subject_param_path = 'subject_params.json'):
 		## Private variables
 		self.available_types = ['right', 'd_right', 'theta_right', 'd_theta_right',\
 							 	'left', 'd_left', 'theta_left', 'd_theta_left']
@@ -46,6 +46,9 @@ class FeatureExtractor():
 		# Initialize variables from json param path
 		param_dict = json_to_dict(json_param_path)
 		for key, value in param_dict.items(): setattr(self, key, value)
+
+		subject_param_dict = json_to_dict(subject_param_path)
+		for key, value in subject_param_dict.items(): setattr(self, key, value)
 
 		# Initialize the label to class name
 		self.label_to_name = json_to_dict(self.commands_filepath)
@@ -205,6 +208,11 @@ class FeatureExtractor():
 		## Obtain raw features
 		xf = self.extract_raw_features(skel_filepath, annot_filepath)
 
+		## Expected format 1_0_S*_L*_Scroll_X.txt
+		skel_fname = os.path.basename(skel_filepath)
+		subject_id = skel_fname.split('_')[2] # S*
+		lexicon_id = skel_fname.split('_')[3] # L*
+
 		for inst_id in range(len(xf['right'])):
 			## Initialize the feature instance. Also, put a label
 			features = {feat_type: None for feat_type in self.available_types}
@@ -231,7 +239,7 @@ class FeatureExtractor():
 
 			## Position
 			if(self.type_flags['right']):
-				features['right'] = right.transpose().flatten() / self.max_r
+				features['right'] = right.transpose().flatten() / self.subject_params[lexicon_id][subject_id] / 1.5
 			## Velocity
 			if(self.type_flags['d_right']):
 				features['d_right'] = d_right.transpose().flatten() / self.max_dr
@@ -417,6 +425,13 @@ class FeatureExtractor():
 		return out
 
 	###### ONLINE Function ########
+	def update_rt_params(self, subject_id = None, lexicon_id = None):
+		if subject_id is None or lexicon_id is None:
+			return ValueError('subject_id and lexicon_id CAN NOT BE None')
+		self.rt_subject_id = subject_id
+		self.rt_lexicon_id = lexicon_id
+
+	###### ONLINE Function ########
 	def process_data_realtime(self, colproc_skel_data):
 		########################
 		# Input arguments:
@@ -447,7 +462,7 @@ class FeatureExtractor():
 
 		## Position
 		if(self.type_flags['right']):
-			features['right'] = right.transpose().flatten() / self.max_r
+			features['right'] = right.transpose().flatten() / self.subject_params[self.rt_lexicon_id][self.rt_subject_id]
 		## Velocity
 		if(self.type_flags['d_right']):
 			features['d_right'] = d_right.transpose().flatten() / self.max_dr
