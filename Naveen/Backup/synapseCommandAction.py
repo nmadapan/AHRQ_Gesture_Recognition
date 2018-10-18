@@ -14,7 +14,7 @@ from scipy.signal import medfilt
 
 
 auto.FAILSAFE = True
-auto.PAUSE = 0.75
+auto.PAUSE = 0.25
 
 (width, height) = auto.size()
 (nativeW, nativeH) = ImageGrab.grab().size
@@ -25,6 +25,11 @@ print str(scale)
 
 (macH, viewer, prompt) = ((0, "\\\\Remote", "Command Prompt") if platform.system() == "Windows" else (44.0 * nativeW / 2880.0, "Citrix Viewer", "Terminal"))
 
+# Should have been the following:
+# border = (19.0 * nativeW / 2880.0) + (2.0 * scale) + 1.0
+# On AHRQ Mac, this would be 19 + (2*2) + 1 = 24
+# On AHRQ Dell, this would be 12.6666667 + 2 + 1 = 15.6666667
+# Sticking with calculation below to be on the safer side, going to figure out later what the actual numbers should be
 border = (20.0 * nativeW / 2880.0) + (4.0 * scale)
 boundBoxNoDash = (border, macH + border, nativeW - border, nativeH - border)
 
@@ -391,9 +396,6 @@ def findRightClick(offset):
 openWindow(viewer)
 
 def gestureCommands(sequence):
-	#calibration = Calibration()
-	#(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH) = calibration.getAll()
-
 	(commandID, actionID) = (-1, -1)
 	commandAction = sequence
 	if (sequence.find(" ") != -1):
@@ -465,7 +467,7 @@ def gestureCommands(sequence):
 			toPress = ("right" if action == "Up" else "left")
 			for i in range(scrollAmount):
 				auto.press(toPress)
-			auto.PAUSE = 0.75
+			auto.PAUSE = 0.25
 			auto.click()
 	elif (command == "Flip" and action != "Flip"):
 		moveToActivePanel()
@@ -494,18 +496,21 @@ def gestureCommands(sequence):
 		else:
 			auto.PAUSE = 0.1
 			auto.press("0")
-			for i in range(10):
-				auto.press("down")
-			auto.press("right")
+			# for i in range(10):
+			# 	auto.press("down")
+			# auto.press("right")
+			auto.press("s")
 			time.sleep(0.5)
 			auto.press("0")
 			if (action == "Horizontal"):
-				auto.press("down")
+				# auto.press("down")
+				auto.press("h")
 			else:
-				auto.press("down")
-				auto.press("down")
-			auto.press("enter")
-			auto.PAUSE = 0.75
+				# auto.press("down")
+				# auto.press("down")
+				auto.press("v")
+			# auto.press("enter")
+			auto.PAUSE = 0.25
 	elif (command == "Rotate" and action != "Rotate"):
 		moveToActivePanel()
 		auto.click(button='right')
@@ -533,22 +538,25 @@ def gestureCommands(sequence):
 		else:
 			auto.PAUSE = 0.1
 			auto.press("0")
-			for i in range(10):
-				auto.press("down")
-			auto.press("right")
+			# for i in range(10):
+			# 	auto.press("down")
+			# auto.press("right")
+			auto.press("s")
 			time.sleep(0.5)
 			auto.press("0")
+			auto.press("r")
 			if (action == "Clockwise"):
-				auto.press("down")
-				auto.press("down")
-				auto.press("down")
+				pass
+				# auto.press("down")
+				# auto.press("down")
+				# auto.press("down")
 			else:
 				auto.press("down")
-				auto.press("down")
-				auto.press("down")
-				auto.press("down")
-			auto.PAUSE = 0.75
+				# auto.press("down")
+				# auto.press("down")
+				# auto.press("down")
 			auto.press("enter")
+			auto.PAUSE = 0.25
 	elif (command == "Zoom"):
 		(isValid, action) = ((True, action) if command != action else defaultAction(commandID, [0, 1, 2, 3]))
 		if (not isValid):
@@ -660,6 +668,7 @@ def gestureCommands(sequence):
 					if (len(points) == 4):
 						(x1, y1, x2, y2) = (int(points[0]), int(points[1]), int(points[2]), int(points[3]))
 					elif (len(points) == 2):
+						moveToActivePanel()
 						(x1, y1) = auto.position()
 						(x2, y2) = (int(points[0]), int(points[1]))
 					else:
@@ -728,7 +737,7 @@ def gestureCommands(sequence):
 				for i in range(5):
 					auto.press("down")
 				auto.press("enter")
-				auto.pause = 0.75
+				auto.pause = 0.25
 			#os.remove(beforeRCRuler)
 			"""auto.click()
 			beforeMeasure = ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("Images", "beforeMeasure.png"))
@@ -754,7 +763,7 @@ def gestureCommands(sequence):
 			#auto.moveTo((329.0 / 1920.0) * nativeW, (82.0 / 1080.0) * nativeH + macH / scale)
 			#auto.moveTo((218.0 / 1440.0) * width, (75.5 / 900.0) * height)
 			#auto.moveTo((326.0 / 1920.0) * width, (78.0 / 1080.0) * height)
-			auto.moveTo((415.0 / 2880.0) * nativeW / scale, ((107.0 + macH) / 1800.0) * nativeH / scale)
+			auto.moveTo((435.0 / 2880.0) * width, ((107.0 + macH) / 1800.0) * height)
 			auto.click()
 			time.sleep(3)
 			"""
@@ -816,8 +825,8 @@ def gestureCommands(sequence):
 				auto.click()
 			else:
 				auto.press("0")
-				auto.press("down")
-				auto.press("enter")
+				auto.press("w")
+				# auto.press("enter")
 			moveToActivePanel()
 			(oldLocationX, oldLocationY) = auto.position()
 			auto.mouseDown()
@@ -892,8 +901,9 @@ def gestureCommands(sequence):
 		else:
 			auto.PAUSE = 0.1
 			auto.press("0")
-			for i in range(9):
-				auto.press("down")
+			# for i in range(9):
+			# 	auto.press("down")
+			auto.press("i")
 			auto.press("right")
 			time.sleep(0.5)
 			auto.press("0")
@@ -901,7 +911,7 @@ def gestureCommands(sequence):
 			for i in range(actionID):
 				auto.press("down")
 			auto.press("enter")
-			auto.PAUSE = 0.75
+			auto.PAUSE = 0.25
 
 	if (command != "Admin"):
 		status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
