@@ -3,17 +3,18 @@ import os, sys
 import random, socket
 from threading import Thread
 import time
-from fake_synapse import synapse
-import synapseCommandAction as sca
+
+## This is a script. Be careful where it is being imported.
+# import synapseCommandAction as sca
 
 ####
-# Sometimes it 'Connection closes' saying timed out. Look into it. 
-# 
+# Sometimes it 'Connection closes' saying timed out. Look into it.
+#
 # Happens bacuse of the socket.setdefaulttimeout(2) in ex_client. If 2 is made 10 then it's working fine. Checked many times
 ####
 
 ## Global Static Variables
-TCP_IP = '10.186.130.21'
+TCP_IP = 'localhost'
 
 TCP_PORT = 5000
 BUFFER_SIZE = 1024
@@ -27,9 +28,8 @@ class Server():
     def __init__(self):
 
         ## Socket variables
-        self.connect_status = False # Connection not yet established. 
+        self.connect_status = False # Connection not yet established.
         self.client, self.addr = None, None
-        self.fl_sock_com = False
         self.sock = None
         socket.setdefaulttimeout(30)
         self.init_socket()
@@ -62,22 +62,19 @@ class Server():
     def th_socket(self):
         # Call Aayush's Synapse command script
         if (not os.path.exists("calibration.txt")):
-            synapse_Flag = sca.gestureCommands("0_3")
+            ## Find the calibration parameters again
+            synapse_Flag = sca.gestureCommands("0_4")
         while True:
-            # if(not self.connect_status): self.wait_for_connection() # This is not relevant beccause
-            #    wait_for_connection expects to receive INITIAL_MESSAGE
             try:
                 data = self.sock_recv()
-                # print data
-                ### Temporary
-                # Find a way to monitor synapse. when we should we send False ?
-                # synapse_Flag = synapse(data) #Aayush's code should be executed from here. Output shall be True or False
-                # Pass in data to raw_input in Aayush's script
-                synapse_Flag=sca.gestureCommands(data[0], data[1]) #it should return TRUE if command is executed properly
-
+                print 'Received: ', data
+                # synapse_Flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
+                synapse_Flag = True
                 if synapse_Flag:
-                    print data,'has been executed'
+                    print data, 'has been executed'
                     self.client.send(str(True)) # Send True once the execuction is done.
+                else:
+                    self.client.send(str(False)) # Send True once the execuction is done.
             except Exception as exp:
                 print exp
                 print 'Connection Closed'
@@ -95,9 +92,8 @@ class Server():
     def run(self):
         sock_thread = Thread(name='server_thread', target=self.th_socket)
         sock_thread.start()
-        
 
 if __name__ == '__main__':
     print '--------- Server ---------'
-    server = Server()
+    server = Server() ## Initialize server object
     server.run()
