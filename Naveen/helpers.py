@@ -406,6 +406,10 @@ def smart_interpn(yp, reps, kind = 'copy'):
 	return out
 
 def interpn(yp, num_points, kind = 'linear'):
+	'''
+	Description:
+		Interpolate the rows of
+	'''
 	# yp is a gesture instance
 	# yp is 2D numpy array of size num_frames x 3 if num_joints = 1
 	# No. of frames will be increased/reduced to num_points
@@ -419,6 +423,15 @@ def interpn(yp, num_points, kind = 'linear'):
 	return y
 
 def flip_video(input_video_path, out_video_path):
+	'''
+	Description:
+		Flip the video given by 'input_video_path'.
+	Input arguments:
+		'input_video_path': absolute path to a video
+		'output_video_path': absolute path to the output video file
+	Return:
+		None
+	'''
 	cap = cv2.VideoCapture(input_video_path)
 	fps = cap.get(cv2.CAP_PROP_FPS)
 	width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
