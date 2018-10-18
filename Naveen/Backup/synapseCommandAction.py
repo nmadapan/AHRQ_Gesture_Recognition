@@ -8,6 +8,9 @@ from PIL import ImageGrab
 from PIL import ImageChops
 import signal
 import sys
+import math
+import matplotlib.pyplot as plt
+from scipy.signal import medfilt
 
 
 auto.FAILSAFE = True
@@ -37,10 +40,10 @@ def openWindow(toOpen):
 		xef_window = auto.getWindow(xef_window_name)
 		xef_window.maximize()
 	else:
-		auto.hotkey("command", "space")
-		auto.typewrite(toOpen)
-		auto.press("enter")
-		#auto.hotkey("command", "tab")
+		# auto.hotkey("command", "space")
+		# auto.typewrite(toOpen)
+		# auto.press("enter")
+		auto.hotkey("command", "tab")
 
 #Remove images already saved (avoids issues with git)
 def removeImages():
@@ -52,6 +55,7 @@ def removeImages():
 		for file in os.listdir(path):
 			if file.endswith(".png"):
 				os.remove(os.path.join(path, file))
+	os.remove("calibration.txt")
 
 # Prompt notification if choosing to remove the images
 def removeImagesPrompt():
@@ -73,7 +77,67 @@ def signal_handler(sig, frame):
 	sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
+# def get_bbox(before, after, thresholds = None, draw = False, num_bins=20):
+	# if (type(before) != type(after)):
+	# 	return ValueError('before and after should have same type')
+	# if (isinstance(before, str)):
+	# 	if (not os.path.isfile(before)):
+	# 		sys.exit(before + ' does NOT exist')
+	# 	if (not os.path.isfile(after)):
+	# 		sys.exit(after + ' does NOT exist')
+	# 	before = cv2.imread(before)
+	# 	after = cv2.imread(after)
+	# elif (isinstance(before, np.ndarray)):
+	# 	assert before.ndim == 3 and after.ndim == 3, 'before and after needs to be rgb arrays'
+	# 	assert (before.shape[0] == after.shape[0]) and (before.shape[1] == after.shape[1]),\
+	# 		 'before and after arrays should be of same dimension'
+	# ###########################
+	# #### Tuning Params ########
+	# noise_percentage = 0.25
+	# percentage_bins_for_mean = 0.5
+	# ##########################
 
+	# noise_index = int(num_bins*noise_percentage)
+	# remaining_mean = int(math.ceil((num_bins - noise_index)*percentage_bins_for_mean))
+	# dif = cv2.cvtColor(np.uint8(np.abs(after - before)), cv2.COLOR_BGR2GRAY)
+	# # _, dif = cv2.threshold(dif,127,255,0)
+
+	# x_sum = np.mean(dif, axis = 0)
+	# y_sum = np.mean(dif, axis = 1)
+ 
+	# x_sum = medfilt(x_sum, 211)
+	# y_sum = medfilt(y_sum, 211)
+
+	# if (thresholds == None):
+	# 	frequencies, avg_hist_values = np.histogram(x_sum, bins = num_bins)
+	# 	sort_ids = np.argsort(frequencies[noise_index:])
+	# 	x_thresh = np.mean(avg_hist_values[noise_index+sort_ids[:remaining_mean]])
+
+	# 	# x_thresh = avg_hist_values[10]# np.argmin(frequencies)
+
+	# 	frequencies, avg_hist_values = np.histogram(y_sum, bins = num_bins)
+	# 	sort_ids = np.argsort(frequencies[noise_index:])
+	# 	y_thresh = np.mean(avg_hist_values[noise_index+sort_ids[:remaining_mean]])
+	# else:
+	# 	x_thresh = thresholds[0]
+	# 	y_thresh = thresholds[1]
+
+	# print x_thresh, y_thresh
+	# # plt.hist(y_sum, bins = 20)
+	# # plt.plot(y_sum)
+	# # plt.show()	
+	# # sys.exit(0)
+	# x_sum, y_sum = x_sum > x_thresh, y_sum > y_thresh
+
+	# x1, x2 = np.argmax(x_sum), x_sum.size - np.argmax(np.flip(x_sum, 0)) - 1
+	# y1, y2 = np.argmax(y_sum), y_sum.size - np.argmax(np.flip(y_sum, 0)) - 1
+
+	# if (draw):
+	# 	after = cv2.rectangle(after,(x1,y1),(x2,y2),(0,255,0),4)
+	# 	cv2.imshow('Frame', cv2.resize(after, None, fx=0.5, fy=0.5))
+	# 	cv2.waitKey(0)
+
+	# return (x1, y1, x2, y2)
 """
 	Input Arguments:
 		before, after: path to the image before right click, and after right click OR
@@ -83,7 +147,7 @@ signal.signal(signal.SIGINT, signal_handler)
 	Output Arguments:
 		(x1, y1, x2, y2): where x1, y1 are top left corner and x2, y2 are bottom right corner
 """
-"""def get_bbox(before, after, thresholds = None, draw = False):
+def get_bbox(before, after, thresholds = None, draw = False):
 	if (type(before) != type(after)):
 		return ValueError('before and after should have same type')
 	if (isinstance(before, str)):
@@ -123,12 +187,12 @@ signal.signal(signal.SIGINT, signal_handler)
 		cv2.waitKey(0)
 
 	return (x1, y1, x2, y2)
-"""
 
+"""
 def get_bbox(before, after):
 	ImageChops.difference(Image.open(before), Image.open(after)).save("tempDiff.png")
 	return auto.locateOnScreen("tempDiff.png")
-
+"""
 
 status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "rulers": {"len": 0},
 	"toUse": "Keyboard", "hold_action": None}
@@ -263,7 +327,8 @@ class Calibration(object):
 		auto.click()
 
 calibration = Calibration()
-(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH) = calibration.getAll()
+(status["topBarHeight"], status["optionH"], status["rightHR"], status["rightPlus"], status["rightIcons"],
+	status["rightOffset"], status["rightBoxW"], status["rightBoxH"]) = calibration.getAll()
 
 
 actionList = [["Admin", "Quit", "Get Status", "Switch ToUse", "Reset All", "Reset TopBar", "Reset RightClick", "Reset Presets", "Reset ScaleRotateFlip"],
@@ -316,7 +381,7 @@ def findRightClick(offset):
 	located = auto.locateOnScreen(os.path.join("Images", "RightClick", "rightClick.png"))
 	if (located is not None):
 		(x1, y1, w, h) = located
-		auto.moveTo((x1 / scale) + (w / 2.0) * scale, (y1 + (offset / 1000.0) * rightBoxH) / scale)
+		auto.moveTo((x1 / scale) + (w / 2.0) * scale, (y1 + (offset / 1000.0) * status["rightBoxH"]) / scale)
 		return True
 	else:
 		print "Error when performing right click function."
@@ -326,8 +391,8 @@ def findRightClick(offset):
 openWindow(viewer)
 
 def gestureCommands(sequence):
-	calibration = Calibration()
-	(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH) = calibration.getAll()
+	#calibration = Calibration()
+	#(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH) = calibration.getAll()
 
 	(commandID, actionID) = (-1, -1)
 	commandAction = sequence
@@ -363,8 +428,8 @@ def gestureCommands(sequence):
 			print "Panel Dimension: " + str(status["panel_dim"][0]) + 'x' + str(status["panel_dim"][1])
 			print "Active panel: " + str(status["active_panel"][0]) + 'x' + str(status["active_panel"][1])
 			print "Patient information window: " + ("opened" if status["window_open"] else "closed")
-			print "Rulers: " + ("\n\t" + str(c) + ": " + status["rulers"][c] for c in status["rulers"] if c != "len")
-			print "(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH)",str(calibration.getAll())
+			# print "Rulers: " + ("\n\t" + str(c) + ": " + status["rulers"][c] for c in status["rulers"] if c != "len")
+			#print "(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH)",str((calibration.getAll()))
 			print ""
 		elif (action == "Switch ToUse"):
 			status["toUse"] = ("Keyboard" if status["toUse"] == "Images" else "Images")
@@ -381,7 +446,9 @@ def gestureCommands(sequence):
 				calibration.resetRightOptions("presets", 8.5)
 			elif (action == "ScaleRotateFlip"):
 				calibration.resetRightOptions("scaleRotateFlip", 9.5)
-			(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH) = calibration.getAll()
+			#(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH) = calibration.getAll()
+			(status["topBarHeight"], status["optionH"], status["rightHR"], status["rightPlus"], status["rightIcons"],
+				status["rightOffset"], status["rightBoxW"], status["rightBoxH"]) = calibration.getAll()
 			if (status["hold_action"] is not None):
 				sequence = status["hold_action"]
 				status["hold_action"] = "held"
@@ -394,7 +461,7 @@ def gestureCommands(sequence):
 			scrollAmount = (-1 * scrollAmount if action == "Up" else scrollAmount)
 			auto.scroll(scrollAmount)
 		else:
-			auto.PAUSE = 0.1
+			auto.PAUSE = 0
 			toPress = ("right" if action == "Up" else "left")
 			for i in range(scrollAmount):
 				auto.press(toPress)
@@ -421,7 +488,7 @@ def gestureCommands(sequence):
 					return False
 			(x1, y1, w, h) = located
 			y1 = y1 / scale;
-			y1 += (rightPlus + (optionH * 0.5) if action == "Horizontal" else rightPlus + (optionH * 1.5))
+			y1 += (status["rightPlus"] + (status["optionH"] * 0.5) if action == "Horizontal" else status["rightPlus"] + (status["optionH"] * 1.5))
 			auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
 			auto.click()
 		else:
@@ -460,7 +527,7 @@ def gestureCommands(sequence):
 					return False
 			(x1, y1, w, h) = located
 			y1 = y1 / scale
-			y1 += (rightPlus + (optionH * 2.5) if action == "Clockwise" else rightPlus + (optionH * 3.5))
+			y1 += (status["rightPlus"] + (status["optionH"] * 2.5) if action == "Clockwise" else status["rightPlus"] + (status["optionH"] * 3.5))
 			auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
 			auto.click()
 		else:
@@ -516,10 +583,10 @@ def gestureCommands(sequence):
 			auto.mouseUp()
 			print "level: " + str(level) + ", (moveToX, moveToY): " + str(tuple((moveToX, moveToY)))
 	elif (command == "Switch Panel" and action != "Switch Panel"):
-		status["active_panel"][1] += (1 if action == "Right" else 0)
-		status["active_panel"][1] += (-1 if action == "Left" else 0)
-		status["active_panel"][0] += (1 if action == "Down" else 0)
-		status["active_panel"][0] += (-1 if action == "Up" else 0)
+		#status["active_panel"][1] += (1 if action == "Right" else 0)
+		#status["active_panel"][1] += (-1 if action == "Left" else 0)
+		#status["active_panel"][0] += (1 if action == "Down" else 0)
+		#status["active_panel"][0] += (-1 if action == "Up" else 0)
 		positions = [["Up", "Down"], ["Left", "Right"]]
 		for i in range(2):
 			status["active_panel"][i] += (-1 if action == positions[i][0] else 0)
@@ -648,8 +715,8 @@ def gestureCommands(sequence):
 				print str((x1, y1))
 				auto.moveTo(x1, y1)
 				ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffRCRuler)
-				moveToX = (x1 + rightIcons + x2) / (2.0 * scale)
-				moveToY = (y1 / scale) + rightPlus + (optionH * 4.5)
+				moveToX = (x1 + status["rightIcons"] + x2) / (2.0 * scale)
+				moveToY = (y1 / scale) + status["rightPlus"] + (status["optionH"] * 4.5)
 				print str((moveToX, moveToY))
 				auto.moveTo(moveToX, moveToY)
 				auto.click()
@@ -669,9 +736,9 @@ def gestureCommands(sequence):
 			afterMeasure = ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("Images", "afterMeasure.png"))
 			(x1, y1, x2, y2) = get_bbox(os.path.join("Images", "beforeMeasure.png"), os.path.join("Images", "afterMeasure.png"))
 			diffX = x2 - x1
-			x1 += boundBoxNoDash[0] + (rightIcons / scale) + (diffX / 2.0)
-			y1 += boundBoxNoDash[1] + rightPlus + (optionH * 4.5)
-			#(moveToX, moveToY) = ((x1 + x2) / 2.0, rightPlus + (optionH * 4.5))
+			x1 += boundBoxNoDash[0] + (status["rightIcons"] / scale) + (diffX / 2.0)
+			y1 += boundBoxNoDash[1] + status["rightPlus"] + (status["optionH"] * 4.5)
+			#(moveToX, moveToY) = ((x1 + x2) / 2.0, status["rightPlus"] + (status["optionH"] * 4.5))
 			#auto.moveTo(x1 + (79.0 / 1440.0) * width, y1 + (85.0 / 900.0) * height)
 			auto.moveTo(x1, y1)
 			auto.click()"""
@@ -679,17 +746,18 @@ def gestureCommands(sequence):
 		if (action == "Open" and not status["window_open"]):
 			auto.moveTo(width / 2.0, 0)
 			time.sleep(1)
-			box = (1.0 * scale, topBarHeight, -1.0 * scale, -1.0 * scale)
+			box = (1.0 * scale, status["topBarHeight"], -1.0 * scale, -1.0 * scale)
 			box = tuple(boundBoxNoDash[i] + box[i] for i in range(4))
 			afterHoverPath = os.path.join("Images", "Window", "afterHover.png")
 			if (not os.path.exists(afterHoverPath)):
 				ImageGrab.grab(bbox=box).save(afterHoverPath)
 			#auto.moveTo((329.0 / 1920.0) * nativeW, (82.0 / 1080.0) * nativeH + macH / scale)
-			#auto.moveTo((218.0 / 1440.0) * width, (75.5.0 / 900.0) * height)
+			#auto.moveTo((218.0 / 1440.0) * width, (75.5 / 900.0) * height)
 			#auto.moveTo((326.0 / 1920.0) * width, (78.0 / 1080.0) * height)
-			auto.moveTo((435.0 / 2880.0) * nativeW / scale, ((107.0 + macH) / 1800.0) * nativeH / scale)
+			auto.moveTo((415.0 / 2880.0) * nativeW / scale, ((107.0 + macH) / 1800.0) * nativeH / scale)
 			auto.click()
-			time.sleep(6)
+			time.sleep(3)
+			"""
 			seriesThumbnailPath = os.path.join("Images", "Window", "seriesThumbnail.png")
 			if (not os.path.exists(seriesThumbnailPath)):
 				ImageGrab.grab(bbox=box).save(seriesThumbnailPath)
@@ -717,10 +785,11 @@ def gestureCommands(sequence):
 				auto.moveTo(0, (y1 + y2) / (scale * 2.0))
 				auto.click()
 				ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(seriesClose_GrayPath)
+			"""
 			status["window_open"] = (not status["window_open"])
 		elif (action == "Close" and status["window_open"]):
-			for file in os.listdir(os.path.join("Images", "Window", "Closes")):
-				close = auto.locateOnScreen(os.path.join("Images", "Window", "Closes", file))
+			for file in os.listdir(os.path.join("Images", "Window", "Closes", "Test")):
+				close = auto.locateOnScreen(os.path.join("Images", "Window", "Closes", "Test", file))
 				if (close is not None):
 					(x1, y1, w, h) = close
 					auto.moveTo((2 * x1 + w) / (scale * 2.0), (2 * y1 + h) / (scale * 2.0))
@@ -758,7 +827,7 @@ def gestureCommands(sequence):
 		(oldLocationX, oldLocationY) = auto.position()
 		auto.moveTo(oldLocationX, 0)
 		time.sleep(1)
-		box = (1.0 * scale, topBarHeight, -1.0 * scale, -1.0 * scale)
+		box = (1.0 * scale, status["topBarHeight"], -1.0 * scale, -1.0 * scale)
 		box = tuple(boundBoxNoDash[i] + box[i] for i in range(4))
 		afterHoverPath = os.path.join("Images", "Layout", "afterHover.png")
 		if (not os.path.exists(afterHoverPath)):
@@ -779,11 +848,18 @@ def gestureCommands(sequence):
 		diffLayoutPath = os.path.join("Images", "Layout", "diffLayout.png")
 		if (not os.path.exists(diffLayoutPath)):
 			ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffLayoutPath)
-		x1 += (68.0 / 1920.0) * nativeW
-		y1 += (95.0 / 1080.0) * nativeH
-		jumpX = (91.0 / 1920.0) * nativeW
+		# x1 += (68.0 / 1920.0) * nativeW
+		# x1 = x1 / scale
+		# y1 += (95.0 / 1080.0) * nativeH
+		# y1 = y1 / scale
+		# jumpX = (91.0 / 1920.0) * nativeW / scale
+		"""x1 += (92.0 / 2880.0) * width
+		y1 += (128.0 / 1800.0) * height
+		jumpX = (122.0 / 2880.0) * width"""
 		(status["panel_dim"][0], status["panel_dim"][1]) = (1, actionID)
-		x1 += (status["panel_dim"][1] - 1) * jumpX
+		#x1 += (status["panel_dim"][1] - 1) * jumpX
+		(x1, y1) = (472 + (actionID - 1) * 62, 217)
+		print str((x1, y1))
 		auto.moveTo(x1, y1)
 		auto.click()
 		resetPanelMoves()
@@ -810,7 +886,7 @@ def gestureCommands(sequence):
 					return False
 			(x1, y1, w, h) = located
 			y1 = y1 / scale
-			y1 += rightPlus + (optionH * (actionID + 0.5))
+			y1 += status["rightPlus"] + (status["optionH"] * (actionID + 0.5))
 			auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
 			auto.click()
 		else:
