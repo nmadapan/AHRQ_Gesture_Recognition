@@ -27,14 +27,19 @@ PORT_CPM = 3000
 ENABLE_SYNAPSE_SOCKET = False
 ENABLE_CPM_SOCKET = False
 
+ONLY_SKELETON = True
+
+LEXICON_ID = 'L6'
+SUBJECT_ID = 'S7'
+
 #TODO: What happens when there are more people. 
 
 class Realtime:
 	def __init__(self):
 		## Global Constants
-		self.lexicon_name = 'L6'
-		self.data_path = r'H:\AHRQ\Study_IV\Data\Data'
-		self.trained_pkl_fpath = r'H:\AHRQ\Study_IV\Data\Data\L6_data.pickle'
+		self.data_path = r'H:\AHRQ\Study_IV\Data\Data' # Path where _reps.txt file is present. 
+		self.trained_pkl_fpath = 'H:\AHRQ\Study_IV\Flipped_Data\\' + LEXICON_ID + '_0_data.pickle' # path to trained .pickle file. 
+		# self.trained_pkl_fpath = r'H:\AHRQ\Study_IV\Data\Data\L6_0_data.pickle' # path to trained .pickle file. 
 
 		self.base_write_dir = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
 
@@ -98,6 +103,7 @@ class Realtime:
 		with open(self.trained_pkl_fpath, 'rb') as fp:
 			res = pickle.load(fp)
 			self.feat_ext = res['fe'] # res['out'] exists but we dont need training data.
+		self.feat_ext.update_rt_params(subject_id = SUBJECT_ID, lexicon_id = LEXICON_ID)
 
 		## Other variables
 		self.skel_instance = None # Updated in self.th_gen_skel(). 
@@ -116,10 +122,10 @@ class Realtime:
 		self.neck_id = 2
 		self.left_hand_id = 7
 		self.right_hand_id = 11
-		self.thresh_level = 0.2 #TODO: It seems to be working. 
+		self.thresh_level = 0.3 #TODO: It seems to be working. 
 
 	def update_cmd_reps(self):
-		rep_path = os.path.join(self.data_path, self.lexicon_name+'_reps.txt')
+		rep_path = os.path.join(self.data_path, LEXICON_ID+'_reps.txt')
 		if(not os.path.isfile(rep_path)): raise IOError('reps file does NOT exist')
 		with open(rep_path, 'r') as fp:
 			lines = fp.readlines()
@@ -242,7 +248,9 @@ class Realtime:
 				print_first_time = True
 				frame_count = 0
 
+				## TODO: Condition it on cond_rgb, otherwise, we might run into race conditions
 				self.skel_instance = deepcopy(skel_frames) # [(ts1, ([left_x, y, z], [right_x, y, z])), ...]
+				## TODO: If length of skel_instance is less than a certain number, ignore that gesture. 
 				skel_frames = []
 
 				self.fl_skel_ready = True ##### Think about conditioning
@@ -327,6 +335,7 @@ class Realtime:
 				print_first_time = True
 				frame_count = 0
 
+				## TODO: Condition it on cond_rgb, otherwise, we might run into race conditions
 				self.op_instance = deepcopy(op_instance) # [(ts1, ([left_f1, f2, .., f5], [right_f1, f2, .., f5])), ...]
 
 				# timestamps, raw_op_features = zip(*op_instance)
@@ -383,17 +392,19 @@ class Realtime:
 
 		acces_kinect_thread.start()
 		gen_skel_thread.start()
-		acces_cpm_thread.start()
+		if(ENABLE_CPM_SOCKET): acces_cpm_thread.start()
 		if(ENABLE_SYNAPSE_SOCKET): synapse_thread.start()
-
-		only_skeleton = True
 
 		## Merger part of the code
 		while(self.fl_alive):
 			if(self.fl_synapse_running): continue
-			if(self.fl_skel_ready and self.fl_cpm_ready):
+
+			if(ENABLE_CPM_SOCKET): flag = self.fl_skel_ready and self.fl_cpm_ready
+			else: flag = self.fl_skel_ready
+			
+			if(flag):
 				# pp(self.skel_instance)
-				# pp(self.op_instance)
+				# pp(self.opq_instance)
 				
 				#####################
 				### SKEL FEATURE ####
@@ -404,12 +415,12 @@ class Realtime:
 				#####################
 
 				## Interpolate cpm instances
-				if(not only_skeleton):
+				if(not ONLY_SKELETON):
 					###################
 					### OP FEATURE ####
 					###################
 					# Detuple op_instance
-					op_ts, raw_op_frames = zip(*op_instance)
+					op_ts, raw_op_frames = zip(*self.op_instance)
 					# Detuple op frames int right and left
 					right_op, left_op = zip(*raw_op_frames)
 					# Merge op features based on dom_rhand
@@ -452,7 +463,7 @@ class Realtime:
 				'''
 
 				self.fl_skel_ready = False
-				self.fl_cpm_ready = False
+				if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False
 
 		# If anything fails do the following
 		self.kr.close()

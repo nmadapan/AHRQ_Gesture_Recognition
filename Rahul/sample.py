@@ -1,12 +1,14 @@
-from opnepose_realtime_routines import extract_fingers_realtime
-import os, time
-print os.getcwd()
+import numpy as np
+import pickle
 
-fing_rt = extract_fingers_realtime
+pkl_path = r'H:\AHRQ\Study_IV\Data\Data_cpm\fingers\L6\L6_fingers_pp.pkl'
+write_pkl_path = r'H:\AHRQ\Study_IV\Data\Data_cpm\fingers\L6\L6_fingers_pp.pkl'
 
-img_dir = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\openpose\\Open_Pose_Demo\\temp_dir'
+with open(pkl_path, 'rb') as fp:
+    fingers_data = pickle.load(fp)
 
-st = time.time()
-fing_rt(img_dir,dom_hand=1,num_fingers=10)
-st2 = time.time()
-print st2 - st
+# for key in fingers_data.keys()[:130]:		
+print np.array(fingers_data['11_2_S6_L2_ContrastPresets_X']).shape
+
+# print type(fingers_data)
+# print np.array(fingers_data['6_1_S1_L6_Pan_Left']).shape

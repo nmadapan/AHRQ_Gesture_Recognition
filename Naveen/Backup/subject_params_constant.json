@@ -1,0 +1,65 @@
+{
+	"subject_params":
+					{
+						"L2":
+							{
+								"S1": 0.7500,
+								"S2": 0.7500,
+								"S3": 0.7500,
+								"S4": 0.7500,
+								"S5": 0.7500,
+								"S6": 0.7500,
+								"S1_name": "Rahulo",
+								"S2_name": "Navingo",
+								"S3_name": "Glebo",
+								"S4_name": "JuanAndres",
+								"S5_name": "JuanAntonio",
+								"S6_name": "Hose"
+							},
+						"L3":
+							{
+								"S1": 0.7500,
+								"S2": 0.7500,
+								"S3": 0.7500,
+								"S4": 0.7500,
+								"S5": 0.7500,
+								"S6": 0.7500,
+								"S1_name": "Rahulo",
+								"S2_name": "Navingo",
+								"S3_name": "Glebo",
+								"S4_name": "Jackie",
+								"S5_name": "Natalia",
+								"S6_name": "Ting"
+							},	
+						"L6":
+							{
+								"S1": 0.7500,
+								"S2": 0.7500,
+								"S3": 0.7500,
+								"S4": 0.7500,
+								"S5": 0.7500,
+								"S6": 0.7500,
+								"S1_name": "Rahulo",
+								"S2_name": "Navingo",
+								"S3_name": "Glebo",
+								"S4_name": "Mandira",
+								"S5_name": "Aayush",
+								"S6_name": "Won"
+							},	
+						"L8":
+							{
+								"S1": 0.7500,
+								"S2": 0.7500,
+								"S3": 0.7500,
+								"S4": 0.7500,
+								"S5": 0.7500,
+								"S6": 0.7500,
+								"S1_name": "Rahulo",
+								"S2_name": "Navingo",
+								"S3_name": "Glebo",
+								"S4_name": "Edgar",
+								"S5_name": "Aayush",
+								"S6_name": "Xiayu"
+							}
+					}		
+}
