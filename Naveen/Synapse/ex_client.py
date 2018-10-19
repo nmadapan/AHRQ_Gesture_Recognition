@@ -4,7 +4,8 @@ import socket, random
 import time
 
 ## Initializing Global Variables
-TCP_IP = 'localhost'
+TCP_IP = '10.186.47.225'
+# TCP_IP = 'localhost'
 TCP_PORT = 5000 # Both server and client should have a common IP and Port
 BUFFER_SIZE = 1024 # in bytes. 1 charecter is one byte.
 INITIAL_MESSAGE = 'Handshake'
@@ -19,9 +20,9 @@ class Client():
 	def sock_connect(self, timeout = 30):
 		# Description:
 		#	If connected, return as is
-		#	Else, keep trying to connect forever. 
-		print 'Connecting to server .', 
-		if(self.connect_status): 
+		#	Else, keep trying to connect forever.
+		print 'Connecting to server .',
+		if(self.connect_status):
 			print 'Connected!'
 			return
 
@@ -33,7 +34,7 @@ class Client():
 				self.connect_status = True
 				self.sock.send(INITIAL_MESSAGE)
 				print '. ',
-				time.sleep(0.5)					
+				time.sleep(0.5)
 			except Exception as exp:
 				print '. ',
 				time.sleep(0.5)
@@ -42,7 +43,7 @@ class Client():
 				sys.exit(0)
 
 	def sock_recv(self, timeout = 30):
-		print '\nWaiting for delivery message: .', 
+		print '\nWaiting for delivery message: .',
 		data = None
 		start = time.time()
 		while(not self.data_received):
@@ -59,7 +60,7 @@ class Client():
 
 			if(time.time()-start > timeout):
 				print 'No delivery message! Waited for more than ' + str(timeout) + ' seconds.'
-				sys.exit(0)		
+				sys.exit(0)
 
 		return data
 
@@ -67,7 +68,7 @@ class Client():
 		self.sock_connect()
 		self.sock_recv()
 
-	def send_data(self, data):	
+	def send_data(self, data):
 		if self.connect_status:
 			self.sock.send(data)
 			return bool(self.sock.recv(32))

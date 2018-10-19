@@ -379,16 +379,16 @@ def flip_skeleton(skel_path, out_path, dim_per_joint=3):
 	fp.close()
 
 def smart_interpn(yp, reps, kind = 'copy'):
-	# yp:
-	#	2D numpy array of size num_frames x 3 if num_joints = 1
-	#
-	# reps:
-	#	1D numpy array whose elements range from [0, num_frames-1]. Note that the size of reps is usually larger than num_frames
-	#
-	# kind:
-	#	'linear'	- linear interpolation
-	#	'copy'		- do the copy
-
+	'''
+	Description:
+		Smart inpterpolation of the given 2D np.ndarray along the rows.
+	Input arguments:
+		* yp: np.ndarray of shape nr x nc. For instance, it is a 2D numpy array of size num_frames x 3 if num_joints = 1
+		* reps: 1D numpy array whose elements range from [0, num_frames-1]. Note that the size of reps is usually larger than num_frames
+		* kind: type of interpolation. 'linear' (linear interpolation) or 'copy' (copy whenever replications happen).
+	Return:
+		np.ndarray with no. of rows equal to the size of 'reps' and no. of columns same as 'yp'.
+	'''
 	assert isinstance(yp, np.ndarray), 'yp is NOT a numpy array'
 	assert yp.ndim == 2, 'yp should be a 2D numpy array'
 
@@ -406,6 +406,16 @@ def smart_interpn(yp, reps, kind = 'copy'):
 	return out
 
 def interpn(yp, num_points, kind = 'linear'):
+	'''
+	Description:
+		Inpterpolation the given 2D np.ndarray along the rows.
+	Input arguments:
+		* yp: np.ndarray of shape nr x nc
+		* num_points: desired no. of rows
+		* kind: type of interpolation. linear or poly. Refer to interp1d of scipy.interpolate for more types of interpolation.
+	Return:
+		np.ndarray with no. of rows equal to num_points and no. of columns same as 'yp'.
+	'''
 	# yp is a gesture instance
 	# yp is 2D numpy array of size num_frames x 3 if num_joints = 1
 	# No. of frames will be increased/reduced to num_points
@@ -419,6 +429,15 @@ def interpn(yp, num_points, kind = 'linear'):
 	return y
 
 def flip_video(input_video_path, out_video_path):
+	'''
+	Description:
+		Flip the video present in input_video_path.
+	Input arguments:
+		* input_video_path: absolute path to video that you want to flip
+		* out_video_path: absolute path to video where you want to write to.
+	Return:
+		None
+	'''
 	cap = cv2.VideoCapture(input_video_path)
 	fps = cap.get(cv2.CAP_PROP_FPS)
 	width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
