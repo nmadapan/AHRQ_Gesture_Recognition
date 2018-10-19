@@ -6,7 +6,6 @@ import time
 ## Initializing Global Variables
 TCP_IP = '10.186.47.225'
 # TCP_IP = 'localhost'
-TCP_PORT = 5000 # Both server and client should have a common IP and Port
 BUFFER_SIZE = 1024 # in bytes. 1 charecter is one byte.
 INITIAL_MESSAGE = 'Handshake'
 
