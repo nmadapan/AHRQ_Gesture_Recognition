@@ -4,7 +4,7 @@ import socket, random
 import time
 
 ## Initializing Global Variables
-TCP_IP = 'localhost'
+TCP_IP = '192.168.0.80'
 TCP_PORT = 5000 # Both server and client should have a common IP and Port
 BUFFER_SIZE = 1024 # in bytes. 1 charecter is one byte.
 INITIAL_MESSAGE = 'Handshake'
