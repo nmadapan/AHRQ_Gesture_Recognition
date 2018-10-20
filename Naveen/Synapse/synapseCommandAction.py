@@ -846,7 +846,7 @@ def gestureCommands(sequence):
 		#auto.moveTo((428.0 / 1920.0) * width, (77.0 / 1080.0) * height)
 		#auto.moveTo((435.0 / 2880.0) * nativeW / scale, ((107.0 + macH) / 1800.0) * nativeH / scale)
 		#moveToY = (61.0 * nativeW / 2880.0)
-		auto.moveTo((857.0 / 2880.0) * nativeW / scale, ((109.0 + macH) / 1800.0) * nativeH / scale)
+		auto.moveTo((857.0 / 2880.0) * width, ((109.0 + macH) / 1800.0) * height)
 		auto.click()
 		time.sleep(5)
 		windowPath = os.path.join("Images", "Layout", "window.png")
@@ -868,7 +868,6 @@ def gestureCommands(sequence):
 		(status["panel_dim"][0], status["panel_dim"][1]) = (1, actionID)
 		#x1 += (status["panel_dim"][1] - 1) * jumpX
 		(x1, y1) = (472 + (actionID - 1) * 62, 217)
-		print str((x1, y1))
 		auto.moveTo(x1, y1)
 		auto.click()
 		resetPanelMoves()

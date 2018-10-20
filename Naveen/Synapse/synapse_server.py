@@ -6,7 +6,7 @@ import time
 import cv2 as cv
 
 ## This is a script. Be careful where it is being imported.
-import synapseCommandAction as sca
+# import synapseCommandAction as sca
 
 ####
 # Sometimes it 'Connection closes' saying timed out. Look into it.
@@ -84,7 +84,9 @@ class Server():
 
 
             if received_data is not None:
-                synapse_Flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
+                # synapse_Flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
+                synapse_Flag = True #it should return TRUE if command is executed properly
+                sleep(2)
                 if synapse_Flag:
                     print 'Received: ', received_data
                     print received_data, 'has been executed'
