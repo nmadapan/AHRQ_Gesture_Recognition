@@ -15,7 +15,8 @@ import cv2 as cv
 ####
 
 ## Global Static Variables
-TCP_IP = socket.gethostbyname(socket.gethostname())
+TCP_IP = 'localhost'
+# TCP_IP = socket.gethostbyname(socket.gethostname())
 print "IP: ", TCP_IP
 
 TCP_PORT = 5000
@@ -60,7 +61,7 @@ class Server():
             print 'Received command',data
             data_received = True
             # self.client.send(str(True)) # We want to send True, once the synapse execution is done and not now.
-        else: 
+        else:
             data = None
         return data
 

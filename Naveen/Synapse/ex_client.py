@@ -4,8 +4,8 @@ import socket, random
 import time
 
 ## Initializing Global Variables
-TCP_IP = '10.186.47.225'
-# TCP_IP = 'localhost'
+# TCP_IP = '10.186.47.225'
+TCP_IP = 'localhost'
 BUFFER_SIZE = 1024 # in bytes. 1 charecter is one byte.
 INITIAL_MESSAGE = 'Handshake'
 
@@ -40,6 +40,29 @@ class Client():
 			if(time.time()-start > timeout):
 				print 'Connection Failed! Waited for more than ' + str(timeout) + ' seconds.'
 				sys.exit(0)
+
+	# def sock_recv(self, timeout = 30):
+	# 	print '\nWaiting for delivery message: .',
+	# 	data = None
+	# 	start = time.time()
+	# 	while(not self.data_received):
+	# 		try:
+	# 			data = self.sock.recv(32) # Not a blocking acall
+	# 			if data:
+	# 				print('Data received')
+	# 				self.data_received = True
+	# 				break
+	# 			print '. ',
+	# 		except Exception as exp:
+	# 			print 'Did not receive any message',
+	# 			# time.sleep(0.5)
+
+	# 		if(time.time()-start > timeout and timeout is not None):
+	# 			print 'No delivery message! Waited for more than ' + str(timeout) + ' seconds.'
+	# 			sys.exit(0)
+
+	# 	return data
+
 
 	def sock_recv(self, timeout = 30):
 		print '\nWaiting for delivery message: .',
@@ -79,18 +102,23 @@ client = Client()
 print 'Wait time: ', time.time()- start
 
 idx = 0
+dataList = ["1_1 40", "1_2 30", "2_1", "2_2", "3_1", "3_2", "4_1 250_600_450", "4_2 30", "6_1", "6_2 500_630", "6_3 80", "6_4 40", "7_1 500_600_700_800", "7_1 400_300_900_500", "7_2 2", "7_2 1", "8_1", "8_2", "9_1 60", "9_2 30", "10_4", "5_1", "5_2", "5_3", "5_4", "5_1", "0_2", "11_1", "11_2"]
 
-while(idx < 3):
+for elem in dataList:
 	if(not client.connect_status): client.init_socket()
 	try:
-		value = str(random.randint(0, 100))
-		flag = client.send_data(value)
-		print value
+		flag = client.send_data(elem)
+		print "sending: ", elem
 	except Exception as exp:
 		print 'raising exception',exp
 		client.connect_status = False
 	time.sleep(0.5)
 	idx += 1
+
+	command_executed = client.sock_recv(timeout=None)
+	print "command", elem, "executed flag: ", command_executed
+
+
 
 print 'Closing the client'
 client.sock.close()
