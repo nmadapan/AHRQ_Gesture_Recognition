@@ -5,6 +5,7 @@ import time
 
 ## Initializing Global Variables
 # TCP_IP = '10.186.47.225'
+TCP_PORT = 10000
 TCP_IP = 'localhost'
 BUFFER_SIZE = 1024 # in bytes. 1 charecter is one byte.
 INITIAL_MESSAGE = 'Handshake'
@@ -13,7 +14,6 @@ class Client():
 	def __init__(self):
 		socket.setdefaulttimeout(10.0) # this time has to set based on the time taken by synapse. If less time is set exception is raised
 		self.connect_status = False
-		self.data_received = False
 		self.init_socket(timeout = 10)
 
 	def sock_connect(self, timeout = 30):
@@ -64,16 +64,18 @@ class Client():
 	# 	return data
 
 
-	def sock_recv(self, timeout = 30):
+
+	def sock_recv(self, timeout = 10):
 		print '\nWaiting for delivery message: .',
 		data = None
 		start = time.time()
-		while(not self.data_received):
+		data_received = False
+		while(not data_received):
 			try:
 				data = self.sock.recv(32) # Blocking call # Gives time out exception
 				if data:
 					print('Handshake successfull ! ! !')
-					self.data_received = True
+					data_received = True
 					break
 				print '. ',
 			except Exception as exp:
@@ -83,8 +85,22 @@ class Client():
 			if(time.time()-start > timeout):
 				print 'No delivery message! Waited for more than ' + str(timeout) + ' seconds.'
 				sys.exit(0)
-
 		return data
+
+    # def sock_recv(self):
+    #     if(not self.connect_status): self.sock_connect()
+
+    #     data_received = False
+    #     data = self.client.recv(BUFFER_SIZE)
+    #     # Send true, if you receive any string of nonzero length
+    #     if len(data) != 0:
+    #         print 'Received command',data
+    #         data_received = True
+    #         # self.client.send(str(True)) # We want to send True, once the synapse execution is done and not now.
+    #     else:
+    #         data = None
+    #     return data
+
 
 	def init_socket(self, timeout = 30):
 		self.sock_connect()
@@ -112,9 +128,8 @@ for elem in dataList:
 	except Exception as exp:
 		print 'raising exception',exp
 		client.connect_status = False
-	time.sleep(0.5)
-	idx += 1
 
+	print "Waitimg to receive flag..."
 	command_executed = client.sock_recv(timeout=None)
 	print "command", elem, "executed flag: ", command_executed
 

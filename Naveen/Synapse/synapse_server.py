@@ -15,11 +15,11 @@ import cv2 as cv
 ####
 
 ## Global Static Variables
-TCP_IP = 'localhost'
 # TCP_IP = socket.gethostbyname(socket.gethostname())
+TCP_IP = 'localhost'
 print "IP: ", TCP_IP
 
-TCP_PORT = 5000
+TCP_PORT = 10000
 BUFFER_SIZE = 1024
 MAX_CLIENTS = 1
 INITIAL_MESSAGE = 'Handshake'
@@ -87,13 +87,13 @@ class Server():
             if received_data is not None:
                 # synapse_Flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
                 synapse_Flag = True #it should return TRUE if command is executed properly
-                sleep(2)
+                time.sleep(2)
                 if synapse_Flag:
                     print 'Received: ', received_data
                     print received_data, 'has been executed'
-                    self.client.send(str(True)) # Send True once the execuction is done.
-                else:
-                    self.client.send(str(False)) # Send True once the execuction is done.
+                self.client.sendall(str(synapse_Flag)) # Send the flag to the client once the execuction is done.
+                print received_data, 'Flag sent'
+
             else:
                 print 'Connection Closed'
                 self.connect_status = False
@@ -107,6 +107,7 @@ class Server():
             print 'Received a handshake'
             self.connect_status = True
             self.client.send(str(True))
+        print 
 
     def run(self):
         sock_thread = Thread(name='server_thread', target=self.th_socket)
