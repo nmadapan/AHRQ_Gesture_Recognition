@@ -12,13 +12,13 @@ plt.rcdefaults()
 ## Initialization ##
 ####################
 ## Skeleton
-skel_folder_path = r'H:\AHRQ\Study_IV\Flipped_Data\L6'
+skel_folder_path = r'H:\AHRQ\Study_IV\Flipped_Data\L2'
 # skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
 ## Fingers
 num_fingers = 0
-ENABLE_FINGERS = False
-pickle_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm\fingers\L3'
-fingers_pkl_fname = 'L3_fingers_norm_30033.pkl'
+ENABLE_FINGERS = True
+pickle_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm\fingers\L2'
+fingers_pkl_fname = 'L2_5fingers_from_coord_euclid_norm_300.pkl'
 #######################
 
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
@@ -52,7 +52,7 @@ if(fe.equate_dim):
 	out['data_input'] = np.array(out['data_input'])
 	out['data_output'] = np.array(out['data_output'])
 
-# print fe.id_to_labels
+# print fe.label_to_ids
 # print fe.label_to_name
 
 ## Plotting histogram - No. of instances per class
