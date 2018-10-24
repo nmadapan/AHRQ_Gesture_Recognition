@@ -72,7 +72,8 @@ def wait_for_kinect(kr, timeout = 30):
 			sys.exit('Waited for more than ' + str(timeout) + ' seconds. Exiting')
 	print('\nAll Kinect modules connected !!')
 
-def get_lhand_bbox(color_skel_pts, des_size = 300):
+def get_lhand_bbox(color_skel_pts, max_wh = (1920, 1080), \
+                   des_size = 300):
 	'''
 	Input arguments:
 		* color_skel_pts: A list of 50 elements. Pixel coordinates of 25 Kinect joints. Format: [x1, y1, x2, y2, ...]
@@ -82,11 +83,24 @@ def get_lhand_bbox(color_skel_pts, des_size = 300):
 			(x, y): pixel coordinates of top LEFT corner of the bbox
 			(w, h): width and height of the bounding box.
 	'''
+	##
+	half_sz = np.int32(des_size/2)
+	max_x, max_y = max_wh
+
 	## Return left hand bounding box
 	hand = np.array(color_skel_pts[2*left_hand_id:2*left_hand_id+2])
-	return [np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
+	x = np.int32(hand[0]) - half_sz
+	y = np.int32(hand[1]) - half_sz
 
-def get_rhand_bbox(color_skel_pts, des_size = 300):
+	## Handle the boundary conditions
+	if(x < 0): x = 0
+	if(y < 0): y = 0
+	if(x+half_sz >= max_x): x = max_x - half_sz - 1
+	if(y+half_sz >= max_y): y = max_y - half_sz - 1
+
+	return [x, y, des_size, des_size]
+
+def get_rhand_bbox(color_skel_pts, max_wh = (1920, 1080), des_size = 300):
 	'''
 	Input arguments:
 		* color_skel_pts: A list of 50 elements. Pixel coordinates of 25 Kinect joints. Format: [x1, y1, x2, y2, ...]
@@ -96,11 +110,24 @@ def get_rhand_bbox(color_skel_pts, des_size = 300):
 			(x, y): pixel coordinates of top RIGHT corner of the bbox
 			(w, h): width and height of the bounding box.
 	'''
+	##
+	half_sz = np.int32(des_size/2)
+	max_x, max_y = max_wh
+
 	## Return right hand bounding box
 	hand = np.array(color_skel_pts[2*right_hand_id:2*right_hand_id+2])
-	return [np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
+	x = np.int32(hand[0]) - half_sz
+	y = np.int32(hand[1]) - half_sz
 
-def get_hand_bbox(hand_pixel_coo, des_size = 300):
+	## Handle the boundary conditions
+	if(x < 0): x = 0
+	if(y < 0): y = 0
+	if(x+half_sz > max_x): x = max_x - half_sz - 1
+	if(y+half_sz > max_y): y = max_y - half_sz - 1
+
+	return [x, y, des_size, des_size]
+
+def get_hand_bbox(hand_pixel_coo, max_wh = (1920, 1080), des_size = 300):
 	'''
 	Input arguments:
 		* hand_pixel_coo: A list/tuple of two elements. Pixel coordinates of hand. Format: [x1, y1] or (x1, y1)
@@ -110,8 +137,22 @@ def get_hand_bbox(hand_pixel_coo, des_size = 300):
 			(x, y): pixel coordinates of top left corner of the bbox
 			(w, h): width and height of the boox.
 	'''
+	##
+	half_sz = np.int32(des_size/2)
+	max_x, max_y = max_wh
+
+	## Return hand bounding box
 	hand = hand_pixel_coo
-	return [np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
+	x = np.int32(hand[0]) - half_sz
+	y = np.int32(hand[1]) - half_sz
+
+	## Handle the boundary conditions
+	if(x < 0): x = 0
+	if(y < 0): y = 0
+	if(x+half_sz > max_x): x = max_x - half_sz - 1
+	if(y+half_sz > max_y): y = max_y - half_sz - 1
+
+	return [x, y, des_size, des_size]
 
 def nparray_to_str(arr, dlim = '_'):
 	'''
