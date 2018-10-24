@@ -44,76 +44,54 @@ class kinect_reader(object):
 	def close(self):
 		self.sensor.close()
 
-	def Body_basics(self):
+	def draw_body(self, img = None, color_skel_pts = None, only_upper_body = True, line_color = (255,255,255), thickness = 15):
+		if(img is None or color_skel_pts is None): return False
+
+		def display_joint(j_start, j_end):
+			try:
+				start = (int(color_skel_pts[2*j_start]), int(color_skel_pts[2*j_start+1]))
+				end = (int(color_skel_pts[2*j_end]), int(color_skel_pts[2*j_end+1]))
+				cv2.line(img, start, end, line_color, thickness)
+				return True
+			except Exception as exp:
+				return False
+
 		# Head/Neck/Torso
-		self.display_joint(pk.JointType_Head, pk.JointType_Neck)
-		self.display_joint(pk.JointType_Neck, pk.JointType_SpineShoulder)
-		self.display_joint(pk.JointType_SpineShoulder, pk.JointType_SpineMid)
-		self.display_joint(pk.JointType_SpineMid, pk.JointType_SpineBase)
-		self.display_joint(pk.JointType_SpineShoulder, pk.JointType_ShoulderRight)
-		self.display_joint(pk.JointType_SpineShoulder, pk.JointType_ShoulderLeft)
-		self.display_joint(pk.JointType_SpineBase, pk.JointType_HipRight)
-		self.display_joint(pk.JointType_SpineBase, pk.JointType_HipLeft)
+		display_joint(pk.JointType_Head, pk.JointType_Neck)
+		display_joint(pk.JointType_Neck, pk.JointType_SpineShoulder)
+		display_joint(pk.JointType_SpineShoulder, pk.JointType_SpineMid)
+		display_joint(pk.JointType_SpineMid, pk.JointType_SpineBase)
+		display_joint(pk.JointType_SpineShoulder, pk.JointType_ShoulderRight)
+		display_joint(pk.JointType_SpineShoulder, pk.JointType_ShoulderLeft)
+		display_joint(pk.JointType_SpineBase, pk.JointType_HipRight)
+		display_joint(pk.JointType_SpineBase, pk.JointType_HipLeft)
 
 		# Upper left limb
-		(L1, ok1) = self.display_joint(pk.JointType_ShoulderLeft, pk.JointType_ElbowLeft)
-		(L2, ok2) = self.display_joint(pk.JointType_ElbowLeft, pk.JointType_WristLeft)
-		self.display_joint(pk.JointType_WristLeft, pk.JointType_HandLeft)
-		self.display_joint(pk.JointType_HandLeft, pk.JointType_HandTipLeft)
-		self.display_joint(pk.JointType_WristLeft, pk.JointType_ThumbLeft)
+		display_joint(pk.JointType_ShoulderLeft, pk.JointType_ElbowLeft)
+		display_joint(pk.JointType_ElbowLeft, pk.JointType_WristLeft)
+		display_joint(pk.JointType_WristLeft, pk.JointType_HandLeft)
+		# display_joint(pk.JointType_HandLeft, pk.JointType_HandTipLeft)
+		# display_joint(pk.JointType_WristLeft, pk.JointType_ThumbLeft)
 
 		# Upper Right limb
-		self.display_joint(pk.JointType_ShoulderRight, pk.JointType_ElbowRight)
-		self.display_joint(pk.JointType_ElbowRight, pk.JointType_WristRight)
-		self.display_joint(pk.JointType_WristRight, pk.JointType_HandRight)
-		self.display_joint(pk.JointType_HandRight, pk.JointType_HandTipRight)
-		self.display_joint(pk.JointType_WristRight, pk.JointType_ThumbRight)
+		display_joint(pk.JointType_ShoulderRight, pk.JointType_ElbowRight)
+		display_joint(pk.JointType_ElbowRight, pk.JointType_WristRight)
+		display_joint(pk.JointType_WristRight, pk.JointType_HandRight)
+		# display_joint(pk.JointType_HandRight, pk.JointType_HandTipRight)
+		# display_joint(pk.JointType_WristRight, pk.JointType_ThumbRight)
 
-		# Lower left limb
-		self.display_joint(pk.JointType_HipLeft, pk.JointType_KneeLeft)
-		self.display_joint(pk.JointType_KneeLeft, pk.JointType_AnkleLeft)
-		self.display_joint(pk.JointType_AnkleLeft, pk.JointType_FootLeft)
+		if(not only_upper_body):
+			# Lower left limb
+			display_joint(pk.JointType_HipLeft, pk.JointType_KneeLeft)
+			display_joint(pk.JointType_KneeLeft, pk.JointType_AnkleLeft)
+			display_joint(pk.JointType_AnkleLeft, pk.JointType_FootLeft)
 
-		# Lower right limb
-		self.display_joint(pk.JointType_HipRight, pk.JointType_KneeRight)
-		self.display_joint(pk.JointType_KneeRight, pk.JointType_AnkleRight)
-		self.display_joint(pk.JointType_AnkleRight, pk.JointType_FootRight)
+			# Lower right limb
+			display_joint(pk.JointType_HipRight, pk.JointType_KneeRight)
+			display_joint(pk.JointType_KneeRight, pk.JointType_AnkleRight)
+			display_joint(pk.JointType_AnkleRight, pk.JointType_FootRight)
 
-		# Upper left limb
-		if ok1 and ok2:
-			ElbowLeft = self.skel_joint_obj[pk.JointType_ElbowLeft].TrackingState
-			Angle_between_line = math.acos(np.dot(L1, L2)/np.sqrt(np.sum(L1**2))/np.sqrt(np.sum(L2**2)))
-			str_out = str(int(Angle_between_line*180/math.pi)) + " degrees"
-			if (ElbowLeft != pk.TrackingState_NotTracked):
-				elbowpts = (int(self.color_skel_obj[pk.JointType_ElbowLeft].x), int(self.color_skel_obj[pk.JointType_ElbowLeft].y))
-				cv2.putText(self.color_image, str_out, elbowpts, cv2.FONT_HERSHEY_SIMPLEX, 4, (0,255,0),2)
-
-	def display_joint(self, j_start, j_end):
-		statJ0 = self.skel_joint_obj[j_start].TrackingState;
-		statJ1 = self.skel_joint_obj[j_end].TrackingState;
-
-		if (statJ0 == pk.TrackingState_NotTracked):
-			return 0, 0
-
-		if (statJ1 == pk.TrackingState_NotTracked):
-			return 0, 0
-
-		if (statJ0 == pk.TrackingState_Inferred) and (statJ1 == pk.TrackingState_Inferred):
-			return 0, 0
-
-		try:
-			start = (int(self.color_skel_obj[j_start].x), int(self.color_skel_obj[j_start].y))
-			end = (int(self.color_skel_obj[j_end].x), int(self.color_skel_obj[j_end].y))
-
-			# We are missing the line drawing function.
-			cv2.line(self.color_image,start,end,(255,255,255),15)
-
-			L = np.asarray(start) - np.asarray(end)
-			return L, 1
-
-		except Exception as e: # there are skel_joint_obj at infty, need to catch it
-			# print e
-			return 0, 0
+		return img
 
 	def update_rgb(self):
 		rgb_flag = self.sensor.has_new_color_frame()
@@ -151,31 +129,29 @@ class kinect_reader(object):
 
 		# Finding a large body index
 		if self.body_frame is not None:
-			body_length_list = []
+			body_depth_list = []
 			for i in range(0, self.sensor.max_body_count):
 				body_iterate = self.body_frame.bodies[i]
 				if not body_iterate.is_tracked:
-					body_length_list.append(-1)
+					body_depth_list.append(float('inf'))
 				else:
 					self.skel_joint_obj = body_iterate.joints
-					head_coord = [self.skel_joint_obj[pk.JointType_Head].Position.x, self.skel_joint_obj[pk.JointType_Head].Position.y,\
-								   self.skel_joint_obj[pk.JointType_Head].Position.z]
-					left_hip_coord = [self.skel_joint_obj[pk.JointType_HipLeft].Position.x, self.skel_joint_obj[pk.JointType_HipLeft].Position.y,\
-										self.skel_joint_obj[pk.JointType_HipLeft].Position.z]
-					# Distance from head to right foot is the body length
-					body_length_list.append(np.linalg.norm(np.array(head_coord) - np.array(left_hip_coord)))
-					if display_skel: self.Body_basics()
-		
-			if max(body_length_list) != -1:
-				large_body_id = np.argmax(body_length_list)
-				body_iterate = self.body_frame.bodies[large_body_id]
+					depths = [self.skel_joint_obj[pk.JointType_Head].Position.z, self.skel_joint_obj[pk.JointType_ShoulderLeft].Position.z, \
+							self.skel_joint_obj[pk.JointType_ShoulderRight].Position.z, self.skel_joint_obj[pk.JointType_Neck].Position.z]
+
+					# Distance from head to right foot is the body depth
+					body_depth_list.append(np.mean(depths))
+			
+			if max(body_depth_list) != -1:
+				closer_body_id = np.argmin(body_depth_list)
+				body_iterate = self.body_frame.bodies[closer_body_id]
 				if body_iterate.is_tracked:
 					self.skel_joint_obj = body_iterate.joints
 					self.color_skel_obj = self.sensor.body_joints_to_color_space(self.skel_joint_obj)
-					self.depth_skel_pts = self.sensor.body_joints_to_depth_space(self.skel_joint_obj)
+					self.depth_skel_obj = self.sensor.body_joints_to_depth_space(self.skel_joint_obj)
 					self.update_skeleton()
 				else:
-					self.skel_joint_obj, self.color_skel_obj, self.depth_skel_pts = None, None, None
+					self.skel_joint_obj, self.color_skel_obj, self.depth_skel_obj = None, None, None
 					print('No Bodies are Tracked !')
 					body_flag = False
 			else:
@@ -185,6 +161,6 @@ class kinect_reader(object):
 	def update_skeleton(self):
 		self.skel_pts = np.array([[self.skel_joint_obj[idx].Position.x, self.skel_joint_obj[idx].Position.y, self.skel_joint_obj[idx].Position.z] for idx in range(25)]).flatten()
 		self.color_skel_pts = np.array([[self.color_skel_obj[idx].x, self.color_skel_obj[idx].y] for idx in range(25)]).flatten()
-		self.depth_skel_pts = np.array([[self.depth_skel_pts[idx].x, self.depth_skel_pts[idx].y] for idx in range(25)]).flatten()
+		self.depth_skel_pts = np.array([[self.depth_skel_obj[idx].x, self.depth_skel_obj[idx].y] for idx in range(25)]).flatten()
 
 __main__ = "Kinect v2 Reader"
