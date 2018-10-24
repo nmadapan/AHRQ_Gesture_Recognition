@@ -10,6 +10,7 @@ import cv2
 ### Kinect Joint IDs ###
 ########################
 ## Refer to kinect_joint_names.json for all joint IDs
+
 ## Left hand
 left_hand_id = 7
 left_elbow_id = 5
@@ -17,6 +18,7 @@ left_shoulder_id = 4
 left_wrist_id = 6
 left_handtip_id = 21
 left_thumb_id = 22
+
 ## Right hand
 right_hand_id = 11
 right_elbow_id = 9
@@ -24,6 +26,7 @@ right_shoulder_id = 8
 right_wrist_id = 10
 right_handtip_id = 23
 right_thumb_id = 24
+
 ## Torso
 torso_id = 0
 neck_id = 2
@@ -319,17 +322,17 @@ def json_to_dict(json_filepath):
 
 
 def flip_skeleton(skel_path, out_path, dim_per_joint=3):
-	############
-	# Flips the body skeleton along the persons vertical axis.
-	# Input argument:
-	#	* skel_path: path to skeleton file. Each line in the file has dim_per_joint*25 elements. [x1, y1, z1 ...]
-	#	* outPath: path to place the output file.
-	#   * dim_per_joint: the number of joints to be flipped
-	#
-	# Assumptions:
-	#	* There is only roll angle about person's veritcal axis
-	#	* Kinect is not tilted.
-	###########
+	'''
+	Description:
+		Flips the body skeleton along the persons vertical axis.
+	Input arguments:
+		* skel_path: path to skeleton file. Each line in the file has dim_per_joint*25 elements. [x1, y1, z1 ...]
+		* outPath: path to place the output file.
+		* dim_per_joint: the number of joints to be flipped
+	Assumptions:
+		* There is only roll angle about person's veritcal axis
+		* Kinect is not tilted.
+	'''
 
 	with open(skel_path, 'r') as fp:
 		lines = fp.readlines()
@@ -388,6 +391,12 @@ def smart_interpn(yp, reps, kind = 'copy'):
 		* kind: type of interpolation. 'linear' (linear interpolation) or 'copy' (copy whenever replications happen).
 	Return:
 		np.ndarray with no. of rows equal to the size of 'reps' and no. of columns same as 'yp'.
+	How to use: 
+		* 'yp': np.ndarray of size 7 x 3
+		* If 'reps' looks like [0 0 1 1 2 2 3 4 5 5 6]. 'reps' has 11 elements. 
+			- It basically means 0th row is repeated twice, 1st row is repeated twice and so on.
+		* Now the idea is to interpolate w.r.t the given 'reps'
+		* It outputs the an np.ndarray of size 11 x 3. Type of interpolation is determined by the argument 'kind'
 	'''
 	assert isinstance(yp, np.ndarray), 'yp is NOT a numpy array'
 	assert yp.ndim == 2, 'yp should be a 2D numpy array'

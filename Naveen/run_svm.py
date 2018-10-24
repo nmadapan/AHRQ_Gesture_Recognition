@@ -12,11 +12,11 @@ plt.rcdefaults()
 ## Initialization ##
 ####################
 ## Skeleton
-skel_folder_path = r'H:\AHRQ\Study_IV\Flipped_Data\L2'
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L8'
 # skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
 ## Fingers
 num_fingers = 0
-ENABLE_FINGERS = True
+ENABLE_FINGERS = False
 pickle_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm\fingers\L2'
 fingers_pkl_fname = 'L2_5fingers_from_coord_euclid_norm_300.pkl'
 #######################
