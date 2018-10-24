@@ -44,8 +44,10 @@ class kinect_reader(object):
 	def close(self):
 		self.sensor.close()
 
-	def draw_body(self, img = None, color_skel_pts = None, only_upper_body = True, line_color = (255,255,255), thickness = 15):
-		if(img is None or color_skel_pts is None): return False
+	def draw_body(self, img = None, color_skel_pts = None, only_upper_body = True, \
+		line_color = (255,255,255), thickness = 15, draw_gest_thresh = True, thresh_level = 0.2):
+
+		if(img is None or color_skel_pts is None): return None
 
 		def display_joint(j_start, j_end):
 			try:
@@ -79,6 +81,32 @@ class kinect_reader(object):
 		display_joint(pk.JointType_WristRight, pk.JointType_HandRight)
 		# display_joint(pk.JointType_HandRight, pk.JointType_HandTipRight)
 		# display_joint(pk.JointType_WristRight, pk.JointType_ThumbRight)
+
+		if(draw_gest_thresh):
+			neck = color_skel_pts[2*pk.JointType_Neck:2*pk.JointType_Neck+2]
+			base = color_skel_pts[2*pk.JointType_SpineBase:2*pk.JointType_SpineBase+2]
+
+			if(np.isinf(np.sum(neck)) or np.isnan(np.sum(neck))): return None
+			if(np.isinf(np.sum(base)) or np.isnan(np.sum(base))): return None
+
+			thresh_x = int(base[0])
+			thresh_y = int(thresh_level * (neck[1] - base[1]) + base[1])
+
+			thresh_disp_len = int(0.5 * thresh_level * (neck[1] - base[1]))
+
+			start_x = thresh_x - 30 
+			if(start_x < 0): start_x = 0
+			elif(start_x >= img.shape[1]): start_x = img.shape[1] - 1
+			
+			end_x = thresh_x + 30 
+			if(end_x < 0): end_x = 0
+			elif(end_x >= img.shape[1]): end_x = img.shape[1] - 1
+			
+			start = (start_x, thresh_y)
+			end = (end_x, thresh_y)
+
+			cv2.circle(img,(int(thresh_x),int(thresh_y)), 10, (0,0,255), -1)
+			cv2.line(img, start, end, (50, 0, 255), thickness)
 
 		if(not only_upper_body):
 			# Lower left limb
