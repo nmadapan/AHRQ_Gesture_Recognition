@@ -341,13 +341,13 @@ class Calibration(object):
 		ImageGrab.grab(bbox=(x1 + self.rightIcons, y1, x1 + boxW, y1 + boxH)).save(optionPath)
 		auto.click()
 
-calibration = Calibration()
+"""calibration = Calibration()
 (status["topBarHeight"], status["optionH"], status["rightHR"], status["rightPlus"], status["rightIcons"],
 	status["rightOffset"], status["rightBoxW"], status["rightBoxH"]) = calibration.getAll()
 
 f = open("calibration" + "_".join([width, height, scale]) + ".txt", "w")
 f.write(json.dumps(status, indent=4, separators=(',', ': ')))
-f.close()
+f.close()"""
 
 actionList = [["Admin", "Quit", "Get Status", "Switch ToUse", "Reset All", "Reset TopBar", "Reset RightClick", "Reset Presets", "Reset ScaleRotateFlip"],
 	["Scroll", "Up", "Down"],
@@ -995,6 +995,8 @@ def gestureCommands(sequence):
 	status["hold_action"] = None
 	
 	return True
+
+gestureCommands("0_4")
 
 # When quitting program, remove anything saved
 #removeImages()
