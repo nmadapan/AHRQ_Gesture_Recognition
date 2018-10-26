@@ -11,6 +11,7 @@ import sys
 import math
 import matplotlib.pyplot as plt
 from scipy.signal import medfilt
+import json
 
 
 auto.FAILSAFE = True
@@ -61,7 +62,7 @@ def removeImages():
 		for file in os.listdir(path):
 			if file.endswith(".png"):
 				os.remove(os.path.join(path, file))
-	os.remove("calibration.txt")
+	os.remove("calibration" + "_".join([width, height, scale]) + ".txt")
 
 # Prompt notification if choosing to remove the images
 def removeImagesPrompt():
@@ -200,8 +201,13 @@ def get_bbox(before, after):
 	return auto.locateOnScreen("tempDiff.png")
 """
 
-status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "rulers": {"len": 0},
-	"toUse": "Keyboard", "hold_action": None, "defaultCommand": None}
+if (not os.path.exists("calibration" + "_".join([width, height, scale]) + ".txt")):
+	status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "rulers": {"len": 0},
+		"toUse": "Keyboard", "hold_action": None, "defaultCommand": None}
+else:
+	f = open("calibration" + "_".join([width, height, scale]) + ".txt", "r")
+	status = json.loads(" ".join([line.rstrip('\n') for line in f]))
+	f.close()
 
 def resetPanelMoves():
 	status["firstW"] = (float(width) / (float(status["panel_dim"][1]) * 2.0))
@@ -218,15 +224,18 @@ def moveToActivePanel():
 
 class Calibration(object):
 	def __init__(self):
-		if (os.path.exists("calibration.txt")):
-			f = open("calibration.txt", "r")
-			#self.boundBoxNoDash = tuple(float(e) for e in f.readline()[1:-2].split(", "))
+		if (os.path.exists("calibration" + "_".join([width, height, scale]) + ".txt")):
+			f = open("calibration" + "_".join([width, height, scale]) + ".txt", "r")
+			self.boundBoxNoDash = tuple(float(e) for e in f.readline()[1:-2].split(", "))
 			(self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons, self.rightOffset,
 				self.rightBoxW, self.rightBoxH) = tuple(float(f.readline()) for i in range(8))
 			f.close()
 		else:
-			(self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
-				self.rightOffset, self.rightBoxW, self.rightBoxH) = (0 for i in range(8))
+			self.resetAll()
+			"""(self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
+				self.rightOffset, self.rightBoxW, self.rightBoxH) = (0 for i in range(8))"""
+		"""(self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
+			self.rightOffset, self.rightBoxW, self.rightBoxH) = (0 for i in range(8))"""
 
 	def getAll(self):
 		return (self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
@@ -238,9 +247,9 @@ class Calibration(object):
 		self.resetRightClick()
 		self.resetRightOptions("presets", 8.5)
 		self.resetRightOptions("scaleRotateFlip", 9.5)
-		f = open("calibration.txt", "w")
+		"""f = open("calibration" + "_".join([width, height, scale]) + ".txt", "w")
 		f.write("\n".join(list(str(e) for e in self.getAll())))
-		f.close()
+		f.close()"""
 		print "\nCompleted warm-up, make your gestures!\n"
 
 	"""
@@ -296,7 +305,7 @@ class Calibration(object):
 		moveToActivePanel()
 		auto.click()
 
-	# Reset rightClick's presets/scaleRotateFlip
+	# Reset rightClick's presets or its scaleRotateFlip
 	def resetRightOptions(self, option, offset):
 		moveToActivePanel()
 		auto.click()
@@ -332,10 +341,13 @@ class Calibration(object):
 		ImageGrab.grab(bbox=(x1 + self.rightIcons, y1, x1 + boxW, y1 + boxH)).save(optionPath)
 		auto.click()
 
-calibration = Calibration()
+"""calibration = Calibration()
 (status["topBarHeight"], status["optionH"], status["rightHR"], status["rightPlus"], status["rightIcons"],
 	status["rightOffset"], status["rightBoxW"], status["rightBoxH"]) = calibration.getAll()
 
+f = open("calibration" + "_".join([width, height, scale]) + ".txt", "w")
+f.write(json.dumps(status, indent=4, separators=(',', ': ')))
+f.close()"""
 
 actionList = [["Admin", "Quit", "Get Status", "Switch ToUse", "Reset All", "Reset TopBar", "Reset RightClick", "Reset Presets", "Reset ScaleRotateFlip"],
 	["Scroll", "Up", "Down"],
@@ -425,7 +437,6 @@ def gestureCommands(sequence):
 			 or status["defaultCommand"] == "Manual Contrast"):
 			auto.mouseUp()
 		status["defaultCommand"] = None
-	print str(status["defaultCommand"])
 
 	#openWindow(viewer)
 
@@ -461,6 +472,9 @@ def gestureCommands(sequence):
 			#(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH) = calibration.getAll()
 			(status["topBarHeight"], status["optionH"], status["rightHR"], status["rightPlus"], status["rightIcons"],
 				status["rightOffset"], status["rightBoxW"], status["rightBoxH"]) = calibration.getAll()
+			f = open("calibration" + "_".join([width, height, scale]) + ".txt", "w")
+			f.write(json.dumps(status, indent=4, separators=(',', ': ')))
+			f.close()
 			if (status["hold_action"] is not None):
 				sequence = status["hold_action"]
 				status["hold_action"] = "held"
@@ -981,6 +995,8 @@ def gestureCommands(sequence):
 	status["hold_action"] = None
 	
 	return True
+
+gestureCommands("0_4")
 
 # When quitting program, remove anything saved
 #removeImages()
