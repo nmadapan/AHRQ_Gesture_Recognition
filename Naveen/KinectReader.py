@@ -41,6 +41,22 @@ class kinect_reader(object):
 
 		self.color_image = np.zeros((self.color_height, self.color_width, 3), dtype=np.uint8)
 
+		self.skel_joint_obj = None
+		self.color_skel_obj = None
+		self.depth_skel_obj = None
+		self.skel_pts = None
+		self.color_skel_pts = None
+		self.depth_skel_pts	= None
+
+		self.color_image = None
+		self.last_color_frame_access = -1
+
+		self.depth_image = None
+		self.last_depth_frame_access = -1
+		
+		self.body_frame = None
+		self.last_body_frame_access = -1		
+
 	def close(self):
 		self.sensor.close()
 
@@ -101,7 +117,7 @@ class kinect_reader(object):
 			end_x = thresh_x + 30 
 			if(end_x < 0): end_x = 0
 			elif(end_x >= img.shape[1]): end_x = img.shape[1] - 1
-			
+
 			start = (start_x, thresh_y)
 			end = (end_x, thresh_y)
 

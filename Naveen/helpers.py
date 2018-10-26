@@ -508,3 +508,9 @@ def flip_video(input_video_path, out_video_path):
 	cap.release()
 	out.release()
 	cv2.destroyAllWindows()
+
+def find_key(d, value):
+	for key, val in d.items():    # for name, age in dictionary.iteritems():  (for Python 2.x)
+	    if val == value:
+	        return key
+	return None

@@ -12,19 +12,21 @@ from pprint import pprint as pp
 
 from helpers import sync_ts
 
-## Socket
+## Socketq
 import socket
 from CustomSocket import Client
 
+from FancyDisplay import FancyDisplay
+
 ## TCP/IP of Synapse Computer
-IP_SYNAPSE = '10.186.130.21' # IP of computer that is running Synapse
-PORT_SYNAPSE = 5000 # Both server and client should have a common IP and Port
+IP_SYNAPSE = '10.186.47.6' # IP of computer that is running Synapse
+PORT_SYNAPSE = 10000  # Both server and client should have a common IP and Port
 
 ## TCP/IP of CPM Computer
 IP_CPM = 'localhost'
 PORT_CPM = 3000
 
-ENABLE_SYNAPSE_SOCKET = False
+ENABLE_SYNAPSE_SOCKET = True
 ENABLE_CPM_SOCKET = False
 
 ONLY_SKELETON = True
@@ -39,6 +41,7 @@ class Realtime:
 		## Global Constants
 		self.data_path = r'H:\AHRQ\Study_IV\Data\Data' # Path where _reps.txt file is present.
 		self.trained_pkl_fpath = 'H:\AHRQ\Study_IV\Flipped_Data\\' + LEXICON_ID + '_0_data.pickle' # path to trained .pickle file.
+		self.cmd_dict = json_to_dict('commands.json')
 		# self.trained_pkl_fpath = r'H:\AHRQ\Study_IV\Data\Data\L6_0_data.pickle' # path to trained .pickle file.
 
 		self.base_write_dir = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
@@ -82,7 +85,7 @@ class Realtime:
 		##
 		## Socket communication
 		if(ENABLE_SYNAPSE_SOCKET):
-			self.client_synapse = Client(IP_SYNAPSE, PORT_SYNAPSE)
+			self.client_synapse = Client(IP_SYNAPSE, PORT_SYNAPSE,buffer_size = 1000000)
 
 		# CPM Initialization takes up to one minute. Dont initialize any socket
 		#	(by calling init_socket) before creating object of CPM Client.
@@ -98,6 +101,9 @@ class Realtime:
 			#socket.setdefaulttimeout(2.0) ######### Need to be tuned depending ont the delays.
 
 		self.command_to_execute = None
+
+		## Fancy Display
+		# self.fancy_display = FancyDisplay(window_str = 'Visualization')
 
 		## Use trained Feature extractor
 		with open(self.trained_pkl_fpath, 'rb') as fp:
@@ -142,12 +148,16 @@ class Realtime:
 		wait_for_kinect(self.kr)
 
 		## opencv part
-		cv2.namedWindow('RGB')
+		# cv2.namedWindow('RGB')
 
 		# Now this thread is ready
 		self.fl_stream_ready = True
 
 		first_time = False
+
+		skel_pts = None
+		color_skel_pts = None	
+		fd_status = True	
 
 		while(self.fl_alive):
 			# if(self.fl_synapse_running): continue # If synapse is running, stop producing the rgb/skeleton data
@@ -195,6 +205,7 @@ class Realtime:
 						self.buf_body_skel.append((ts, skel_col_reduce(skel_pts)))
 						self.buf_body_skel.pop(0) # Buffer is of fixed length. Append an element at the end and pop the first element.
 						# tslist, _ = zip(*self.buf_body_skel)
+
 						# Update rgb skel buffers
 						self.buf_rgb_skel.append((ts, skel_col_reduce(color_skel_pts, dim=2, wrt_shoulder = False)))
 						self.buf_rgb_skel.pop(0) # Buffer is of fixed length. Append an element at the end and pop the first element.
@@ -211,7 +222,22 @@ class Realtime:
 					self.buf_rgb.pop(0)
 					self.cond_rgb.notify_all()
 					# tslist, _ = zip(*self.buf_rgb)
-					cv2.imshow('RGB', cv2.resize(self.kr.color_image, None, fx=0.5, fy=0.5))
+					# cv2.imshow('RGB', cv2.resize(self.kr.color_image, None, fx=0.5, fy=0.5))
+
+					# self.fancy_display.update_image(self.kr.color_image)
+					# self.fancy_display.update_skel_pts(color_skel_pts)
+					# fd_status = self.fancy_display.refresh()
+
+					if((self.kr.color_image is not None) and (color_skel_pts is not None)):
+						image_with_skel = self.kr.draw_body(self.kr.color_image, color_skel_pts)
+						if(image_with_skel is not None):
+							resz_img = cv2.resize(image_with_skel, None, fx = 0.5, fy = 0.5)
+							cv2.imshow('Visualization', resz_img)
+							flag = True
+				# if cv2.waitKey(self.delay) == ord('q'):
+				# 	cv2.destroyAllWindows()
+				# 	flag = False
+
 
 			if(cv2.waitKey(1) == ord('q')):
 				self.fl_alive = False
@@ -249,7 +275,7 @@ class Realtime:
 				frame_count = 0
 
 				## TODO: Condition it on cond_rgb, otherwise, we might run into race conditions
-				self.skel_instance = deepcopy(skel_frames) # [(ts1, ([left_x, y, z], [right_x, y, z])), ...]
+				self.skel_instance = deepcopy(skel_frames ) # [(ts1, ([left_x, y, z], [right_x, y, z])), ...]
 				## TODO: If length of skel_instance is less than a certain number, ignore that gesture.
 				skel_frames = []
 
@@ -354,16 +380,17 @@ class Realtime:
 
 			# If command is ready: Do the following:
 			# Wait for five seconds for the delivery message.
-			print self.client_synapse.sock.send(self.command_to_execute)
-			data = self.client_synapse.sock_recv(display = False)
-			print 'Received: ', data
-			if(data):
+			command_executed = self.client_synapse.send_data(self.command_to_execute)
+			# print self.client_synapse.sock.send(self.command_to_execute)
+			# data = self.client_synapse.sock_recv(display = False)
+			print 'Received: ', command_executed
+			if(command_executed):
 				self.fl_cmd_ready = False
 				self.fl_synapse_running = False
 			else:
 				print 'Synapse execution failed !'
 				## What to do now
-				sys.exit(0)
+				# sys.exit(0)
 
 	def get_next_cmd(self, pred_cmd):
 		# pred_cmd : predicted command name
@@ -441,7 +468,7 @@ class Realtime:
 					final_overall_inst = final_skel_inst
 
 				label, cname = self.feat_ext.pred_output_realtime(final_overall_inst)
-				self.command_to_execute = self.get_next_cmd(cname)
+				self.command_to_execute = find_key(self.cmd_dict, self.get_next_cmd(cname))
 
 				print 'Predicted: ', label, cname
 
