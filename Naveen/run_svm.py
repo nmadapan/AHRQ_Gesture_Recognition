@@ -8,41 +8,40 @@ from helpers import skelfile_cmp
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 
-skel_folder_path = 'D:\\AHRQ\\Study_IV\\Data\\Data\\L8'
-rerun = False
+####################
+## Initialization ##
+####################
+## Skeleton
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L8'
+# skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
+## Fingers
+num_fingers = 0
+ENABLE_FINGERS = False
+pickle_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm\fingers\L2'
+fingers_pkl_fname = 'L2_5fingers_from_coord_euclid_norm_300.pkl'
+#######################
+
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
 dirname = os.path.dirname(skel_folder_path)
 fileprefix = os.path.basename(skel_folder_path)
 
-data_pickle = os.path.join(dirname, fileprefix+'_data.pickle')
-if(rerun or (not os.path.isfile(data_pickle))):
-	fe = FeatureExtractor(json_param_path = 'param.json')
-	out = fe.generate_io(skel_folder_path, annot_folder_path)
-	with open(data_pickle, 'wb') as fp:
-		pickle.dump({'fe': fe, 'out': out}, fp)
-else:
-	with open(data_pickle, 'rb') as fp:
-		res = pickle.load(fp)
-		fe, out = res['fe'], res['out']
+out_pkl_fname = os.path.join(dirname, fileprefix+'_'+str(num_fingers)+'_data.pickle')
 
-# ## Appending finger lengths
+fe = FeatureExtractor(json_param_path = 'param.json')
+out = fe.generate_io(skel_folder_path, annot_folder_path)
 
-pickle_path1 = 'H:\\AHRQ\\Study_IV\\Data\\Data_OpenPose\\fingers_data'
-
-with open(os.path.join(pickle_path1, 'L3_copy.pkl'), 'rb') as fp:
-	fingers_data = pickle.load(fp)
-
-data_merge=[]
-for txt_file in fe.skel_file_order:
-	key = os.path.splitext(txt_file)[0].split('_')[:-1]
-	s='_'
-	key=s.join(key)
-	for line in np.round(fingers_data.get(key),4):
-		data_merge.append(line)
-
-
-
-out['data_input'] = np.concatenate([out['data_input'], np.array(data_merge)], axis = 1)
+if(ENABLE_FINGERS):
+	# # ## Appending finger lengths
+	with open(os.path.join(pickle_path1, fingers_pkl_fname), 'rb') as fp:
+		fingers_data = pickle.load(fp)
+	data_merge=[]
+	for txt_file in fe.skel_file_order:
+		key = os.path.splitext(txt_file)[0].split('_')[:-1]
+		s='_'
+		key=s.join(key)
+		for line in np.round(fingers_data.get(key),4):
+			data_merge.append(line)
+	out['data_input'] = np.concatenate([out['data_input'][:np.array(data_merge).shape[0]], np.array(data_merge)], axis = 1)
 
 # Randomize data input and output
 temp = zip(out['data_input'], out['data_output'])
@@ -52,6 +51,9 @@ out['data_input'], out['data_output'] = list(out['data_input']), list(out['data_
 if(fe.equate_dim):
 	out['data_input'] = np.array(out['data_input'])
 	out['data_output'] = np.array(out['data_output'])
+
+# print fe.label_to_ids
+# print fe.label_to_name
 
 ## Plotting histogram - No. of instances per class
 objects = tuple(fe.inst_per_class.keys())
@@ -67,8 +69,5 @@ plt.grid(True)
 #plt.show()
 
 clf, _, _ = fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60)
-
-pickle_name  = fileprefix + '_obj.pickle'
-
-with open(os.path.join(dirname, pickle_name), 'wb') as fp:
-	pickle.dump(fe, fp)
+with open(out_pkl_fname, 'wb') as fp:
+	pickle.dump({'fe': fe, 'out': out}, fp)

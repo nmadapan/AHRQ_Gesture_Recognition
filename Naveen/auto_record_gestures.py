@@ -18,7 +18,7 @@ from KinectReader import kinect_reader
 # Initialization
 
 # Default settings
-base_write_folder = '..\\Data' # Where to write the files
+base_write_folder = ".\\" # Where to write the files
 images_folder = os.path.join('.', 'Images') ####### Change this
 kinect_studio_open_time = 3 # 'in seconds
 fixed_num_gestures = 20

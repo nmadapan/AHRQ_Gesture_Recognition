@@ -24,18 +24,18 @@ from helpers import *
 #####################
 
 # Initialization
-xef_folder_paths = ['E:\\AHRQ\\XEF_Files\\Calib\\*']
-in_format_flag = False # True since the filename is in the correct format
+xef_folder_paths = [r'E:\AHRQ\Study_IV\XEF_Files\*', r'H:\AHRQ\Study_IV\XEF_Files\*', r'G:\AHRQ\XEF_Files\*']
+in_format_flag = True # True since the filename is in the correct format
 enable_repeat = False # If True, all xef files will be executed, Otherwise, only the files that werent read previously or the files that were incompletely read
-xef_rgb_factor = 3.2 # Max is 3.8
+xef_rgb_factor = 2.5 # Max is 3.8
 print_fnames = False
-images_folder = '.\\Images_AHRQ'
+images_folder = '.\\Images_Rahul'
 
-error_log_folder = '.\\Logfiles'
+error_log_folder = r'E:\AHRQ\Study_IV\XEF_Files\Logfiles'
 error_log_filename = os.path.join(error_log_folder, 'error_log_'+datetime.now().strftime("%Y_%m_%d_%H_%M")+'.txt')
 
 # Default settings
-base_write_folder = 'E:\\AHRQ\\XEF_Files\\Calib\\Calib_Data' # Where to write the files
+base_write_folder = r'H:\AHRQ\Study_IV\NewData' # Where to write the files
 kinect_studio_open_time = 3 # in seconds
 thresh_empty_cycles = 200 # No. of cycles to wait before obtaining the first RGB image. Quit after 200 cycles. 
 dynamic_thresh_fac = 10 # How long to wait later for the arrival of RGB frame 
@@ -97,6 +97,7 @@ class GUI():
 		self.width, self.height = auto.size()
 		self.xef_file_name = os.path.basename(xef_file_name) # convert absolute path to just the filename
 
+		print self.xef_file_name
 		# Add extension if it is not added
 		if(self.xef_file_name[-4:] != '.xef'): self.xef_file_name = self.xef_file_name + '.xef'
 
@@ -125,7 +126,7 @@ class GUI():
 		gui_flag = True
 
 		## Connect Kinect Studio
-		res = auto.locateCenterOnScreen(os.path.join('.', 'Images', 'connect.PNG'))
+		res = auto.locateCenterOnScreen(os.path.join(images_folder, 'connect.PNG'))
 		if res is not None:
 			cx, cy = res
 			auto.click(cx, cy)

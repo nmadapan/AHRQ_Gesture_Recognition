@@ -2,8 +2,6 @@ import cv2
 import numpy as np
 from glob import glob
 from os.path import join
-import json
-import sys
 from helpers import *
 from copy import deepcopy
 
@@ -14,7 +12,7 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lex_folder = 'D:\\AHRQ\\Study_IV\\Data\\Data\\L3' # Where to write the files
+lex_folder = r'H:\AHRQ\Study_IV\NewData\L6' # Where to write the files
 fps = 120
 default_width, default_height = 1920, 1080
 
@@ -56,6 +54,12 @@ close_flag = False
 cmd_idx = 0
 while(True):
 	cmd = cmds[cmd_idx]
+
+	## Resetting the bframe
+	for idx1 in range(len(bframe)):
+		for idx2 in range(len(bframe[0])):
+			bframe[idx1][idx2][:] = 255 * np.ones((des_h, des_w, 3))
+
 	if(close_flag): break
 
 	vids = glob(join(lex_folder, cmd+'*_rgb.avi'))
@@ -66,9 +70,9 @@ while(True):
 			j = idx/M
 			i = idx - M * j
 			ret, frame = vcap.read()
-			if ret: 
+			if ret:
 				frame = cv2.resize(frame, dsize=(des_w, des_h))
-				cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA) 
+				cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA)
 			else: frame = 255*np.ones((des_h, des_w, 3))
 			bframe[i][j] = np.uint8(frame)
 		cframe = []

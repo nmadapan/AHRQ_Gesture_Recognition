@@ -1,0 +1,31 @@
+L2:
+		Scroll_Up -> S6 starting gestures are not in capured window
+		Flip Horizontal -> S3 wrong name
+		Rotate_Clockwise -> S3 is not there, it comes in Rotate_Anticlockwise
+		Zoom_Out -> S6 video in the beginning is not proper
+		Ruler_Meausre- S6 video is not proper
+		Window_Open -> S6: one instance in the beginning is performed in the wrong way
+		Window_Close -> S4 needs to be rerecorded
+		Manual_Contrast -> S3,S6 need to be flipped
+		Contrast Presets -> S3 not found, S6(different gesture) 
+		Contrast Preset II -> S4,S6 not found
+
+L3: S6 is wrongly named, renaming required 
+
+		Scroll -> S3,S4 need to be flipped
+		Flip -> S3 need to be flipped
+		Flip Horizontal -> S3 need to be flipped
+		Rotate -> S3: Flip, S6: Wong Gesture
+		Rotate Clockwise -> S6 wrong gesture
+		Zoom Out -> S4: gesture same as Zoom In(Check Manual Contrast if it's exactly the same)
+
+L6: 
+		Layout Four Panels : Flip S3
+
+L8:
+		Scroll_Up : S5 -> Wrongly Named
+		Scroll_Down : S6 -> out of boundary in the beginning
+		Rotate_Clockwise: S5 -> Gesture somewhat different
+		Rotate_CounterClockwise: S5 -> Gesture somewhat different
+		
+
