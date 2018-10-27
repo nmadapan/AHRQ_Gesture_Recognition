@@ -17,8 +17,8 @@ import json
 auto.FAILSAFE = True
 auto.PAUSE = 0.25
 
-(width, height) = auto.size()
-(nativeW, nativeH) = ImageGrab.grab().size
+(width, height) = tuple(float(e) for e in auto.size())
+(nativeW, nativeH) = tuple(float(e) for e in ImageGrab.grab().size)
 scale = nativeW / width
 print "WxH: %s" % ((width, height),)
 print "nativeW, nativeH: %s" % ((nativeW, nativeH),)
@@ -52,17 +52,7 @@ def openWindow(toOpen):
 		# auto.press("enter")
 		auto.hotkey("command", "tab")
 
-#Remove images already saved (avoids issues with git)
-def removeImages():
-	paths = [os.path.join("SCA_Images", "RightClick"), os.path.join("SCA_Images", "Window", "Closes"),
-		os.path.join("SCA_Images", "Window"), os.path.join("SCA_Images", "Layout"), os.path.join("SCA_Images")]
-	for path in paths:
-		if (not os.path.exists(path)):
-			continue
-		for file in os.listdir(path):
-			if file.endswith(".png"):
-				os.remove(os.path.join(path, file))
-	os.remove("calibration" + "_".join([width, height, scale]) + ".txt")
+#Remove images already saved (avoids issue"_".join(list(str(e) for e in [width, height, scale])).replace(".", "-") + ".txt")
 
 # Prompt notification if choosing to remove the images
 def removeImagesPrompt():
@@ -200,12 +190,12 @@ def get_bbox(before, after):
 	ImageChops.difference(Image.open(before), Image.open(after)).save("tempDiff.png")
 	return auto.locateOnScreen("tempDiff.png")
 """
-
-if (not os.path.exists("calibration" + "_".join([width, height, scale]) + ".txt")):
+calibrationPath = "calibration" + "_".join(list(str(e) for e in [width, height, scale])).replace(".", "-") + ".txt"
+if (not os.path.exists(calibrationPath)):
 	status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "rulers": {"len": 0},
 		"toUse": "Keyboard", "hold_action": None, "defaultCommand": None}
 else:
-	f = open("calibration" + "_".join([width, height, scale]) + ".txt", "r")
+	f = open(calibrationPath, "r")
 	status = json.loads(" ".join([line.rstrip('\n') for line in f]))
 	f.close()
 
@@ -224,14 +214,24 @@ def moveToActivePanel():
 
 class Calibration(object):
 	def __init__(self):
-		if (os.path.exists("calibration" + "_".join([width, height, scale]) + ".txt")):
-			f = open("calibration" + "_".join([width, height, scale]) + ".txt", "r")
-			self.boundBoxNoDash = tuple(float(e) for e in f.readline()[1:-2].split(", "))
-			(self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons, self.rightOffset,
-				self.rightBoxW, self.rightBoxH) = tuple(float(f.readline()) for i in range(8))
-			f.close()
+		if (os.path.exists(calibrationPath)):
+			self.topBarHeight = status["topBarHeight"]
+			self.optionH = status["optionH"]
+			self.rightHR = status["rightHR"]
+			self.rightPlus = status["rightPlus"]
+			self.rightIcons = status["rightIcons"]
+			self.rightOffset = status["rightOffset"]
+			self.rightBoxW = status["rightBoxW"]
+			self.rightBoxH = status["rightBoxH"]
+			#f = open(calibrationPath, "r")
+			#self.boundBoxNoDash = tuple(float(e) for e in f.readline()[1:-2].split(", "))
+			#(self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons, self.rightOffset,
+			#	self.rightBoxW, self.rightBoxH) = tuple(float(f.readline()) for i in range(8))
+			#f.close()
 		else:
 			self.resetAll()
+			(status["topBarHeight"], status["optionH"], status["rightHR"], status["rightPlus"], status["rightIcons"],
+				status["rightOffset"], status["rightBoxW"], status["rightBoxH"]) = self.getAll()
 			"""(self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
 				self.rightOffset, self.rightBoxW, self.rightBoxH) = (0 for i in range(8))"""
 		"""(self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
@@ -247,7 +247,7 @@ class Calibration(object):
 		self.resetRightClick()
 		self.resetRightOptions("presets", 8.5)
 		self.resetRightOptions("scaleRotateFlip", 9.5)
-		"""f = open("calibration" + "_".join([width, height, scale]) + ".txt", "w")
+		"""f = open(calibrationPath, "w")
 		f.write("\n".join(list(str(e) for e in self.getAll())))
 		f.close()"""
 		print "\nCompleted warm-up, make your gestures!\n"
@@ -341,11 +341,11 @@ class Calibration(object):
 		ImageGrab.grab(bbox=(x1 + self.rightIcons, y1, x1 + boxW, y1 + boxH)).save(optionPath)
 		auto.click()
 
-"""calibration = Calibration()
-(status["topBarHeight"], status["optionH"], status["rightHR"], status["rightPlus"], status["rightIcons"],
+calibration = Calibration()
+"""(status["topBarHeight"], status["optionH"], status["rightHR"], status["rightPlus"], status["rightIcons"],
 	status["rightOffset"], status["rightBoxW"], status["rightBoxH"]) = calibration.getAll()
 
-f = open("calibration" + "_".join([width, height, scale]) + ".txt", "w")
+f = open(calibrationPath, "w")
 f.write(json.dumps(status, indent=4, separators=(',', ': ')))
 f.close()"""
 
@@ -472,7 +472,7 @@ def gestureCommands(sequence):
 			#(topBarHeight, optionH, rightHR, rightPlus, rightIcons, rightOffset, rightBoxW, rightBoxH) = calibration.getAll()
 			(status["topBarHeight"], status["optionH"], status["rightHR"], status["rightPlus"], status["rightIcons"],
 				status["rightOffset"], status["rightBoxW"], status["rightBoxH"]) = calibration.getAll()
-			f = open("calibration" + "_".join([width, height, scale]) + ".txt", "w")
+			f = open(calibrationPath, "w")
 			f.write(json.dumps(status, indent=4, separators=(',', ': ')))
 			f.close()
 			if (status["hold_action"] is not None):
@@ -560,8 +560,7 @@ def gestureCommands(sequence):
 				if (status["hold_action"] != "held"):
 					status["hold_action"] = commandAction
 					return gestureCommands("0_8")
-				else:
-					return False
+				else: return False
 			(x1, y1, w, h) = located
 			y1 = y1 / scale
 			y1 += (status["rightPlus"] + (status["optionH"] * 2.5) if action == "Clockwise" else status["rightPlus"] + (status["optionH"] * 3.5))
@@ -570,23 +569,11 @@ def gestureCommands(sequence):
 		else:
 			auto.PAUSE = 0.1
 			auto.press("0")
-			# for i in range(10):
-			# 	auto.press("down")
-			# auto.press("right")
 			auto.press("s")
 			time.sleep(0.5)
 			auto.press("0")
 			auto.press("r")
-			if (action == "Clockwise"):
-				pass
-				# auto.press("down")
-				# auto.press("down")
-				# auto.press("down")
-			else:
-				auto.press("down")
-				# auto.press("down")
-				# auto.press("down")
-				# auto.press("down")
+			if (action != "Clockwise"): auto.press("down")
 			auto.press("enter")
 			auto.PAUSE = 0.25
 	elif (command == "Zoom"):
@@ -815,12 +802,11 @@ def gestureCommands(sequence):
 			box = (1.0 * scale, status["topBarHeight"], -1.0 * scale, -1.0 * scale)
 			box = tuple(boundBoxNoDash[i] + box[i] for i in range(4))
 			afterHoverPath = os.path.join("SCA_Images", "Window", "afterHover.png")
-			if (not os.path.exists(afterHoverPath)):
-				ImageGrab.grab(bbox=box).save(afterHoverPath)
-			#auto.moveTo((329.0 / 1920.0) * nativeW, (82.0 / 1080.0) * nativeH + macH / scale)
-			#auto.moveTo((218.0 / 1440.0) * width, (75.5 / 900.0) * height)
-			#auto.moveTo((326.0 / 1920.0) * width, (78.0 / 1080.0) * height)
-			auto.moveTo((435.0 / 2880.0) * width, ((107.0 + macH) / 1800.0) * height)
+			if (not os.path.exists(afterHoverPath)): ImageGrab.grab(bbox=box).save(afterHoverPath)
+			if (platform.system() == "Windows"):
+				auto.moveTo(326.0 * width / 1920.0, (80.0 + macH) * height / 1080.0 - 4.0)
+			else:
+				auto.moveTo(435.0 * width / 2880.0, (107.0 * status["topBarHeight"] / 224.0) + macH)
 			auto.click()
 			time.sleep(3)
 			"""
@@ -911,24 +897,21 @@ def gestureCommands(sequence):
 		box = (1.0 * scale, status["topBarHeight"], -1.0 * scale, -1.0 * scale)
 		box = tuple(boundBoxNoDash[i] + box[i] for i in range(4))
 		afterHoverPath = os.path.join("SCA_Images", "Layout", "afterHover.png")
-		if (not os.path.exists(afterHoverPath)):
-			ImageGrab.grab(bbox=box).save(os.path.join("SCA_Images", "Layout", "afterHover.png"))
-		#auto.moveTo((329.0 / 1920.0) * width, (82.0 / 1080.0) * height)
-		#auto.moveTo((643.0 / 1920.0) * nativeW, (82.0 / 1080.0) * nativeH)
-		#auto.moveTo((428.0 / 1920.0) * width, (77.0 / 1080.0) * height)
-		#auto.moveTo((435.0 / 2880.0) * nativeW / scale, ((107.0 + macH) / 1800.0) * nativeH / scale)
-		#moveToY = (61.0 * nativeW / 2880.0)
-		auto.moveTo((857.0 / 2880.0) * width, ((109.0 + macH) / 1800.0) * height)
+		if (not os.path.exists(afterHoverPath)): ImageGrab.grab(bbox=box).save(os.path.join("SCA_Images", "Layout", "afterHover.png"))
+		#auto.moveTo(435.0 * width / 2880.0, (107.0 + macH) * height / 1800.0)
+		#auto.moveTo(857.0 * width / 2880.0, (109.0 + macH) * height / 1800.0)
+		if (platform.system() == "Windows"):
+			auto.moveTo(642.0 * width / 1920.0, (80.0 + macH) * height / 1080.0)
+		else:
+			auto.moveTo(857.0 * width / 2880.0, (109.0 * status["topBarHeight"] / 224.0) + macH)
 		auto.click()
 		time.sleep(5)
 		windowPath = os.path.join("SCA_Images", "Layout", "window.png")
-		if (not os.path.exists(windowPath)):
-			ImageGrab.grab(bbox=box).save(os.path.join("SCA_Images", "Layout", "window.png"))
+		if (not os.path.exists(windowPath)): ImageGrab.grab(bbox=box).save(os.path.join("SCA_Images", "Layout", "window.png"))
 		diffBox = get_bbox(afterHoverPath, windowPath)
 		(x1, y1, x2, y2) = (diffBox[i] + box[(i % 2)] for i in range(4))
 		diffLayoutPath = os.path.join("SCA_Images", "Layout", "diffLayout.png")
-		if (not os.path.exists(diffLayoutPath)):
-			ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffLayoutPath)
+		if (not os.path.exists(diffLayoutPath)): ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffLayoutPath)
 		# x1 += (68.0 / 1920.0) * nativeW
 		# x1 = x1 / scale
 		# y1 += (95.0 / 1080.0) * nativeH
@@ -939,7 +922,7 @@ def gestureCommands(sequence):
 		jumpX = (122.0 / 2880.0) * width"""
 		(status["panel_dim"][0], status["panel_dim"][1]) = (1, actionID)
 		#x1 += (status["panel_dim"][1] - 1) * jumpX
-		(x1, y1) = (472 + (actionID - 1) * 62, 217)
+		(x1, y1) = (472.0 + (actionID - 1) * 62.0, 217.0)
 		auto.moveTo(x1, y1)
 		auto.click()
 		resetPanelMoves()
@@ -985,8 +968,7 @@ def gestureCommands(sequence):
 			auto.PAUSE = 0.25
 		time.sleep(1)
 
-	if (command != "Admin"):
-		status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
+	if (command != "Admin"): status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
 
 
 	#openWindow(prompt)
@@ -995,8 +977,6 @@ def gestureCommands(sequence):
 	status["hold_action"] = None
 	
 	return True
-
-gestureCommands("0_4")
 
 # When quitting program, remove anything saved
 #removeImages()
