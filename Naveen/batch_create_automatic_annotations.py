@@ -20,7 +20,7 @@ import glob
 #####################
 
 ## Initialization
-base_skel_folder = r'H:\AHRQ\Study_IV\Flipped_Data\L8'
+base_skel_folder = r'H:\AHRQ\Study_IV\NewData\L8'
 base_write_folder = os.path.join(base_skel_folder, 'Annotations')
 
 # base_skel_folder = 'F:\\AHRQ\\Study_IV\\AHRQ_Gesture_Recognition\\Data'

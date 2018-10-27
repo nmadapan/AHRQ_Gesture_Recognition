@@ -1,0 +1,47 @@
+L2 -S4- Window Close - Rerecord - Taa will replace juanandres
+
+L2 -S3,S6- Manual Contrast - Flip or Rerecord. Glebys, taa -> hose
+
+L2 -S4,S5- Layout Three and Four Panels -  Rerecord
+	juanAndres - edgar
+	juanAntonio - Taa
+
+L3:
+	* S3 - Glebys
+	* S4 - Jackie
+	
+	S3 - Scroll - Flip or Record [DONE]
+	S3 - Flip - Flip or Record [DONE]
+	S3 - Flip Horizontal - Flip or Record [DONE]
+	S3 - Rotate - Flip or Rerecord [DONE]
+
+	S4 - Scroll - Flip or Record
+	S4 - Flip Horizontal - Flip or Record
+	S4 - Zoom Out - Rerecord
+
+L6:
+	S6 - Switch panel left - rerecord - Taa [DONE]
+	S4 - Switch panel right - record - Jackie
+	S3 - Layout four panels - flip/record - Glebys [DONE]
+
+
+L8:
+	S1 (Rahul) [DONE], S3 (Glebo) [DONE], S4 (Edgar) - Scroll up - record
+	S4 (Edgar) - window open
+	S4 (Edgar) - window close
+	window open == Manual contrast increase
+	window close == Manual contrast decrease
+
+NEW:
+L3:
+
+
+L6:
+	S6_SwitchPanel_Left
+	S4_SwitchPanel_Right
+	S4_LayoutThree_Panels
+
+L8:
+	S4_Scroll_Up
+	S4_PIW_Open
+	S4_PIW_Close

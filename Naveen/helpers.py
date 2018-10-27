@@ -10,6 +10,7 @@ import cv2
 ### Kinect Joint IDs ###
 ########################
 ## Refer to kinect_joint_names.json for all joint IDs
+
 ## Left hand
 left_hand_id = 7
 left_elbow_id = 5
@@ -17,6 +18,7 @@ left_shoulder_id = 4
 left_wrist_id = 6
 left_handtip_id = 21
 left_thumb_id = 22
+
 ## Right hand
 right_hand_id = 11
 right_elbow_id = 9
@@ -24,6 +26,7 @@ right_shoulder_id = 8
 right_wrist_id = 10
 right_handtip_id = 23
 right_thumb_id = 24
+
 ## Torso
 torso_id = 0
 neck_id = 2
@@ -69,7 +72,8 @@ def wait_for_kinect(kr, timeout = 30):
 			sys.exit('Waited for more than ' + str(timeout) + ' seconds. Exiting')
 	print('\nAll Kinect modules connected !!')
 
-def get_lhand_bbox(color_skel_pts, des_size = 300):
+def get_lhand_bbox(color_skel_pts, max_wh = (1920, 1080), \
+                   des_size = 300):
 	'''
 	Input arguments:
 		* color_skel_pts: A list of 50 elements. Pixel coordinates of 25 Kinect joints. Format: [x1, y1, x2, y2, ...]
@@ -79,11 +83,24 @@ def get_lhand_bbox(color_skel_pts, des_size = 300):
 			(x, y): pixel coordinates of top LEFT corner of the bbox
 			(w, h): width and height of the bounding box.
 	'''
+	##
+	half_sz = np.int32(des_size/2)
+	max_x, max_y = max_wh
+
 	## Return left hand bounding box
 	hand = np.array(color_skel_pts[2*left_hand_id:2*left_hand_id+2])
-	return [np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
+	x = np.int32(hand[0]) - half_sz
+	y = np.int32(hand[1]) - half_sz
 
-def get_rhand_bbox(color_skel_pts, des_size = 300):
+	## Handle the boundary conditions
+	if(x < 0): x = 0
+	if(y < 0): y = 0
+	if(x+half_sz >= max_x): x = max_x - half_sz - 1
+	if(y+half_sz >= max_y): y = max_y - half_sz - 1
+
+	return [x, y, des_size, des_size]
+
+def get_rhand_bbox(color_skel_pts, max_wh = (1920, 1080), des_size = 300):
 	'''
 	Input arguments:
 		* color_skel_pts: A list of 50 elements. Pixel coordinates of 25 Kinect joints. Format: [x1, y1, x2, y2, ...]
@@ -93,11 +110,24 @@ def get_rhand_bbox(color_skel_pts, des_size = 300):
 			(x, y): pixel coordinates of top RIGHT corner of the bbox
 			(w, h): width and height of the bounding box.
 	'''
+	##
+	half_sz = np.int32(des_size/2)
+	max_x, max_y = max_wh
+
 	## Return right hand bounding box
 	hand = np.array(color_skel_pts[2*right_hand_id:2*right_hand_id+2])
-	return [np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
+	x = np.int32(hand[0]) - half_sz
+	y = np.int32(hand[1]) - half_sz
 
-def get_hand_bbox(hand_pixel_coo, des_size = 300):
+	## Handle the boundary conditions
+	if(x < 0): x = 0
+	if(y < 0): y = 0
+	if(x+half_sz > max_x): x = max_x - half_sz - 1
+	if(y+half_sz > max_y): y = max_y - half_sz - 1
+
+	return [x, y, des_size, des_size]
+
+def get_hand_bbox(hand_pixel_coo, max_wh = (1920, 1080), des_size = 300):
 	'''
 	Input arguments:
 		* hand_pixel_coo: A list/tuple of two elements. Pixel coordinates of hand. Format: [x1, y1] or (x1, y1)
@@ -107,8 +137,22 @@ def get_hand_bbox(hand_pixel_coo, des_size = 300):
 			(x, y): pixel coordinates of top left corner of the bbox
 			(w, h): width and height of the boox.
 	'''
+	##
+	half_sz = np.int32(des_size/2)
+	max_x, max_y = max_wh
+
+	## Return hand bounding box
 	hand = hand_pixel_coo
-	return [np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
+	x = np.int32(hand[0]) - half_sz
+	y = np.int32(hand[1]) - half_sz
+
+	## Handle the boundary conditions
+	if(x < 0): x = 0
+	if(y < 0): y = 0
+	if(x+half_sz > max_x): x = max_x - half_sz - 1
+	if(y+half_sz > max_y): y = max_y - half_sz - 1
+
+	return [x, y, des_size, des_size]
 
 def nparray_to_str(arr, dlim = '_'):
 	'''
@@ -319,17 +363,17 @@ def json_to_dict(json_filepath):
 
 
 def flip_skeleton(skel_path, out_path, dim_per_joint=3):
-	############
-	# Flips the body skeleton along the persons vertical axis.
-	# Input argument:
-	#	* skel_path: path to skeleton file. Each line in the file has dim_per_joint*25 elements. [x1, y1, z1 ...]
-	#	* outPath: path to place the output file.
-	#   * dim_per_joint: the number of joints to be flipped
-	#
-	# Assumptions:
-	#	* There is only roll angle about person's veritcal axis
-	#	* Kinect is not tilted.
-	###########
+	'''
+	Description:
+		Flips the body skeleton along the persons vertical axis.
+	Input arguments:
+		* skel_path: path to skeleton file. Each line in the file has dim_per_joint*25 elements. [x1, y1, z1 ...]
+		* outPath: path to place the output file.
+		* dim_per_joint: the number of joints to be flipped
+	Assumptions:
+		* There is only roll angle about person's veritcal axis
+		* Kinect is not tilted.
+	'''
 
 	with open(skel_path, 'r') as fp:
 		lines = fp.readlines()
@@ -379,16 +423,22 @@ def flip_skeleton(skel_path, out_path, dim_per_joint=3):
 	fp.close()
 
 def smart_interpn(yp, reps, kind = 'copy'):
-	# yp:
-	#	2D numpy array of size num_frames x 3 if num_joints = 1
-	#
-	# reps:
-	#	1D numpy array whose elements range from [0, num_frames-1]. Note that the size of reps is usually larger than num_frames
-	#
-	# kind:
-	#	'linear'	- linear interpolation
-	#	'copy'		- do the copy
-
+	'''
+	Description:
+		Smart inpterpolation of the given 2D np.ndarray along the rows.
+	Input arguments:
+		* yp: np.ndarray of shape nr x nc. For instance, it is a 2D numpy array of size num_frames x 3 if num_joints = 1
+		* reps: 1D numpy array whose elements range from [0, num_frames-1]. Note that the size of reps is usually larger than num_frames
+		* kind: type of interpolation. 'linear' (linear interpolation) or 'copy' (copy whenever replications happen).
+	Return:
+		np.ndarray with no. of rows equal to the size of 'reps' and no. of columns same as 'yp'.
+	How to use: 
+		* 'yp': np.ndarray of size 7 x 3
+		* If 'reps' looks like [0 0 1 1 2 2 3 4 5 5 6]. 'reps' has 11 elements. 
+			- It basically means 0th row is repeated twice, 1st row is repeated twice and so on.
+		* Now the idea is to interpolate w.r.t the given 'reps'
+		* It outputs the an np.ndarray of size 11 x 3. Type of interpolation is determined by the argument 'kind'
+	'''
 	assert isinstance(yp, np.ndarray), 'yp is NOT a numpy array'
 	assert yp.ndim == 2, 'yp should be a 2D numpy array'
 
@@ -406,6 +456,16 @@ def smart_interpn(yp, reps, kind = 'copy'):
 	return out
 
 def interpn(yp, num_points, kind = 'linear'):
+	'''
+	Description:
+		Inpterpolation the given 2D np.ndarray along the rows.
+	Input arguments:
+		* yp: np.ndarray of shape nr x nc
+		* num_points: desired no. of rows
+		* kind: type of interpolation. linear or poly. Refer to interp1d of scipy.interpolate for more types of interpolation.
+	Return:
+		np.ndarray with no. of rows equal to num_points and no. of columns same as 'yp'.
+	'''
 	# yp is a gesture instance
 	# yp is 2D numpy array of size num_frames x 3 if num_joints = 1
 	# No. of frames will be increased/reduced to num_points
@@ -419,6 +479,15 @@ def interpn(yp, num_points, kind = 'linear'):
 	return y
 
 def flip_video(input_video_path, out_video_path):
+	'''
+	Description:
+		Flip the video present in input_video_path.
+	Input arguments:
+		* input_video_path: absolute path to video that you want to flip
+		* out_video_path: absolute path to video where you want to write to.
+	Return:
+		None
+	'''
 	cap = cv2.VideoCapture(input_video_path)
 	fps = cap.get(cv2.CAP_PROP_FPS)
 	width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -439,3 +508,9 @@ def flip_video(input_video_path, out_video_path):
 	cap.release()
 	out.release()
 	cv2.destroyAllWindows()
+
+def find_key(d, value):
+	for key, val in d.items():    # for name, age in dictionary.iteritems():  (for Python 2.x)
+	    if val == value:
+	        return key
+	return None

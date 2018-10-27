@@ -1,14 +1,25 @@
+###############################################################################
+#This code extracts finger lengths from hands using Cobvolutional Pose Machines(CPM)
+# this code is in Python 3(most of the python files in this repository are in python2)
+# as CPM require tensorflow which runs only in python 3 
+
+###############################################################################
+#ToCheck: framesnums sent to the cpm are matches geture annotations
+
+
 import numpy as np
 import os, time, glob, pickle, re, copy, sys, json
 from scipy.interpolate import interp1d
 import cv2
 
-sys.path.insert(0, r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master')
+# if this file is in some other location than "convolutional-pose-machines-tensorflow-master", then 
+# uncomment the following line and use the path to the CPM folder
+# sys.path.insert(0, r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master')
 from CpmClass_offline import CpmClass
 
-data_basepath=r'H:\AHRQ\Study_IV\Flipped_Data'
-read_base_path = r"H:\AHRQ\Study_IV\Data\Data_cpm"
-# write_base_path = "H:\\AHRQ\\Study_IV\\Data\\Data_OpenPose"
+data_basepath=r'H:\AHRQ\Study_IV\Flipped_Data' #path to data parsed from xef files
+read_base_path = r"H:\AHRQ\Study_IV\Data\Data_cpm" # path to directory where fames extracted from the xef files are 
+
 frames_folder = "Frames"
 fingers_folder='fingers'
 frames_dir=os.path.join(read_base_path,frames_folder)
@@ -16,16 +27,19 @@ fingers_dir=os.path.join(read_base_path,fingers_folder)
 lexicons = glob.glob(os.path.join(data_basepath,"*"))
 lexicons_names=[os.path.basename(x) for x in glob.glob(os.path.join(data_basepath,"*"))]       #[L2,L3,...]
 
-
+dominant_hand = True
 # hands_key_points=[3,5,6,9,10,13,14,17,18,21]  # first point starts from 1 
 hands_key_points=[2,4,5,8,9,12,13,16,17,20] #referencing elements of joint coord set
 skip_exisiting_fold = True
-# method='copy'
 num_fingers = 5 #number of fingers per hand
 frame_gap = 3
 
+inst= CpmClass(display_flag = True) #instantiating CpmClass
+
 def fingers_length(key_points):
-    #keypoints as a list of x,y coordinates of relevant fingers' joints
+###############################################################################
+## Returns finger lengths given the coordinates(x,y) of hand keypoints/joints
+##############################################################################
     fingers_len=[]
     for i in range(0,len(key_points),4):
         finger_len=np.sqrt((key_points[i+2]-key_points[i])**2+(key_points[i+3]-key_points[i+1])**2)
@@ -33,29 +47,44 @@ def fingers_length(key_points):
     return np.round(fingers_len,4)
 
 def create_writefolder_dir(create_dir):
+#################################################
+### creates the folders/directories
+#################################################
     try:
         os.mkdir(create_dir)
     except WindowsError:
         create_writefolder_dir()
 
-# def sort_filenames(annot_rgb_files):
-#     basenames=[os.path.basename(file) for file in annot_rgb_files]
-#     base_ids=[int(file.split('_')[0]+file.split('_')[1]) for file in basenames]
-#     zipped= zip(base_ids,basenames)
-#     zipped.sort(key = lambda t: t[0])
-#     sorted_gestures = list(zip(*zipped)[1])
-#     return sorted_gestures
 
 def sort_filenames(annot_rgb_files):
-    basenames=[os.path.basename(file) for file in annot_rgb_files]
-    base_ids=[int(file.split('_')[0]+file.split('_')[1]) for file in basenames]
-    zipped= zip(base_ids,basenames)
-    sorted_gestures = sorted(zipped)
-    sorted_gestures_final = [gest_name[1] for gest_name in sorted_gestures]
+##################################################
+### sorts annotation files
+### works differently for python 2 and python 3
+##################################################
+    if sys.version_info.major==3:
+        basenames=[os.path.basename(file) for file in annot_rgb_files]
+        base_ids=[int(file.split('_')[0]+file.split('_')[1]) for file in basenames]
+        zipped= zip(base_ids,basenames)
+        sorted_gestures = sorted(zipped)
+        sorted_gestures_final = [gest_name[1] for gest_name in sorted_gestures]    
+    else:
+        basenames=[os.path.basename(file) for file in annot_rgb_files]
+        base_ids=[int(file.split('_')[0]+file.split('_')[1]) for file in basenames]
+        zipped= zip(base_ids,basenames)
+        zipped.sort(key = lambda t: t[0])
+        sorted_gestures_final = list(zip(*zipped)[1])
     return sorted_gestures_final
 
 def get_annot_files(lexicon):
-    #return sorted filenames with extension(not the complete path)
+    '''
+        Description:
+            Given the lexicon name this function returns the sorted rgb and skeleton annotation files 
+        Input : 
+            Lexicon ID (L2,L3...)
+        Returns: 
+            annot_rgb_files -  list of sorted rgb gesture annottaion files for the entire lexicon    
+            annot_skel_files - list of sorted skelton annotation files for the entire lexicon             
+    '''
     annot_fold_path=os.path.join(data_basepath,lexicon)
     annot_folder=os.path.join(annot_fold_path,"Annotations")
     annot_rgb_files = sort_filenames(glob.glob(os.path.join(annot_folder,"*_rgbannot2.txt")))
@@ -64,24 +93,32 @@ def get_annot_files(lexicon):
     annot_skel_files=[os.path.join(annot_folder,file) for file in annot_skel_files]
     return annot_rgb_files,annot_skel_files
 
-#take gesture start and end from the skel_file
-#if number of gest_len_skel==gest_len_rgb do nothing 
-# else match the timestamps from skel to rgb. Number of rgb frames should be equal to number of skel frames
-
-# for interpolation, firstly extrac the data for all the frames in a gesture. I f interpolation is required subsample the data and
-# do the interploation
- 
- #TODO:Normalization
-
-
 def readlines_txt(f_name,str_to_num):
-    #str_to_num - int or float
+    '''
+        Description: 
+            for a text file returns the content of the file in list form
+        Input Arguments:
+            f_name - path to the file
+            str_to_num - int or float
+        Returns:
+            f_lines - list of the contents of the file  
+    '''
     with open(f_name) as f:
         f_lines=f.readlines()
         f_lines=[str_to_num(x.strip()) for x in f_lines]
     return f_lines
 
 def match_ts(rgb_ts,skel_ts):
+    '''
+        Description: 
+            This function maps skeleton time stamps to rgb time stamps and vice versa
+        Input Arguments:
+            rgb_ts - path to the file with rgb time stamps
+            skel_ts - path to the file with skeleton time stamps
+        Returns:
+            s_to_r - mapping from skeleton time stamps to rgb time stamps 
+            r_to_s - mapping from rgb time stamps to skeleton time stamps
+    '''
     rgb_ts=np.array(rgb_ts)
     skel_ts=np.array(skel_ts)
     s_to_r=np.argmin(abs(rgb_ts.reshape(-1,1)-skel_ts.reshape(1,-1)),axis=1)
@@ -89,23 +126,52 @@ def match_ts(rgb_ts,skel_ts):
     return s_to_r,r_to_s
 
 def get_gesture_names(skel_files):
+    '''
+        Description: 
+            This function returns gesture names from the skeleton file paths
+        Input Arguments:
+            skel_files: path to skeleton files
+        Returns:
+            gesture_names - gesture names associated with those files
+    '''
     gesture_names=[]
     for file in skel_files:
         strings_=os.path.basename(file).split('_')
         gesture_names.append('_'.join(strings_[:-1]))
     return gesture_names
 
-inst= CpmClass(display_flag = False)
 
-def cpm_fingers(frame):
-    #must return a list
-    joint_coord_set = inst.get_hand_skel(frame)
-    # print(len(joint_coord_set))
-    finger_lengths = inst.get_fing_lengths(joint_coord_set)
+def cpm_fingers(frame):     #must return a list
+    '''
+        Description: 
+            This function returns finger lengths using Convolutional Pose Machines(CPM)
+        Input Arguments:
+            frame: rgb image from which to extract finger lengths
+        Returns:
+            finger_lengths - finger lengths extracted from frame using CPM
+    '''
+    joint_coord_set = inst.get_hand_skel(frame) #(x,y) coordinates of all the 21 joints of the hand
+    finger_lengths = inst.get_finger_lengths(joint_coord_set) #finger lengths from the all the hand joints
     return  finger_lengths.tolist()
 
-def normalize_gesture():
-    pass
+def cpm_fingers_coords(frame, fingers = True):     #must return a list
+    '''
+        Description: 
+            This function either returns fingers coordinates or joint coordinates of  whole hand using Convolutional Pose Machines(CPM)
+        Input Arguments:
+            frame: rgb image from which to extract finger lengths
+            fingers: True if fingers extreme joint coordinates are required
+        Returns:
+            finger_coords - finger coordinates extracted from frame using CPM
+                                         or
+            joint_coord_set -hand joint coordinates extracted from frame using CPM
+    '''
+    joint_coord_set = inst.get_hand_skel(frame)
+    finger_coords = inst.get_hand_keypoints(joint_coord_set)
+    if fingers:
+        return  finger_coords #list
+    else:
+        return  joint_coord_set
 
 def json_to_dict(json_filepath):
     if(not os.path.isfile(json_filepath)):
@@ -132,104 +198,110 @@ def interpn(yp, num_points=num_points, kind = 'linear'):
         y[:, dim] = f(x)
     return y
 
-dominant_hand = True
 
 def create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file,frames_folder,\
                         num_fingers = num_fingers, dominant_hand = dominant_hand):
+
+    '''
+        Description: 
+            This function uses rgb annotation file and skel annotation files to get the gesture start and end.
+            Since there could be offset between rgb and skeleton gesture annotations,both have to be mapped 
+            to each other.
+            Then it grabs the frames,corresponding to the gesture annotations, and send them to CPM to extract the
+            fingers'/whole hand joint coordinates. 
+            Since CPM works with only one hand, we are segmenting bounding boxes around both the hands and sending 
+            that to CPM sequentially.
+            Since SVM only works for constant length features, all the gestures are interpolated/extrapolated to 
+            have the same length(same number of features).
+            For each gesture one column vector is outputted.   
+            List of all the gestures(approixmately 20), is returned 
+                        
+        Input Arguments:
+            annot_rgb_file: path to rgb annotation file corresponding to the gesture 
+            annot_skel_file: path to skeleton annotation file corresponding to the gesture
+            rgb_ts_file: path to rgb frames' time stamps file corresponding to the gesture
+            skel_ts_file: path to skel frames' time stamps file corresponding to the gesture
+            frames_folder: path to folder containing frames of corresponding gesture
+            num_fingers: number of finger lengths(starting from thumb)
+            dominant_hand: Features of dominant hand are being appended first. takes value 'left' or "right"
+
+        Returns:
+            full_gesture_data: List of lists for gestures' features.
+                               Each inner list has features complete of the gestures, interpolated to the
+                               fixed number of frames imported from the "params.json" file.
+
+                
+    '''
 
     rgb_frame_nums=readlines_txt(annot_rgb_file,int)
     skel_frame_nums=readlines_txt(annot_skel_file,int)
     rgb_ts=readlines_txt(rgb_ts_file,float)
     skel_ts=readlines_txt(skel_ts_file,float)
-
     #left and right are interchanged to accomodate kinect's inversion
-    #TODO: write a function to sort frame_nums    
     left_files=glob.glob(os.path.join(frames_folder,'*_r*'))
     right_files=glob.glob(os.path.join(frames_folder,'*_l*'))
-
-
-    #match gesture wise
-    # TODOextarct frames nums for gesture for both rgb and skel and use this function
-
-    
     num_gestures=len(rgb_frame_nums)/2
-    # print(num_gestures)
-
     full_gesture_data=[]
-
-    for i in range(0,int(num_gestures),1): #loop over num_gestures times
+    for i in range(0,int(len(rgb_frame_nums)),2): #loop over num_gestures times
         rgb_gest_start=rgb_frame_nums[i]
         rgb_gest_end=rgb_frame_nums[i+1]
         skel_gest_start=skel_frame_nums[i]
         skel_gest_end=skel_frame_nums[i+1]
         gest_rgb_ts = rgb_ts[rgb_gest_start:rgb_gest_end+1]
         gest_skel_ts = skel_ts[skel_gest_start:skel_gest_end+1]
-
-        gesture_left_frames=left_files[rgb_gest_start:rgb_gest_end]    
-        gesture_right_frames=right_files[rgb_gest_start:rgb_gest_end]
-        #write a function to sort the frames
-        
+        gesture_left_frames=left_files[rgb_gest_start:rgb_gest_end+1]    
+        gesture_right_frames=right_files[rgb_gest_start:rgb_gest_end+1]
+            
         s_to_r,r_to_s = match_ts(rgb_ts[rgb_gest_start:rgb_gest_end],skel_ts[skel_gest_start:skel_gest_end])
         
+        print('rgb gesture start:',rgb_gest_start,'rgb gesture end:',rgb_gest_end)
+        print('skel gesture start:',skel_gest_start,'skel gesture end:',skel_gest_end)
+        # print('gesture_left_frames',[os.path.basename(frame) for frame in gesture_left_frames])
+        # print('gesture_right_frames',[os.path.basename(frame) for frame in gesture_right_frames])
         gesture_data=[]
-
-        for j in range(0,len(gesture_left_frames),frame_gap):
+        num_gest_frames = len(gesture_left_frames)
+        for j in range(0,num_gest_frames):
         # dominant hand is assumed to be left. if not the replace dominat_hand with not dominant_hand 
             frame_l=cv2.imread(gesture_left_frames[j])
             frame_r=cv2.imread(gesture_right_frames[j])
 
+            # if hand is completely out of the frame, then the bounding box is of size 0.
+            # to handle those zeros are returned as finger lengths or raw coordinates 
+            #TODO: handle bounday conditions more strategically
             if frame_l is None:
                 print('this',gesture_left_frames[j],'is not processed due to 0 size')
-                left_fingers = np.zeros(5).tolist()
+                left_fingers = np.zeros(20).tolist()
             else:
-                left_fingers = cpm_fingers(gesture_left_frames[j])
+                left_fingers = cpm_fingers_coords(gesture_left_frames[j],fingers=True)
 
             if frame_r is None:
                 print('this',gesture_right_frames[j],'is not processed due to 0 size')               
-                right_fingers = np.zeros(5).tolist()
+                right_fingers = np.zeros(20).tolist()
             else:
-                right_fingers = cpm_fingers(gesture_right_frames[j])
+                right_fingers = cpm_fingers_coords(gesture_right_frames[j],fingers=True)
 
-            if len(gesture_left_frames)-j>frame_gap:
-                if dominant_hand:
-                    for p in range(frame_gap):
-                        gesture_data.append(left_fingers+right_fingers)
-                else:
-                    for p in range(frame_gap):
-                        gesture_data.append(right_fingers+left_fingers)                    
-
+            if dominant_hand:
+                gesture_data.append(left_fingers+right_fingers)
             else:
-                if dominant_hand:
-                    for p in range(len(gesture_left_frames)-j):
-                        gesture_data.append(left_fingers+right_fingers)
-                else:
-                    for p in range(len(gesture_left_frames)-j):
-                        gesture_data.append(right_fingers+left_fingers)
+                gesture_data.append(right_fingers+left_fingers)                    
 
-
- #should return lists so that they can be added
-
-
+        #should return lists so that they can be added
         gesture_data_updated=[]
-
-        #taking into account variation in 
         for k in range(len(r_to_s)):
-            # print(gesture_data[r_to_s[k]])
+        ###############################################################################################################    
+        # final number of frames should be equal to the number of skeleton frames as we are meging with them
+        # However it shouldn't matter much as we are interpolating the gestures to fixed number of frames
+        ###############################################################################################################
             gesture_data_updated.append(gesture_data[r_to_s[k]])
-        # for ex one of the gesture in 5_3_S2_L2_X_Up has only 1 frame and interpolation doesn't work.
-        #putting it into try catch
+        # if due to some error there is only one frame in a gesture, it can't be interpolated to num_frames.
+        # that is being handled with try and catch
         try:
             frames_data=interpn(np.array(gesture_data_updated))
             full_gesture_data.append(np.array(frames_data).flatten().tolist())
         except:
             gest_len=rgb_gest_end-rgb_gest_start
             print('Can-not append gesture {0} with lengths {1}'.format(os.path.basename(annot_rgb_file),str(gest_len)))
-
     return full_gesture_data
-# run cpm through whole of the gesture, save fingers and then match it with skel ts
-# error causing gesture - 5_3_S2_L2_X_Up_rgbannot2.txt
-# create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file,
-#                 frames_folder=frames_folder)
 
 
 #verify a particular gesture
@@ -244,36 +316,34 @@ def create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file
 # sys.exit(0)
 
 
+##########################################################
+# code for accessing files and folders and 
+# send it to create_fingers_data
+##########################################################
+
 for lexicon in lexicons:
     lexicon_name=os.path.basename(lexicon)
     frames_lexicon_folder=os.path.join(frames_dir,lexicon_name)
-    # print xml_lexicon_folder,len(os.listdir(xml_lexicon_folder))
     write_base_folder=os.path.join(fingers_dir,lexicon_name)
     if not os.path.isdir(write_base_folder): create_writefolder_dir(write_base_folder)
     frames_folders=glob.glob(os.path.join(frames_lexicon_folder,"*"))
     annot_rgb_files,annot_skel_files=get_annot_files(lexicon_name) 
     rgb_ts_files = glob.glob(os.path.join(lexicon,"*_rgbts.txt"))
     skel_ts_files =glob.glob(os.path.join(lexicon,"*_skelts.txt"))
-
-    gestures=get_gesture_names(annot_rgb_files)
-
-    with open(os.path.join(write_base_folder,lexicon_name+'_fingers_n.pkl'),'wb') as pkl_file:
+    gestures=get_gesture_names(annot_rgb_files) 
+    with open(os.path.join(write_base_folder,lexicon_name+'_fingers_coords.pkl'),'wb') as pkl_file:
         gest_dict = {}
-
         for gesture in gestures:
-
             print('extracting fingerlengths from gesture', gesture)
             annot_rgb_file = [file for file in annot_rgb_files if gesture in file][0]
             annot_skel_file = [file for file in annot_skel_files if gesture in file][0]
             rgb_ts_file = [file for file in rgb_ts_files if gesture in file][0]
             skel_ts_file = [file for file in skel_ts_files if gesture in file][0]
             frames_folder = [folder for folder in frames_folders if gesture in folder][0]
-
             start=time.time()
             data_to_write = create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file,
                     frames_folder=frames_folder)
             print('Time taken',time.time()-start)
-
             data_to_write_list=[]
             for line in data_to_write:
                 data_to_write_list.append(line)

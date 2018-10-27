@@ -229,6 +229,7 @@ class Client():
     def close(self):
         ## Close the connection with the server. 
         self.sock.close()
+        
 
 if __name__ == '__main__':
     tcp_ip = 'localhost'
@@ -254,6 +255,7 @@ if __name__ == '__main__':
 
             ## When you call server.run
             flag = client.send_data('Hello World')
+            print("RECEIVED: ", flag) 
         except Exception as exp:
             print('raising exception', exp)
             client.connect_status = False
