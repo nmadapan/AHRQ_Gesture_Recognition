@@ -254,8 +254,8 @@ def create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file
             
         s_to_r,r_to_s = match_ts(rgb_ts[rgb_gest_start:rgb_gest_end],skel_ts[skel_gest_start:skel_gest_end])
         
-        print('rgb gesture start:',rgb_gest_start,'rgb gesture end:',rgb_gest_end)
-        print('skel gesture start:',skel_gest_start,'skel gesture end:',skel_gest_end)
+        # print('rgb gesture start:',rgb_gest_start,'rgb gesture end:',rgb_gest_end)
+        # print('skel gesture start:',skel_gest_start,'skel gesture end:',skel_gest_end)
         # print('gesture_left_frames',[os.path.basename(frame) for frame in gesture_left_frames])
         # print('gesture_right_frames',[os.path.basename(frame) for frame in gesture_right_frames])
         gesture_data=[]

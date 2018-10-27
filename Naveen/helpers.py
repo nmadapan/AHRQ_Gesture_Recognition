@@ -95,8 +95,8 @@ def get_lhand_bbox(color_skel_pts, max_wh = (1920, 1080), \
 	## Handle the boundary conditions
 	if(x < 0): x = 0
 	if(y < 0): y = 0
-	if(x+half_sz >= max_x): x = max_x - half_sz - 1
-	if(y+half_sz >= max_y): y = max_y - half_sz - 1
+	if(x+des_size >= max_x): x = max_x - des_size - 1
+	if(y+des_size >= max_y): y = max_y - des_size - 1
 
 	return [x, y, des_size, des_size]
 
@@ -122,8 +122,8 @@ def get_rhand_bbox(color_skel_pts, max_wh = (1920, 1080), des_size = 300):
 	## Handle the boundary conditions
 	if(x < 0): x = 0
 	if(y < 0): y = 0
-	if(x+half_sz > max_x): x = max_x - half_sz - 1
-	if(y+half_sz > max_y): y = max_y - half_sz - 1
+	if(x+des_size > max_x): x = max_x - des_size - 1
+	if(y+des_size > max_y): y = max_y - des_size - 1
 
 	return [x, y, des_size, des_size]
 
@@ -149,8 +149,8 @@ def get_hand_bbox(hand_pixel_coo, max_wh = (1920, 1080), des_size = 300):
 	## Handle the boundary conditions
 	if(x < 0): x = 0
 	if(y < 0): y = 0
-	if(x+half_sz > max_x): x = max_x - half_sz - 1
-	if(y+half_sz > max_y): y = max_y - half_sz - 1
+	if(x+des_size > max_x): x = max_x - des_size - 1
+	if(y+des_size > max_y): y = max_y - des_size - 1
 
 	return [x, y, des_size, des_size]
 
