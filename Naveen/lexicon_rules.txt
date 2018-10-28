@@ -1,0 +1,29 @@
+
+L2:
+
+
+
+Elements with context
+L3:
+	Scroll
+	flip
+	rotate
+	zoom
+	switch panel
+	Pan
+	window
+	manual contrast
+	layout
+	contrast presets
+CONFLICTS: modifier zoom out == context manual contrast
+		   modifier contrast presets 1 and 2 are == modifier layout 1 and 2
+
+NOTE make rules -> a the  direction is detected for scroll, pan, manual contras or switch panel, but we are in a different context, use that context instead
+
+
+
+
+
+
+
+
