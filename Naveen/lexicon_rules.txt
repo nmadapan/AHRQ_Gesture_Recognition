@@ -1,10 +1,21 @@
 
 L2:
-
-
-
 Elements with context
+	switch panel
+	pan
+	Manual contrast
+	Layout
+	Contrast presets
+
+CONFLICTS: modifier zoom out == context manual contrast
+		   modifier presets 2 == modifier switch panel up
+
+similar modifiers:
+	pan == switch
+
+
 L3:
+Elements with context:
 	Scroll
 	flip
 	rotate
@@ -16,14 +27,50 @@ L3:
 	layout
 	contrast presets
 CONFLICTS: modifier zoom out == context manual contrast
-		   modifier contrast presets 1 and 2 are == modifier layout 1 and 2
+		   modifier contrast presets 1 and 2 are == modifier layout 1 and 2 (SAME IN CODE)
+
+similar modifiers
+	pan left/right = switch left/right
+
+
+L6:
+Elements with context
+	flip
+	manual contrast
+	contrast_presets
+	Layout
+
+
+CONFLICTS: 	modifier zoom out == modifier ruler measure 
+
+Toggles:
+	ruler delete when ruler measure has been used -> confused context lists
+
+
+L8:
+Elements with context
+	
+
+
+CONFLICTS: ruler measure commands == window open cliose commands	
+
+Toggles:
+	ruler delete when ruler measure has been used -> confused context lists (full command)
+	window close when window open has been used -> confused contexs (full command)
+
+
 
 NOTE make rules -> a the  direction is detected for scroll, pan, manual contras or switch panel, but we are in a different context, use that context instead
 
 
+if rules that need to be made:
+	if the modifiers are similar --> use the one of the context
+	if the modifier does not exist --> ignore
+	if the contexts or coomands can be confused --> send execution option
+	commands that need to be toogled form x list when used with counter
 
 
 
-
-
-
+Things to fix:
+	re-name flip vertical L8
+	record layout for L6 
