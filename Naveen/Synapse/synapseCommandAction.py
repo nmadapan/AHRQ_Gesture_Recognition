@@ -324,7 +324,7 @@ class Calibration(object):
 
 calibration = Calibration()
 
-actionList = [["Admin", "Quit", "Get Status", "Switch ToUse", "Reset All", "Reset TopBar", "Reset RightClick", "Reset Presets", "Reset ScaleRotateFlip"],
+actionList = [["Admin", "Quit", "Get Status", "Switch ToUse", "Reset"],
 	["Scroll", "Up", "Down"],
 	["Flip", "Horizontal", "Vertical"],
 	["Rotate", "Clockwise", "Counter-Clockwise"],
@@ -404,17 +404,16 @@ def gestureCommands(sequence):
 			print ""
 		elif (action == "Switch ToUse"):
 			status["toUse"] = ("key_shorts" if status["toUse"] == "img_recog" else "SCA_Images")
-		elif ("Reset " in action):
-			action = action[6:]
-			if (action == "All"):
+		elif (action == "Reset"):
+			if (status["params"] == "All"):
 				calibration.resetAll()
-			if (action == "TopBar"):
+			if (status["params"] == "TopBar"):
 				calibration.resetTopBarHeight()
-			elif (action == "RightClick"):
+			elif (status["params"] == "RightClick"):
 				calibration.resetRightClick()
-			elif (action == "Presets"):
+			elif (status["params"] == "Presets"):
 				calibration.resetRightOptions("presets", 8.5)
-			elif (action == "ScaleRotateFlip"):
+			elif (status["params"] == "ScaleRotateFlip"):
 				calibration.resetRightOptions("scaleRotateFlip", 9.5)
 			(status["topBarHeight"], status["optionH"], status["rightHR"], status["rightPlus"], status["rightIcons"],
 				status["rightOffset"], status["rightBoxW"], status["rightBoxH"]) = calibration.getAll()
@@ -444,14 +443,14 @@ def gestureCommands(sequence):
 			located = findRightClick(352)
 			if (not located):
 				if (status["hold_action"] != "held"):
-					status["hold_action"] = commandAction
+					(status["hold_action"], status["params"]) = (commandAction, "RightClick")
 					return gestureCommands("0_6")
 				else: return False
 			time.sleep(1)
 			located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "scaleRotateFlip.png"))
 			if (located is None):
 				if (status["hold_action"] != "held"):
-					status["hold_action"] = commandAction
+					(status["hold_action"], status["params"]) = (commandAction, "ScaleRotateFlip")
 					return gestureCommands("0_8")
 				else: return False
 			(x1, y1, w, h) = located
@@ -474,14 +473,14 @@ def gestureCommands(sequence):
 			located = findRightClick(352)
 			if (not located):
 				if (status["hold_action"] != "held"):
-					status["hold_action"] = commandAction
+					(status["hold_action"], status["params"]) = (commandAction, "RightClick")
 					return gestureCommands("0_6")
 				else: return False
 			time.sleep(1)
 			located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "scaleRotateFlip.png"))
 			if (located is None):
 				if (status["hold_action"] != "held"):
-					status["hold_action"] = commandAction
+					(status["hold_action"], status["params"]) = (commandAction, "ScaleRotateFlip")
 					return gestureCommands("0_8")
 				else: return False
 			(x1, y1, w, h) = located
@@ -509,7 +508,7 @@ def gestureCommands(sequence):
 				if (status["toUse"] == "img_recog"):
 					if (not findRightClick(54)):
 						if (status["hold_action"] != "held"):
-							status["hold_action"] = commandAction
+							(status["hold_action"], status["params"]) = (commandAction, "RightClick")
 							return gestureCommands("0_6")
 						else: return False
 					auto.click()
@@ -557,7 +556,7 @@ def gestureCommands(sequence):
 				if (status["toUse"] == "img_recog"):
 					if (not findRightClick(90)):
 						if (status["hold_action"] != "held"):
-							status["hold_action"] = commandAction
+							(status["hold_action"], status["params"]) = (commandAction, "RightClick")
 							return gestureCommands("0_6")
 						else: return False
 					auto.click()
@@ -602,7 +601,7 @@ def gestureCommands(sequence):
 				located = findRightClick(126)
 				if (not located):
 					if (status["hold_action"] != "held"):
-						status["hold_action"] = commandAction
+						(status["hold_action"], status["params"]) = (commandAction, "RightClick")
 						return gestureCommands("0_6")
 					else: return False
 				auto.click()
@@ -825,14 +824,14 @@ def gestureCommands(sequence):
 			located = findRightClick(316)
 			if (not located):
 				if (status["hold_action"] != "held"):
-					status["hold_action"] = commandAction
+					(status["hold_action"], status["params"]) = (commandAction, "RightClick")
 					return gestureCommands("0_6")
 				else:
 					return False
 			located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "presets.png"))
 			if (located is None):
 				if (status["hold_action"] != "held"):
-					status["hold_action"] = commandAction
+					(status["hold_action"], status["params"]) = (commandAction, "Presets")
 					return gestureCommands("0_7")
 				else:
 					return False
