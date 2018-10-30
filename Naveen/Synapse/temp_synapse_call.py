@@ -19,7 +19,7 @@ dataList = ["10_2"]
 # Call Aayush's Synapse command script
 import synapseCommandAction as sca
 #if (not os.path.exists("calibration1920_1080_1.txt")):
-#    synapse_Flag = sca.gestureCommands("0_4")
+#    synapse_Flag = sca.gestureCommands("0_4 All")
 i = 0
 while True and i < len(dataList):
     # if(not self.connect_status): self.wait_for_connection() # This is not relevant beccause
