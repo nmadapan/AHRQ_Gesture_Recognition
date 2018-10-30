@@ -12,20 +12,19 @@ plt.rcdefaults()
 ## Initialization ##
 ####################
 ## Skeleton
-skel_folder_path = r'H:\AHRQ\Study_IV\Flipped_Data\L2'
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
 # skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
 ## Fingers
-num_fingers = 0
 ENABLE_FINGERS = True
-pickle_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm\fingers\L2'
-fingers_pkl_fname = 'L2_5fingers_from_coord_euclid_norm_300.pkl'
+pickle_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L2'
+fingers_pkl_fname = 'L2_fingers_from_hand_base.pkl'
 #######################
 
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
 dirname = os.path.dirname(skel_folder_path)
 fileprefix = os.path.basename(skel_folder_path)
 
-out_pkl_fname = os.path.join(dirname, fileprefix+'_'+str(num_fingers)+'_data.pickle')
+out_pkl_fname = os.path.join(dirname, fileprefix+'_data.pickle')
 
 fe = FeatureExtractor(json_param_path = 'param.json')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
@@ -41,7 +40,7 @@ if(ENABLE_FINGERS):
 		key=s.join(key)
 		for line in np.round(fingers_data.get(key),4):
 			data_merge.append(line)
-	out['data_input'] = np.concatenate([out['data_input'][:np.array(data_merge).shape[0]], np.array(data_merge)], axis = 1)
+	out['data_input'] = np.concatenate([out['data_input'], np.array(data_merge)], axis = 1)
 
 # Randomize data input and output
 temp = zip(out['data_input'], out['data_output'])

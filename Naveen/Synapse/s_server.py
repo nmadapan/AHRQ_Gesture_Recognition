@@ -5,7 +5,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0,parentdir) 
 ###################################################################
-import synapseCommandAction as sca
+# import synapseCommandAction as sca
 
 from CustomSocket import Server 
 
@@ -29,6 +29,12 @@ class SynapseServer(Server):
                     if synapse_Flag:
                         print("Command: ",data, "was executed")
                     self.client.send(str(synapse_Flag))
+                synapse_Flag = True
+                # synapse_Flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
+                # synapse_Flag = True #it should return TRUE if command is executed properly
+                if synapse_Flag:
+                    print("Command: ",data, "was executed")
+                self.client.send(str(synapse_Flag))
             except Exception as exp:
                 print(exp)
                 print('Connection Closed')

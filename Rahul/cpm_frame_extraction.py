@@ -11,47 +11,103 @@ right_hand_id = 11
 right_wrist_id = 10
 blur_nondom_hand=False
 
-skip_existing_folder = True
+skip_existing_folder = True # True if don't want to override existing folders
 
 
-read_base_path = "H:\AHRQ\Study_IV\Flipped_Data"
-write_base_path = "H:\AHRQ\Study_IV\Data\Data_cpm"
+read_base_path = r"H:\AHRQ\Study_IV\NewData"
+write_base_path = r"H:\AHRQ\Study_IV\Data\Data_cpm_new"
 frames_folder="Frames"
 frames_dir=os.path.join(write_base_path,frames_folder)
 if not os.path.isdir(frames_dir): create_writefolder_dir(frames_dir)
 lexicons=glob.glob(os.path.join(read_base_path,"*"))
 
-def get_lhand_bbox(color_skel_pts, des_size = 300):
-    ############
-    # Input arguments:
-    #   'color_skel_pts': A list of 50 elements. Pixel coordinates of 25 Kinect joints. 
-    #       Format: [x1, y1, x2, y2, ...]
-    #   'des_size': Size of the bounding box
-    #
-    # Return:
-    #   'bbox': list of four values. [x, y, w, h]. 
-    #       (x, y): pixel coordinates of top left corner of the bbox
-    #       (w, h): width and height of the boox. 
-    ############
+# def get_lhand_bbox(color_skel_pts, des_size = 300):
+#     ############
+#     # Input arguments:
+#     #   'color_skel_pts': A list of 50 elements. Pixel coordinates of 25 Kinect joints. 
+#     #       Format: [x1, y1, x2, y2, ...]
+#     #   'des_size': Size of the bounding box
+#     #
+#     # Return:
+#     #   'bbox': list of four values. [x, y, w, h]. 
+#     #       (x, y): pixel coordinates of top left corner of the bbox
+#     #       (w, h): width and height of the boox. 
+#     ############
+#     ## Return left hand bounding box
+#     hand = np.array(color_skel_pts[2*left_hand_id:2*left_hand_id+2])
+#     return hand.tolist(),[np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
+
+# def get_rhand_bbox(color_skel_pts, des_size = 300):
+#     ############
+#     # Input arguments:
+#     #   'color_skel_pts': A list of 50 elements. Pixel coordinates of 25 Kinect joints. 
+#     #       Format: [x1, y1, x2, y2, ...]
+#     #   'des_size': Size of the bounding box
+#     #
+#     # Return:
+#     #   'bbox': list of four values. [x, y, w, h]. 
+#     #       (x, y): pixel coordinates of top left corner of the bbox
+#     #       (w, h): width and height of the boox. 
+#     ############    
+#     ## Return right hand bounding box
+#     hand = np.array(color_skel_pts[2*right_hand_id:2*right_hand_id+2])
+#     return hand.tolist(),[np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
+
+
+def get_lhand_bbox(color_skel_pts, max_wh , \
+                   des_size = 300):
+    '''
+    Input arguments:
+        * color_skel_pts: A list of 50 elements. Pixel coordinates of 25 Kinect joints. Format: [x1, y1, x2, y2, ...]
+        * des_size: Size of the square bounding box
+    Return:
+        * bbox: list of four values. [x, y, w, h].
+            (x, y): pixel coordinates of top LEFT corner of the bbox
+            (w, h): width and height of the bounding box.
+    '''
+    ##
+    half_sz = np.int32(des_size/2)
+    max_x, max_y = max_wh
+
     ## Return left hand bounding box
     hand = np.array(color_skel_pts[2*left_hand_id:2*left_hand_id+2])
-    return hand.tolist(),[np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
+    x = np.int32(hand[0]) - half_sz
+    y = np.int32(hand[1]) - half_sz
 
-def get_rhand_bbox(color_skel_pts, des_size = 300):
-    ############
-    # Input arguments:
-    #   'color_skel_pts': A list of 50 elements. Pixel coordinates of 25 Kinect joints. 
-    #       Format: [x1, y1, x2, y2, ...]
-    #   'des_size': Size of the bounding box
-    #
-    # Return:
-    #   'bbox': list of four values. [x, y, w, h]. 
-    #       (x, y): pixel coordinates of top left corner of the bbox
-    #       (w, h): width and height of the boox. 
-    ############    
+    ## Handle the boundary conditions
+    if(x < 0): x = 0
+    if(y < 0): y = 0
+    if(x+des_size >= max_x): x = max_x - des_size - 1
+    if(y+des_size >= max_y): y = max_y - des_size - 1
+
+    return hand.tolist(),[x, y, des_size, des_size]
+
+def get_rhand_bbox(color_skel_pts, max_wh, des_size = 300):
+    '''
+    Input arguments:
+        * color_skel_pts: A list of 50 elements. Pixel coordinates of 25 Kinect joints. Format: [x1, y1, x2, y2, ...]
+        * des_size: Size of the square bounding box
+    Return:
+        * bbox: list of four values. [x, y, w, h].
+            (x, y): pixel coordinates of top RIGHT corner of the bbox
+            (w, h): width and height of the bounding box.
+    '''
+    ##
+    half_sz = np.int32(des_size/2)
+    max_x, max_y = max_wh
+
     ## Return right hand bounding box
     hand = np.array(color_skel_pts[2*right_hand_id:2*right_hand_id+2])
-    return hand.tolist(),[np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
+    x = np.int32(hand[0]) - half_sz
+    y = np.int32(hand[1]) - half_sz
+
+    ## Handle the boundary conditions
+    if(x < 0): x = 0
+    if(y < 0): y = 0
+    if(x+des_size > max_x): x = max_x - des_size - 1
+    if(y+des_size > max_y): y = max_y - des_size - 1
+
+    return hand.tolist(),[x, y, des_size, des_size]
 
 def readlines_txt(f_name,str_to_num=False):
     with open(f_name) as f:
@@ -92,8 +148,10 @@ def extract_frames_cpm(video_file,rgb_ts_file,skle_ts_file,rgb_skel_file,write_f
     success, frame = cap.read()
     counter=0
     while success:
-        r_hand_coord,[lx,ly,lw,lh]=get_lhand_bbox([np.float(coord) for coord in skel_coo[s_to_r[counter]].split(' ')])
-        l_hand_coord,[rx,ry,rw,rh]=get_rhand_bbox([np.float(coord) for coord in skel_coo[s_to_r[counter]].split(' ')])
+        r_hand_coord,[lx,ly,lw,lh]=get_lhand_bbox([np.float(coord) for coord in skel_coo[s_to_r[counter]].split(' ')],\
+            max_wh=(frame.shape[1],frame.shape[0]))
+        l_hand_coord,[rx,ry,rw,rh]=get_rhand_bbox([np.float(coord) for coord in skel_coo[s_to_r[counter]].split(' ')],\
+            max_wh=(frame.shape[1],frame.shape[0]))
         # cv2.rectangle(frame,(lx,ly),(lx+lw,ly+lh),(255,0,0),2)      
         # cv2.rectangle(frame,(rx,ry),(rx+rw,ry+rh),(0,0,255),2)
         if blur_nondom_hand:
@@ -162,15 +220,19 @@ def generate_data():
         for gesture in gestures:
             # if gesture in missing_gestures:
             gesture_folder=os.path.join(write_base_folder,gesture)
-            if not os.path.isdir(gesture_folder): create_writefolder_dir(gesture_folder)
-            print 'extracting frames from the gesture', gesture
-            gesture_video=[video for video in rgb_videos if gesture in video][0]
-            rgb_skel_file=[file for file in rgb_skel_files if gesture in file][0]
-            rgb_ts_file=[file for file in rgb_ts_files if gesture in file][0]
-            skel_ts_file=[file for file in skel_ts_files if gesture in file][0]
-            print 'writing in folder:',gesture_folder
-            extract_frames_cpm(video_file=gesture_video,rgb_skel_file=rgb_skel_file,rgb_ts_file=rgb_ts_file,skle_ts_file=skel_ts_file,\
-                write_folder=gesture_folder)
+            if skip_existing_folder and os.path.isdir(gesture_folder): continue
+            else:
+                create_writefolder_dir(gesture_folder)
+            # if not os.path.isdir(gesture_folder): create_writefolder_dir(gesture_folder)
+            # else:continue
+                print 'extracting frames from the gesture', gesture
+                gesture_video=[video for video in rgb_videos if gesture in video][0]
+                rgb_skel_file=[file for file in rgb_skel_files if gesture in file][0]
+                rgb_ts_file=[file for file in rgb_ts_files if gesture in file][0]
+                skel_ts_file=[file for file in skel_ts_files if gesture in file][0]
+                print 'writing in folder:',gesture_folder
+                extract_frames_cpm(video_file=gesture_video,rgb_skel_file=rgb_skel_file,rgb_ts_file=rgb_ts_file,skle_ts_file=skel_ts_file,\
+                    write_folder=gesture_folder)
             # print os.path.basename(rgb_skel_file),os.path.basename(rgb_ts_file),os.path.basename(skel_ts_file),os.path.basename(gesture_video)
 
 

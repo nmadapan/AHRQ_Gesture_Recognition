@@ -7,6 +7,20 @@ import sys
 from glob import glob
 import numpy as np
 from copy import deepcopy 
+
+xef_names = ['1_1_S3_L8_Scroll_Up', '10_4_S3_L6_X_FourPanels', '3_0_S3_L3_Rotate_X',\
+			'2_1_S3_L3_X_Horizontal', '2_0_S3_L3_Flip_X', '1_0_S3_L3_Scroll_X', \
+			'5_1_S6_L6_SwitchPanel_Left', '1_1_S1_L8_Scroll_Up','8_2_S4_L8_PIW_Close','8_1_S4_L8_PIW_Open','1_1_S4_L8_Scroll_Up']
+
+data_path = r'H:\AHRQ\Study_IV\NewData'
+
+for xef_name in xef_names:
+	print xef_name, 
+	fpath = join(data_path, '*\\'+xef_name+'*')
+	print '===========>', len(glob(fpath))
+
+sys.exit()
+
 ## Global variables
 lexicon_id = 'L8'
 naveen_path = '.'

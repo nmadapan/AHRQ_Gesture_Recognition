@@ -7,7 +7,7 @@ from glob import glob
 def pose_calib_data(skelpath):
 	def filtered_max(skelpath, plot = False):
 		ignore_from = int(0.25*len(lines))
-		arm_list = [] 
+		arm_list = []
 
 		for line in lines[ignore_from:]:
 			right, left = skel_col_reduce(line, num_joints = 2)
@@ -15,8 +15,8 @@ def pose_calib_data(skelpath):
 			r_hand, r_elbow = right[:3], right[3:]
 			l_hand, l_elbow = left[:3], left[3:]
 
-			r_hand = r_hand - r_elbow 
-			l_hand = l_hand - l_elbow 
+			r_hand = r_hand - r_elbow
+			l_hand = l_hand - l_elbow
 			arm_list.append(np.linalg.norm(l_elbow) + np.linalg.norm(l_hand))
 			arm_list.append(np.linalg.norm(r_elbow) + np.linalg.norm(r_hand))
 
@@ -26,6 +26,7 @@ def pose_calib_data(skelpath):
 
 		# return min(np.max(arm_list), np.median(arm_list) + 3 * np.std(arm_list))
 		return np.median(arm_list)
+>>>>>>> 3697cc754d51c13ef9ba6b2bd5613a087d83fde2
 	with open(skelpath, 'r') as fp:
 		lines = fp.readlines()
 		lines = [map(float, line.strip().split(' ')) for line in lines]
@@ -45,7 +46,7 @@ if __name__ == '__main__':
 	final_lengths = {subject_id: [] for subject_id in subject_ids}
 
 	for subject_id in subject_ids:
-		print subject_id, 
+		print subject_id,
 		for skelfile in skelfiles:
 			if subject_id in skelfile:
 				max_r, _ = pose_calib_data(skelfile)
@@ -54,5 +55,3 @@ if __name__ == '__main__':
 		print final_lengths[subject_id]
 
 	print final_lengths
-
-
