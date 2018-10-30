@@ -690,7 +690,7 @@ def gestureCommands(sequence):
 		if (not isValid):
 			return False
 		else:"""
-	elif (command == "Ruler"):
+	elif (command == "Ruler" and action != "Ruler"):
 		if (action == "Measure"):
 			moveToActivePanel()
 			auto.click(button='right')
@@ -700,13 +700,13 @@ def gestureCommands(sequence):
 					if (status["hold_action"] != "held"):
 						status["hold_action"] = commandAction
 						return gestureCommands("0_6")
-					else:
-						return False
+					else: return False
 				auto.click()
 				time.sleep(2)
 			else:
 				auto.press("r")
 				auto.press("enter")
+			status["params"] = raw_input("Enter coordinates separated by underscores (either 2 or 4 parameters): ")
 			points = status["params"].split("_")
 			try:
 				if (len(points) == 4):
@@ -716,9 +716,10 @@ def gestureCommands(sequence):
 					(x1, y1) = auto.position()
 					(x2, y2) = (int(points[0]), int(points[1]))
 				else:
-					print "Ruler measure parameters should include 2 or 4 non-negative integers separated by underscores."
+					promptNotify("Coordinates must have only 2 or 4 non-negative integers.", 0)
+					return False
 			except ValueError:
-				print "Ruler measure parameters should only include non-negative integers separated by underscores."
+				promptNotify("Coordinates must be non-negative integers.", 0)
 				return False
 			auto.moveTo(x1, y1)
 			auto.mouseDown()
@@ -734,22 +735,18 @@ def gestureCommands(sequence):
 			print "ID of Ruler Measurement: " + str(curr)
 		elif (action == "Delete"):
 			if (status["params"] == ""):
-				print "Ruler delete ID not specified."
-				openWindow(prompt)
+				promptNotify("Ruler delete ID not specified.", 0)
 				return False
 			elif (len(status["params"].split("_")) != 1):
-				print "Ruler delete ID must only be one positive integer."
-				openWindow(prompt)
+				promptNotify("Ruler delete ID must only be one positive integer.", 0)
 				return False
 			try:
 				rulerID = int(status["params"])
 				if (rulerID not in status["rulers"]):
 					print "Ruler delete ID is not in the list of rulers."
-					openWindow(prompt)
 					return False
 			except ValueError:
 				print "Ruler delete ID should be a positive integer value."
-				openWindow(prompt)
 				return False
 			points = status["rulers"][rulerID].split("_")
 			status["rulers"].pop(rulerID, None)
