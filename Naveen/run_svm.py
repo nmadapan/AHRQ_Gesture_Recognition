@@ -16,8 +16,8 @@ skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
 # skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
 ## Fingers
 ENABLE_FINGERS = True
-pickle_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L2'
-fingers_pkl_fname = 'L2_fingers_from_hand_base.pkl'
+pickle_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\fingers_pkl'
+fingers_pkl_fname = os.path.basename(skel_folder_path)+'_fingers_from_hand_base_sorted.pkl'
 #######################
 
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
