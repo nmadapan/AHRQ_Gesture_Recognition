@@ -1,21 +1,18 @@
+## Existing libraries
 import cv2
 import numpy as np
 import os, sys, time
 from threading import Thread, Condition
 from copy import copy, deepcopy
 import pickle
+from pprint import pprint as pp
+import socket
 
+## Custom
 from FeatureExtractor import FeatureExtractor
 from KinectReader import kinect_reader
 from helpers import *
-from pprint import pprint as pp
-
-from helpers import sync_ts
-
-## Socketq
-import socket
 from CustomSocket import Client
-
 from FancyDisplay import FancyDisplay
 
 ## TCP/IP of Synapse Computer
@@ -26,113 +23,117 @@ PORT_SYNAPSE = 10000  # Both server and client should have a common IP and Port
 IP_CPM = 'localhost'
 PORT_CPM = 3000
 
+## Flags
 ENABLE_SYNAPSE_SOCKET = True
 ENABLE_CPM_SOCKET = False
-
 ONLY_SKELETON = True
 
+## IMPORTANT
 LEXICON_ID = 'L6'
 SUBJECT_ID = 'S7'
 
-#TODO: What happens when there are more people.
-
 class Realtime:
 	def __init__(self):
-		## Global Constants
-		self.data_path = r'H:\AHRQ\Study_IV\Data\Data' # Path where _reps.txt file is present.
-		self.trained_pkl_fpath = 'H:\AHRQ\Study_IV\Flipped_Data\\' + LEXICON_ID + '_0_data.pickle' # path to trained .pickle file.
+		###################
+		### DATA PATHS ####
+		###################
+		# Path where _reps.txt file is present.
+		self.data_path = r'H:\AHRQ\Study_IV\Data\Data'
+		# path to trained .pickle file.
+		self.trained_pkl_fpath = 'H:\\AHRQ\\Study_IV\\Flipped_Data\\' + LEXICON_ID + '_0_data.pickle'
 		self.cmd_dict = json_to_dict('commands.json')
-		# self.trained_pkl_fpath = r'H:\AHRQ\Study_IV\Data\Data\L6_0_data.pickle' # path to trained .pickle file.
-
 		self.base_write_dir = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
 
+		#############
+		## BUFFERS ##
+		#############
+		# Size of the buffer
 		self.buf_size = 10
+		# timestamp, frame_list (75 elements) # [..., t-3, t-2, t-1, t]
+		self.buf_body_skel = [(None, None) for _ in range(self.buf_size)]
+		# timestamp, frame_nparray
+		self.buf_rgb = [(None, None) for _ in range(self.buf_size)]
+		# timestamp, frame_list (50 elements) # [..., t-3, t-2, t-1, t]
+		self.buf_rgb_skel = [(None, None) for _ in range(self.buf_size)]
+		 # timestamp, frame_list
+		self.buf_finglen = [(None, None) for _ in range(self.buf_size)]
 
-		## Buffers
-		self.buf_body_skel = [(None, None) for _ in range(self.buf_size)] # timestamp, frame_list (75 elements) # [..., t-3, t-2, t-1, t]
-		self.buf_rgb = [(None, None) for _ in range(self.buf_size)] # timestamp, frame_nparray
-		self.buf_rgb_skel = [(None, None) for _ in range(self.buf_size)] # timestamp, frame_list (50 elements) # [..., t-3, t-2, t-1, t]
-
-		self.buf_finglen = [(None, None) for _ in range(self.buf_size)] # timestamp, frame_list
-
-		## Flags
-		self.fl_alive = True
+		##################
+		## THREAD FLAGS ##
+		##################
+		self.fl_alive = True # If False, kill all threads
 		self.fl_stream_ready = False # th_access_kinect
 		self.fl_skel_ready = False # th_gen_skel
 		self.fl_cpm_ready = False # th_gen_cpm
-
+		# If true, we have command to execute ==> now call synapse, else command is not ready yet.
+		self.fl_cmd_ready = False
+		self.fl_gest_started = False
+		# Synapse running, # th_synapse. If False, meaning synapse is executing a command. So stop everything else.
+		self.fl_synapse_running = False
 		##
 		# TODO: If synapse breaks down, we should restart. So we need to save the current state info.
 		##
 
-		# If true, we have command to execute ==> now call synapse, else command is not ready yet.
-		self.fl_cmd_ready = False
-
-		self.fl_gest_started = False
-		self.fl_synapse_running = False # Synapse running, # th_synapse. If False, meaning synapse is executing a command. So stop everything else.
-
-		# Initialize the Kinect
+		########################
+		### INTIALIZE KINECT ###
+		########################
 		self.kr = kinect_reader()
-
-		## thread conditions
-		self.cond_body_skel = Condition()
-		self.cond_rgb = Condition()
-
-		## Socket initialization
-		# variable inits
-		# wait_for_connection for the first time.
-		# Set the sself.fl_sock_com = True
-		##
-		## Socket communication
-		if(ENABLE_SYNAPSE_SOCKET):
-			self.client_synapse = Client(IP_SYNAPSE, PORT_SYNAPSE,buffer_size = 1000000)
-
-		# CPM Initialization takes up to one minute. Dont initialize any socket
-		#	(by calling init_socket) before creating object of CPM Client.
-		if(ENABLE_CPM_SOCKET):
-			self.client_cpm = Client(IP_CPM, PORT_CPM)
-
-		if(ENABLE_SYNAPSE_SOCKET):
-			self.client_synapse.init_socket()
-
-		if(ENABLE_CPM_SOCKET):
-			self.client_cpm.init_socket()
-
-			#socket.setdefaulttimeout(2.0) ######### Need to be tuned depending ont the delays.
-
-		self.command_to_execute = None
-
-		## Fancy Display
-		# self.fancy_display = FancyDisplay(window_str = 'Visualization')
-
-		## Use trained Feature extractor
-		with open(self.trained_pkl_fpath, 'rb') as fp:
-			res = pickle.load(fp)
-			self.feat_ext = res['fe'] # res['out'] exists but we dont need training data.
-		self.feat_ext.update_rt_params(subject_id = SUBJECT_ID, lexicon_id = LEXICON_ID)
-
-		## Other variables
-		self.skel_instance = None # Updated in self.th_gen_skel().
-		# It is a tuple (timestamp, feature_vector of skeleton - ndarray(1 x _)). It is a flattened array.
-
-		self.op_instance = None # Updated in self.th_gen_cpm().
-		# It is a tuple (timestamp, feature_vector of finger lengths - ndarray(num_frames, 10)).
-
-		# Previously executed command
-		self.cmd_reps = {} # Updated by a function call to update_cmd_reps
-		self.prev_executed_cmds = []
-		self.update_cmd_reps()
-
-		## Skeleton constants
 		self.base_id = 0
 		self.neck_id = 2
 		self.left_hand_id = 7
 		self.right_hand_id = 11
 		self.thresh_level = 0.3 #TODO: It seems to be working.
 
+		#########################
+		### THREAD CONDITIONS ###
+		#########################
+		self.cond_body_skel = Condition()
+		self.cond_rgb = Condition()
+
+		#############################
+		### SOCKET INITIALIZATION ###
+		#############################
+		## Synapse Socket initialization
+		if(ENABLE_SYNAPSE_SOCKET):
+			self.client_synapse = Client(IP_SYNAPSE, PORT_SYNAPSE, buffer_size = 1000000)
+		## CPM Socket initialization
+		# CPM Initialization takes up to one minute. Dont initialize any socket
+		#	(by calling init_socket) before creating object of CPM Client.
+		if(ENABLE_CPM_SOCKET):
+			self.client_cpm = Client(IP_CPM, PORT_CPM)
+		## Call Synapse init socket
+		if(ENABLE_SYNAPSE_SOCKET):
+			self.client_synapse.init_socket()
+		## Call CPM init socket
+		if(ENABLE_CPM_SOCKET):
+			self.client_cpm.init_socket()
+		#socket.setdefaulttimeout(2.0) ######### TODO: Need to be tuned depending ont the delays.
+
+		##################################
+		### INITIALIZE OTHER VARIABLES ###
+		##################################
+		self.command_to_execute = None # Updated in run()
+		self.skel_instance = None # Updated in self.th_gen_skel(). It is a tuple (timestamp, feature_vector of skeleton - ndarray(1 x _)). It is a flattened array.
+		self.op_instance = None # Updated in self.th_gen_cpm(). It is a tuple (timestamp, feature_vector of finger lengths - ndarray(num_frames, 10)).
+		self.cmd_reps = {} # Updated by self.update_cmd_reps()
+		self.prev_executed_cmds = [] # Updated by self.update_cmd_reps()
+		self.update_cmd_reps()
+
+		## Fancy Display
+		# self.fancy_display = FancyDisplay(window_str = 'Visualization')
+
+		######################################
+		### LOAD TARINED FEATURE EXTRACTOR ###
+		######################################
+		## Use previously trained Feature extractor
+		with open(self.trained_pkl_fpath, 'rb') as fp:
+			res = pickle.load(fp)
+			self.feat_ext = res['fe'] # res['out'] exists but we dont need training data.
+		self.feat_ext.update_rt_params(subject_id = SUBJECT_ID, lexicon_id = LEXICON_ID) ## This will let us know which normalization parameters are used.
+
 	def update_cmd_reps(self):
-		rep_path = os.path.join(self.data_path, LEXICON_ID+'_reps.txt')
-		if(not os.path.isfile(rep_path)): raise IOError('reps file does NOT exist')
+		rep_path = os.path.join(self.data_path, LEXICON_ID + '_reps.txt')
+		if(not os.path.isfile(rep_path)): raise IOError('reps.txt file does NOT exist')
 		with open(rep_path, 'r') as fp:
 			lines = fp.readlines()
 			if(len(lines) == 0): raise ValueError('reps file is empty')
@@ -156,8 +157,7 @@ class Realtime:
 		first_time = False
 
 		skel_pts = None
-		color_skel_pts = None	
-		fd_status = True	
+		color_skel_pts = None
 
 		while(self.fl_alive):
 			# if(self.fl_synapse_running): continue # If synapse is running, stop producing the rgb/skeleton data

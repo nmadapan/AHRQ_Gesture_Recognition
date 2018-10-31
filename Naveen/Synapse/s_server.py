@@ -11,9 +11,6 @@ from CustomSocket import Server
 
 class SynapseServer(Server):
     def run(self, only_once = True):
-        if (not os.path.exists("calibration.txt")):
-            ## Find the calibration parameters again
-            synapse_Flag = sca.gestureCommands("0_4")    
         ########################
         # Receives a data string from a client, prints it, sends True/False to the client
         # If only_once is True, it will receive only one data string. Otherwise, it will receive infinitely. 
@@ -23,6 +20,15 @@ class SynapseServer(Server):
             if(not self.connect_status): self.wait_for_connection()
             try:
                 data = self.client.recv(self.buffer_size)
+                print("command received: ", data)
+                if data in ['5_1','5_2','5_3','5_4','7_1','7_2']:
+                    pass
+                else:    
+                    synapse_Flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
+                    # synapse_Flag = True #it should return TRUE if command is executed properly
+                    if synapse_Flag:
+                        print("Command: ",data, "was executed")
+                    self.client.send(str(synapse_Flag))
                 synapse_Flag = True
                 # synapse_Flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
                 # synapse_Flag = True #it should return TRUE if command is executed properly
@@ -39,7 +45,10 @@ class SynapseServer(Server):
 
 if __name__ == '__main__':
     #### Variables #######
-    tcp_ip = 'localhost'
+    # tcp_ip = socket.gethostbyname(socket.gethostname())
+    tcp_ip='10.186.47.6'
+    # print(tcp_ip)
+    # tcp_ip = 'localhost'
     tcp_port = 10000 
 
     # Initialize the server Thread
