@@ -2,11 +2,11 @@ import numpy as np
 import pickle,os,sys
 
 num_fingers=3
-pickle_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm\fingers\L3'
+pickle_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L2'
 lexicon=os.path.basename(pickle_path1)
+file_name_common='_fingers_from_hand_base.pkl'
 
-
-with open(os.path.join(pickle_path1, 'L3_fingers_300_normalized.pkl'), 'rb') as fp:
+with open(os.path.join(pickle_path1, lexicon+file_name_common), 'rb') as fp:
 	fingers_data = pickle.load(fp)
 
 new_dict={}
@@ -24,5 +24,5 @@ for key in fingers_data:
 
 	new_dict[key]=gest_list
 
-with open(os.path.join(pickle_path1,lexicon+'_fingers_norm_3003'+str(num_fingers)+'.pkl'),'wb') as pkl_file:
+with open(os.path.join(pickle_path1,lexicon+'_3_fingers_from_hand_base.pkl'),'wb') as pkl_file:
 	pickle.dump(new_dict,pkl_file)

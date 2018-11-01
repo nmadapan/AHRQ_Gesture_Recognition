@@ -1,22 +1,18 @@
+## Existing libraries
 import cv2
 import numpy as np
 import os, sys, time
 from threading import Thread, Condition
 from copy import copy, deepcopy
 import pickle
+from pprint import pprint as pp
+import socket
 
+## Custom
 from FeatureExtractor import FeatureExtractor
 from KinectReader import kinect_reader
 from helpers import *
-from pprint import pprint as pp
-
-from helpers import sync_ts
-
-## Socketq
-import socket
 from CustomSocket import Client
-
-from FancyDisplay import FancyDisplay
 
 ## TCP/IP of Synapse Computer
 IP_SYNAPSE = '10.186.47.6' # IP of computer that is running Synapse
@@ -26,113 +22,136 @@ PORT_SYNAPSE = 10000  # Both server and client should have a common IP and Port
 IP_CPM = 'localhost'
 PORT_CPM = 3000
 
+## Flags
 ENABLE_SYNAPSE_SOCKET = False
 ENABLE_CPM_SOCKET = False
-
 ONLY_SKELETON = True
 
+## IMPORTANT
 LEXICON_ID = 'L6'
 SUBJECT_ID = 'S7'
 
-#TODO: What happens when there are more people.
+'''
+10/31
+	* All threads exit when main exits 
+	* Got a good idea about thread Conditions. 
+		* Changes have been made to access_kinect thread and gen_skel thread.
+11/01
+	* How does calibration works for finger lengths. 
+		* What functions to call. How to update the calibration file. 
+		* Ask Rahul. Also, incorporate in both offline and online codes.
+		* Finishing the calibration
+	*  Need to fix other threads w.r.t Condition variables. 
+	* Communication between the threads. Using the flags properly. 
+	* Make modification to the skel_instance data structure, so it contains information 
+		* about if the hands are below or above the threshold. 
+	* Do not send frames to CPM if hands are below the threshold. Modify code in the CPM.
+	* When we fill the buffers (buf_body_skel and buf_rgb_skel), we assume that body_skel and rgb_skel are in sync
+		* When we access the buffers (buf_rgb_skel and buf_rgb), we assume that both of them are in sync which maynot be the case
+		* FIX this
+	* If the no. of frames in skeleton are less than a threshold, ignore. Make changes to run()
+'''
+
 
 class Realtime:
 	def __init__(self):
-		## Global Constants
-		self.data_path = r'H:\AHRQ\Study_IV\Data\Data' # Path where _reps.txt file is present.
-		self.trained_pkl_fpath = 'H:\AHRQ\Study_IV\Flipped_Data\\' + LEXICON_ID + '_0_data.pickle' # path to trained .pickle file.
+		###################
+		### DATA PATHS ####
+		###################
+		# Path where _reps.txt file is present.
+		self.data_path = r'H:\AHRQ\Study_IV\Data\Data'
+		# path to trained .pickle file.
+		self.trained_pkl_fpath = 'H:\\AHRQ\\Study_IV\\Flipped_Data\\' + LEXICON_ID + '_0_data.pickle'
 		self.cmd_dict = json_to_dict('commands.json')
-		# self.trained_pkl_fpath = r'H:\AHRQ\Study_IV\Data\Data\L6_0_data.pickle' # path to trained .pickle file.
-
 		self.base_write_dir = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
 
+		#############
+		## BUFFERS ##
+		#############
+		# Size of the buffer
 		self.buf_size = 10
+		# timestamp, frame_list (75 elements) # [..., t-3, t-2, t-1, t]
+		self.buf_body_skel = [(None, None) for _ in range(self.buf_size)]
+		# timestamp, frame_nparray
+		self.buf_rgb = [(None, None) for _ in range(self.buf_size)]
+		# timestamp, frame_list (50 elements) # [..., t-3, t-2, t-1, t]
+		self.buf_rgb_skel = [(None, None) for _ in range(self.buf_size)]
+		 # timestamp, frame_list
+		self.buf_finglen = [(None, None) for _ in range(self.buf_size)]
 
-		## Buffers
-		self.buf_body_skel = [(None, None) for _ in range(self.buf_size)] # timestamp, frame_list (75 elements) # [..., t-3, t-2, t-1, t]
-		self.buf_rgb = [(None, None) for _ in range(self.buf_size)] # timestamp, frame_nparray
-		self.buf_rgb_skel = [(None, None) for _ in range(self.buf_size)] # timestamp, frame_list (50 elements) # [..., t-3, t-2, t-1, t]
-
-		self.buf_finglen = [(None, None) for _ in range(self.buf_size)] # timestamp, frame_list
-
-		## Flags
-		self.fl_alive = True
+		##################
+		## THREAD FLAGS ##
+		##################
+		self.fl_alive = True # If False, kill all threads
 		self.fl_stream_ready = False # th_access_kinect
 		self.fl_skel_ready = False # th_gen_skel
 		self.fl_cpm_ready = False # th_gen_cpm
-
+		# If true, we have command to execute ==> now call synapse, else command is not ready yet.
+		self.fl_cmd_ready = False
+		self.fl_gest_started = False
+		# Synapse running, # th_synapse. If False, meaning synapse is executing a command. So stop everything else.
+		self.fl_synapse_running = False
 		##
 		# TODO: If synapse breaks down, we should restart. So we need to save the current state info.
 		##
 
-		# If true, we have command to execute ==> now call synapse, else command is not ready yet.
-		self.fl_cmd_ready = False
-
-		self.fl_gest_started = False
-		self.fl_synapse_running = False # Synapse running, # th_synapse. If False, meaning synapse is executing a command. So stop everything else.
-
-		# Initialize the Kinect
+		########################
+		### INTIALIZE KINECT ###
+		########################
 		self.kr = kinect_reader()
-
-		## thread conditions
-		self.cond_body_skel = Condition()
-		self.cond_rgb = Condition()
-
-		## Socket initialization
-		# variable inits
-		# wait_for_connection for the first time.
-		# Set the sself.fl_sock_com = True
-		##
-		## Socket communication
-		if(ENABLE_SYNAPSE_SOCKET):
-			self.client_synapse = Client(IP_SYNAPSE, PORT_SYNAPSE,buffer_size = 1000000)
-
-		# CPM Initialization takes up to one minute. Dont initialize any socket
-		#	(by calling init_socket) before creating object of CPM Client.
-		if(ENABLE_CPM_SOCKET):
-			self.client_cpm = Client(IP_CPM, PORT_CPM)
-
-		if(ENABLE_SYNAPSE_SOCKET):
-			self.client_synapse.init_socket()
-
-		if(ENABLE_CPM_SOCKET):
-			self.client_cpm.init_socket()
-
-			#socket.setdefaulttimeout(2.0) ######### Need to be tuned depending ont the delays.
-
-		self.command_to_execute = None
-
-		## Fancy Display
-		# self.fancy_display = FancyDisplay(window_str = 'Visualization')
-
-		## Use trained Feature extractor
-		with open(self.trained_pkl_fpath, 'rb') as fp:
-			res = pickle.load(fp)
-			self.feat_ext = res['fe'] # res['out'] exists but we dont need training data.
-		self.feat_ext.update_rt_params(subject_id = SUBJECT_ID, lexicon_id = LEXICON_ID)
-
-		## Other variables
-		self.skel_instance = None # Updated in self.th_gen_skel().
-		# It is a tuple (timestamp, feature_vector of skeleton - ndarray(1 x _)). It is a flattened array.
-
-		self.op_instance = None # Updated in self.th_gen_cpm().
-		# It is a tuple (timestamp, feature_vector of finger lengths - ndarray(num_frames, 10)).
-
-		# Previously executed command
-		self.cmd_reps = {} # Updated by a function call to update_cmd_reps
-		self.prev_executed_cmds = []
-		self.update_cmd_reps()
-
-		## Skeleton constants
 		self.base_id = 0
 		self.neck_id = 2
 		self.left_hand_id = 7
 		self.right_hand_id = 11
 		self.thresh_level = 0.3 #TODO: It seems to be working.
 
+		#########################
+		### THREAD CONDITIONS ###
+		#########################
+		self.cond_body_skel = Condition()
+		self.cond_rgb = Condition()
+
+		#############################
+		### SOCKET INITIALIZATION ###
+		#############################
+		## Synapse Socket initialization
+		if(ENABLE_SYNAPSE_SOCKET):
+			self.client_synapse = Client(IP_SYNAPSE, PORT_SYNAPSE, buffer_size = 1000000)
+		## CPM Socket initialization
+		# CPM Initialization takes up to one minute. Dont initialize any socket
+		#	(by calling init_socket) before creating object of CPM Client.
+		if(ENABLE_CPM_SOCKET):
+			self.client_cpm = Client(IP_CPM, PORT_CPM)
+		## Call Synapse init socket
+		if(ENABLE_SYNAPSE_SOCKET):
+			self.client_synapse.init_socket()
+		## Call CPM init socket
+		if(ENABLE_CPM_SOCKET):
+			self.client_cpm.init_socket()
+		#socket.setdefaulttimeout(2.0) ######### TODO: Need to be tuned depending on the delays.
+
+		##################################
+		### INITIALIZE OTHER VARIABLES ###
+		##################################
+		self.command_to_execute = None # Updated in run()
+		self.skel_instance = None # Updated in self.th_gen_skel(). It is a tuple (timestamp, feature_vector of skeleton - ndarray(1 x _)). It is a flattened array.
+		self.op_instance = None # Updated in self.th_gen_cpm(). It is a tuple (timestamp, feature_vector of finger lengths - ndarray(num_frames, 10)).
+		self.cmd_reps = {} # Updated by self.update_cmd_reps()
+		self.prev_executed_cmds = [] # Updated by self.update_cmd_reps()
+		self.update_cmd_reps()
+
+		######################################
+		### LOAD TARINED FEATURE EXTRACTOR ###
+		######################################
+		## Use previously trained Feature extractor
+		with open(self.trained_pkl_fpath, 'rb') as fp:
+			res = pickle.load(fp)
+			self.feat_ext = res['fe'] # res['out'] exists but we dont need training data.
+		self.feat_ext.update_rt_params(subject_id = SUBJECT_ID, lexicon_id = LEXICON_ID) ## This will let us know which normalization parameters are used.
+
 	def update_cmd_reps(self):
-		rep_path = os.path.join(self.data_path, LEXICON_ID+'_reps.txt')
-		if(not os.path.isfile(rep_path)): raise IOError('reps file does NOT exist')
+		rep_path = os.path.join(self.data_path, LEXICON_ID + '_reps.txt')
+		if(not os.path.isfile(rep_path)): raise IOError('reps.txt file does NOT exist')
 		with open(rep_path, 'r') as fp:
 			lines = fp.readlines()
 			if(len(lines) == 0): raise ValueError('reps file is empty')
@@ -147,100 +166,83 @@ class Realtime:
 		# Initialize Kinect
 		wait_for_kinect(self.kr)
 
-		## opencv part
-		# cv2.namedWindow('RGB')
-
 		# Now this thread is ready
 		self.fl_stream_ready = True
 
 		first_time = False
 
 		skel_pts = None
-		color_skel_pts = None	
-		fd_status = True	
+		color_skel_pts = None
 
 		while(self.fl_alive):
 			# if(self.fl_synapse_running): continue # If synapse is running, stop producing the rgb/skeleton data
 			# elif(self.fl_skel_ready and self.fl_cpm_ready): continue # If previous skeleton features and op features are not used, stop producing.
 
-			# Refreshing Frames
+			## Refresh kinect frames
 			rgb_flag = self.kr.update_rgb()
 			body_flag = self.kr.update_body()
 
 			if(body_flag):
-				### TODO:
-				## We need to take into account the direction of movement of hand.
-				## gestures starts when previous skeleton is below the threshold and current skeleton is above the threshold.
-				###
-
 				skel_pts = self.kr.skel_pts.tolist() # list of 75 floats.
 				color_skel_pts = self.kr.color_skel_pts.tolist() # list of 50 floats
+				'''
+				GESTURE SPOTTING HAPPENS HERE:
+					* Check if gesture started.
+					* If fl_gest_started = true, gesture has started.
+					* If fl_gest_started = false, hands are below the threshold and gesture has ended.
+				'''
+				start_y_coo = self.thresh_level * (skel_pts[3*self.neck_id+1] - skel_pts[3*self.base_id+1]) ## Threshold level 
+				left_y = skel_pts[3*self.left_hand_id+1] - skel_pts[3*self.base_id+1] # left hand
+				right_y = skel_pts[3*self.right_hand_id+1] - skel_pts[3*self.base_id+1] # right hand
 
-				# GESTURE SPOTTING NEEDS TO HAPPEN HERE
-				# Check if gesture started
-				# When start_flag=true the gesture started
-				# When start_flag=false the hands are down and the
-				# frames don't need to be collected
-				start_y_coo = self.thresh_level * (skel_pts[3*self.neck_id+1] - skel_pts[3*self.base_id+1])
-				left_y = skel_pts[3*self.left_hand_id+1] - skel_pts[3*self.base_id+1]
-				right_y = skel_pts[3*self.right_hand_id+1] - skel_pts[3*self.base_id+1]
-
+				## Make sure that hands are below the threshold in the beginning
 				if(not first_time):
 					fl_hands_position = (left_y < start_y_coo) and (right_y < start_y_coo)
 					if(fl_hands_position): first_time = True
 
-				## When you want to wait() based on a shared variables, make sure to include them in the thread.Condition.
-				with self.cond_body_skel: # Producer. Consumers will wait for the notify call #######
-					if (left_y >= start_y_coo or right_y >= start_y_coo) and (not self.fl_gest_started) and first_time:
-						self.fl_gest_started = True
-						print 'Gesture started :)'
-					if (left_y < start_y_coo and right_y < start_y_coo) and self.fl_gest_started:
-						self.fl_gest_started = False
-						print 'Gesture ended :('
+				## Identify if the gesture started
+				if (left_y >= start_y_coo or right_y >= start_y_coo) and (not self.fl_gest_started) and first_time:
+					self.fl_gest_started = True
+					print 'Gesture started :)'
+				if (left_y < start_y_coo and right_y < start_y_coo) and self.fl_gest_started:
+					self.fl_gest_started = False
+					print 'Gesture ended :('
 
-					# Update the skel buffer
+				## When you want to wait() based on a shared variables, make sure to include them in the thread.Condition.
+				with self.cond_body_skel: # Producer. Consumers will wait for the notify call #
+					# Update the skel buffer after gesture is started
 					if(self.fl_gest_started):
 						ts = int(time.time()*100)
 						# Update body skel buffers
 						self.buf_body_skel.append((ts, skel_col_reduce(skel_pts)))
 						self.buf_body_skel.pop(0) # Buffer is of fixed length. Append an element at the end and pop the first element.
-						# tslist, _ = zip(*self.buf_body_skel)
-
 						# Update rgb skel buffers
 						self.buf_rgb_skel.append((ts, skel_col_reduce(color_skel_pts, dim=2, wrt_shoulder = False)))
 						self.buf_rgb_skel.pop(0) # Buffer is of fixed length. Append an element at the end and pop the first element.
-
-					# The Notify all should be outside because if not, the cosumer
-					# can wait for this call just after the flags that allow
-					# it to enter the "consuming condition" have changed
+					# The notify_all call should be outside (if condition) and inside (with condition) because if not, the cosumer
+					# can wait for this call just after the flags that allow it to enter the "consuming condition" have changed
 					self.cond_body_skel.notify_all()
 
-			if(rgb_flag): # and self.fl_gest_started. Later dont even fill the buffers when others are running. q
-				with self.cond_rgb: # Producer. Consumers need to wait for producer's 'notify' call
-					ts = int(time.time()*100)
-					self.buf_rgb.append((ts, self.kr.color_image))
-					self.buf_rgb.pop(0)
-					self.cond_rgb.notify_all()
-					# tslist, _ = zip(*self.buf_rgb)
-					# cv2.imshow('RGB', cv2.resize(self.kr.color_image, None, fx=0.5, fy=0.5))
-
-					# self.fancy_display.update_image(self.kr.color_image)
-					# self.fancy_display.update_skel_pts(color_skel_pts)
-					# fd_status = self.fancy_display.refresh()
-
-					if((self.kr.color_image is not None) and (color_skel_pts is not None)):
-						image_with_skel = self.kr.draw_body(self.kr.color_image, color_skel_pts)
-						if(image_with_skel is not None):
-							resz_img = cv2.resize(image_with_skel, None, fx = 0.5, fy = 0.5)
-							cv2.imshow('Visualization', resz_img)
-							flag = True
-				# if cv2.waitKey(self.delay) == ord('q'):
-				# 	cv2.destroyAllWindows()
-				# 	flag = False
-
+			if(rgb_flag):
+				## Update RGB image buffer after gesture is started
+				if self.fl_gest_started:
+					with self.cond_rgb: # Producer. Consumers need to wait for producer's 'notify' call
+						ts = int(time.time()*100)
+						self.buf_rgb.append((ts, self.kr.color_image))
+						self.buf_rgb.pop(0)
+						self.cond_rgb.notify_all()
+				## Visualization
+				if((self.kr.color_image is not None) and (self.kr.color_skel_pts is not None)):
+					image_with_skel = self.kr.draw_body(self.kr.color_image, self.kr.color_skel_pts)
+					if(image_with_skel is not None):
+						resz_img = cv2.resize(image_with_skel, None, fx = 0.5, fy = 0.5)
+						cv2.imshow('Visualization', resz_img)
 
 			if(cv2.waitKey(1) == ord('q')):
+				cv2.destroyAllWindows()
 				self.fl_alive = False
+
+		print 'Exiting access kinect thread !!!'
 
 	def th_gen_skel(self):
 		##
@@ -251,48 +253,39 @@ class Realtime:
 		## Wait for kinect stream to be ready
 		while(not self.fl_stream_ready): continue
 
-		frame_count = 0 # this is zeroed internally
+		frame_count = 0 # this is being reset internally
 		skel_frames = []
 		first_time = False
-		print_first_time = True
 		while(self.fl_alive):
 			# if(self.fl_synapse_running): continue # If synapse is running, dont do anything
 			if(self.fl_skel_ready): continue # If previous skeleton features are not used, dont do anything.
+
 			if self.fl_gest_started:
-				if print_first_time:
-					# print "IN SKEL THREAD, GESTURE STARTED: "
-					print_first_time = False
-				first_time = True
 				with self.cond_body_skel:
 					self.cond_body_skel.wait()
-					# reduce -> append
 					skel_frames.append(deepcopy(self.buf_body_skel[-1]))
-					frame_count += 1
-			if not self.fl_gest_started and first_time:
-				# print "IN SKEL THREAD, GESTURE ENDED: "
+				first_time = True
+				frame_count += 1
+			elif first_time:
 				first_time = False
-				print_first_time = True
 				frame_count = 0
-
-				## TODO: Condition it on cond_rgb, otherwise, we might run into race conditions
-				self.skel_instance = deepcopy(skel_frames ) # [(ts1, ([left_x, y, z], [right_x, y, z])), ...]
-				## TODO: If length of skel_instance is less than a certain number, ignore that gesture.
+				self.skel_instance = deepcopy(skel_frames) # [(ts1, ([left_x, y, z], [right_x, y, z])), ...]
 				skel_frames = []
+				self.fl_skel_ready = True
 
-				self.fl_skel_ready = True ##### Think about conditioning
+		print 'Exiting gen_skel !!!'
 
 	def save_hand_bbox(self, img, hand_pixel_coo, out_fname):
-		################
-		# 'img': An RGB image. np.ndarray of shape (H x W x 3).
-		# 'bbox': list of four values. [x, y, w, h].
-		#		(x, y): pixel coordinates of top left corner of the bbox
-		#		(w, h): width and height of the boox.
-		#
-		# Description:
-		#	Writes the bbox to self.base_write_dir
-		################
+		'''
+		Description:
+			Writes the hand bbox to self.base_write_dir
+		Input arguments:		
+			'img': An RGB image. np.ndarray of shape (H x W x 3).
+			'bbox': list of four values. [x, y, w, h].
+				(x, y): pixel coordinates of top left corner of the bbox
+				(w, h): width and height of the boox.
+		'''
 		if(img is None): return
-
 		bbox = get_hand_bbox(hand_pixel_coo, \
 		                     max_wh = (img.shape[1], img.shape[0]))
 		rx, ry, rw, rh = tuple(bbox)
@@ -372,6 +365,8 @@ class Realtime:
 				op_instance = []
 				self.fl_cpm_ready = True #### Think about conditioning
 
+		print 'Exiting CPM thread !!!'
+
 	def th_synapse(self):
 		#
 		while(self.fl_alive):
@@ -391,6 +386,8 @@ class Realtime:
 				print 'Synapse execution failed !'
 				## What to do now
 				# sys.exit(0)
+
+		print 'Exiting Synapse thread !!!'
 
 	def get_next_cmd(self, pred_cmd):
 		# pred_cmd : predicted command name
@@ -413,6 +410,12 @@ class Realtime:
 		acces_cpm_thread = Thread(name = 'access_cpm', target = self.th_gen_cpm) # C: RGB ; P: finger_lengths
 		synapse_thread = Thread(name = 'autoclick_synapse', target = self.th_synapse) #
 
+		## Kill all threads when main exits
+		acces_kinect_thread.daemon = True
+		gen_skel_thread.daemon = True
+		acces_cpm_thread.daemon = True
+		synapse_thread.daemon = True
+
 		##########
 		# TODO: Incorporate the calibration information in the realtime code
 		#
@@ -432,13 +435,14 @@ class Realtime:
 
 			if(flag):
 				# pp(self.skel_instance)
-				# pp(self.opq_instance)
+				# pp(self.op_instance)
 
 				#####################
 				### SKEL FEATURE ####
 				#####################
 				# Detuple skel_instance
 				skel_ts, raw_skel_frames = zip(*self.skel_instance)
+				## TODO: If length of skel_instance is less than a certain number, ignore that gesture.
 				dom_rhand, final_skel_inst = self.feat_ext.generate_features_realtime(list(raw_skel_frames))
 				#####################
 
@@ -499,6 +503,8 @@ class Realtime:
 			self.client_synapse.close()
 		if(ENABLE_CPM_SOCKET):
 			self.client_cpm.close()
+
+		print 'Exiting main thread !!!'
 
 
 if(__name__ == '__main__'):

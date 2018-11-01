@@ -3,10 +3,6 @@
 # this code is in Python 3(most of the python files in this repository are in python2)
 # as CPM require tensorflow which runs only in python 3 
 
-    #################################
-# This file contains additional functionality for sending hands to CPM
-#if wrist is below the threshold it doesn't send the frames to CPM but returns zeros
-    #################################
 ###############################################################################
 #ToCheck: framesnums sent to the cpm are matches geture annotations
 
@@ -40,13 +36,7 @@ hands_key_points=[2,4,5,8,9,12,13,16,17,20] #referencing elements of joint coord
 skip_exisiting_fold = True
 num_fingers = 5 #number of fingers per hand
 frame_gap = 3
-thresh_level=0.2
-torso_id = 0
-neck_id = 2
-left_hand_id = 7
-right_hand_id = 11
 
-base_id=torso_id
 inst= CpmClass(display_flag = False) #instantiating CpmClass
 
 def fingers_length(key_points):
@@ -269,55 +259,44 @@ def create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file
         skel_gest_end=skel_frame_nums[i+1]
         gest_rgb_ts = rgb_ts[rgb_gest_start:rgb_gest_end+1]
         gest_skel_ts = skel_ts[skel_gest_start:skel_gest_end+1]
-
-        s_to_r,r_to_s = match_ts(rgb_ts[rgb_gest_start:rgb_gest_end],skel_ts[skel_gest_start:skel_gest_end])    
         gesture_left_frames=left_files[rgb_gest_start:rgb_gest_end+1]    
         gesture_right_frames=right_files[rgb_gest_start:rgb_gest_end+1]
-
-        skel_frames_to_rgb=skel_gest_start + s_to_r #skeleton frames corresponding to rgb
-  
-          
-        gesture_left_frames=[left_files[i] for i in np.array(r_to_s)+rgb_gest_start] #or rgb_gest_start
-        gesture_right_frames=[right_files[i] for i in np.array(r_to_s)+rgb_gest_start] #or skel_gest_start #TO VERIFY 
-
+            
+        s_to_r,r_to_s = match_ts(rgb_ts[rgb_gest_start:rgb_gest_end],skel_ts[skel_gest_start:skel_gest_end])
+        
         print('rgb gesture start:',rgb_gest_start,'rgb gesture end:',rgb_gest_end)
         print('skel gesture start:',skel_gest_start,'skel gesture end:',skel_gest_end)
-
-        gesture_data=[]       
+        # print('gesture_left_frames',[os.path.basename(frame) for frame in gesture_left_frames])
+        # print('gesture_right_frames',[os.path.basename(frame) for frame in gesture_right_frames])
+        gesture_data=[]
         num_gest_frames = len(gesture_left_frames)
-
-        start_y_coo = thresh_level * (skel_frames_to_rgb[0][3*neck_id+1] - skel_frames_to_rgb[0][3*base_id+1]) 
-        for j in range(0,num_gest_frames):   
+        for j in range(0,num_gest_frames):
         # dominant hand is assumed to be left. if not the replace dominat_hand with not dominant_hand 
             frame_l=cv2.imread(gesture_left_frames[j])
             frame_r=cv2.imread(gesture_right_frames[j])
 
             # if hand is completely out of the frame, then the bounding box is of size 0.
-            left_y = skel_frames_to_rgb[j][3*left_hand_id+1] - skel_frames_to_rgb[j][3*base_id+1]
-            right_y = skel_frames_to_rgb[j][3*right_hand_id+1] - skel_frames_to_rgb[j][3*base_id+1]
-            if left_y <= start_y_coo:
-                left_fingers = np.zeros(num_zeros_coords).tolist() 
-            else:    
-                if frame_l is None:
-                    print('this',gesture_left_frames[j],'is not processed due to 0 size')
-                    left_fingers = np.zeros(num_zeros_coords).tolist()
-                else:
-                    left_fingers = cpm_fingers_coords(gesture_left_frames[j])
+            # to handle those zeros are returned as finger lengths or raw coordinates 
+            #TODO: handle bounday conditions more strategically
+            if frame_l is None:
+                print('this',gesture_left_frames[j],'is not processed due to 0 size')
+                left_fingers = np.zeros(num_zeros_coords).tolist()
+            else:
+                left_fingers = cpm_fingers_coords(gesture_left_frames[j])
 
-            if right_y <= start_y_coo:
-                right_fingers = np.zeros(num_zeros_coords).tolist() 
-            else:    
-                if frame_r is None:
-                    print('this',gesture_right_frames[j],'is not processed due to 0 size')
-                    right_fingers = np.zeros(num_zeros_coords).tolist()
-                else:
-                    right_fingers = cpm_fingers_coords(gesture_right_frames[j])
+            if frame_r is None:
+                print('this',gesture_right_frames[j],'is not processed due to 0 size')               
+                right_fingers = np.zeros(jnum_zeros_coords).tolist()
+            else:
+                right_fingers = cpm_fingers_coords(gesture_right_frames[j])
 
             if not  dominant_hand:
                 gesture_data.append(left_fingers+right_fingers)
             else:
                 gesture_data.append(right_fingers+left_fingers)
                     
+
+        #should return lists so that they can be added
         gesture_data_updated=[]
         for k in range(len(r_to_s)):
         ###############################################################################################################    
@@ -355,7 +334,7 @@ def create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file
 ##########################################################
 
 
-for lexicon in lexicons[2:4]:
+for lexicon in lexicons[:1]:
     lexicon_name=os.path.basename(lexicon)
     print(lexicon_name)
     frames_lexicon_folder=os.path.join(frames_dir,lexicon_name)

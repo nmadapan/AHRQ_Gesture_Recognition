@@ -126,8 +126,8 @@ class kinect_reader(object):
 
 		# If draw_gest_thresh is True, Draw the gesture threshold.
 		if(draw_gest_thresh):
-			neck = color_skel_pts[2*pk.JointType_Neck:2*pk.JointType_Neck+2]
-			base = color_skel_pts[2*pk.JointType_SpineBase:2*pk.JointType_SpineBase+2]
+			neck = img_skel_pts[2*pk.JointType_Neck:2*pk.JointType_Neck+2]
+			base = img_skel_pts[2*pk.JointType_SpineBase:2*pk.JointType_SpineBase+2]
 
 			# If neck or base are not detected, don't draw anything
 			if(np.isinf(np.sum(neck)) or np.isnan(np.sum(neck))): return None
