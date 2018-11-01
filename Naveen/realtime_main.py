@@ -52,7 +52,6 @@ SUBJECT_ID = 'S7'
 	* If the no. of frames in skeleton are less than a threshold, ignore. Make changes to run()
 '''
 
-
 class Realtime:
 	def __init__(self):
 		###################
