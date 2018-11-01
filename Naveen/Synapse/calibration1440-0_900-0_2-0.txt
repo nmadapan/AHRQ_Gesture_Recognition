@@ -18,5 +18,6 @@
     "jumpW": 0,
     "prev_action": "",
     "jumpH": 0,
-    "rightIcons": 49.9
+    "rightIcons": 49.9,
+    "group1_command": null
 }
