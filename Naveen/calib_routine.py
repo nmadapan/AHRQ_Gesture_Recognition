@@ -26,7 +26,6 @@ def pose_calib_data(skelpath):
 
 		# return min(np.max(arm_list), np.median(arm_list) + 3 * np.std(arm_list))
 		return np.median(arm_list)
->>>>>>> 3697cc754d51c13ef9ba6b2bd5613a087d83fde2
 	with open(skelpath, 'r') as fp:
 		lines = fp.readlines()
 		lines = [map(float, line.strip().split(' ')) for line in lines]
