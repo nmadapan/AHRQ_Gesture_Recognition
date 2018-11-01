@@ -6,8 +6,7 @@ Elements with context
 	Layout
 	Contrast presets
 
-CONFLICTS: modifier zoom out == context manual contrast
-		   modifier presets 1 == modifier switch panel up (SAME IN CODE)
+CONFLICTS: modifier presets 1 == modifier switch panel up (SAME IN CODE)
 
 similar modifiers:
 	pan == switch
@@ -35,11 +34,12 @@ L6:
 Elements with context
 	flip
 	manual contrast
+
 	contrast_presets
 	Layout
 
 
-CONFLICTS: 	modifier zoom out == modifier ruler measure 
+CONFLICTS: 	modifier zoom in == modifier ruler measure 
 
 Toggles:
 	ruler delete when ruler measure has been used -> confused context lists

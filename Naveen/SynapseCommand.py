@@ -29,6 +29,12 @@ class SynapseCommand():
 		if rcv_modifier_num == "0": 
 			self.context = rcv_command
 			self.command = rcv_command
+			# if the context needs the modifier to desambiguate,
+			# add the entire list of possible contexts to the contexts and
+			# don't execute anything. 
+
+			# then in the modifiers, check if you have a list of contexts, if you do, 
+			# desambiguate according to the context. 
 		# if a modifier with context is executed 
 		elif rcv_context_num in [num.split("_")[0] for num in context_list]:
 			# Check if the context was executed
@@ -59,7 +65,7 @@ class SynapseCommand():
 				self.command = None
 				self.context = None
 				return None
-				
+
 		# A command without context was executed. Reset everything and
 		# send the command.
 		# TODO maybe we want to pull the previous context but it seems
