@@ -1,4 +1,3 @@
-
 L2:
 Elements with context
 	switch panel
@@ -8,11 +7,10 @@ Elements with context
 	Contrast presets
 
 CONFLICTS: modifier zoom out == context manual contrast
-		   modifier presets 2 == modifier switch panel up
+		   modifier presets 1 == modifier switch panel up (SAME IN CODE)
 
 similar modifiers:
 	pan == switch
-
 
 L3:
 Elements with context:
@@ -50,8 +48,6 @@ Toggles:
 L8:
 Elements with context
 	
-
-
 CONFLICTS: ruler measure commands == window open cliose commands	
 
 Toggles:
@@ -68,8 +64,6 @@ if rules that need to be made:
 	if the modifier does not exist --> ignore
 	if the contexts or coomands can be confused --> send execution option
 	commands that need to be toogled form x list when used with counter
-
-
 
 Things to fix:
 	re-name flip vertical L8

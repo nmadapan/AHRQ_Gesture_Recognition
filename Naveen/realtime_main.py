@@ -26,7 +26,7 @@ PORT_SYNAPSE = 10000  # Both server and client should have a common IP and Port
 IP_CPM = 'localhost'
 PORT_CPM = 3000
 
-ENABLE_SYNAPSE_SOCKET = True
+ENABLE_SYNAPSE_SOCKET = False
 ENABLE_CPM_SOCKET = False
 
 ONLY_SKELETON = True
