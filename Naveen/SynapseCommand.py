@@ -17,6 +17,8 @@ class SynapseCommand():
 		self.mod_without_context_err = 0
 		self.modifier_replaced = 0
 		self.subject_n = subject_n
+		self.similar_modifiers =
+		self.similar_gestures = 
 
 	def get_command(self, rcv_command):
 		#####################
