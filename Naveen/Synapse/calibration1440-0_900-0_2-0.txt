@@ -1,23 +1,32 @@
 {
-    "active_panel": [1, 1],
-    "optionH": 17.964,
-    "window_open": false,
+    "active_panel": [
+        1,
+        1
+    ],
     "hold_action": null,
-    "rightBoxW": 397,
     "rulers": {
         "len": 0
     },
-    "defaultCommand": null,
-    "rightBoxH": 998,
-    "rightHR": 4.99,
-    "rightOffset": 57.884,
-    "panel_dim": [1, 1],
     "rightPlus": 3.992,
+    "rightOffset": 57.884,
+    "defaultCommand": null,
     "toUse": "Keyboard",
+    "group1_command": null,
+    "rightBoxH": 998,
+    "prev_action": "10_3, Layout Three-Panels",
+    "rightBoxW": 382,
+    "params": "",
+    "firstW": 720.0,
+    "firstH": 450.0,
+    "optionH": 17.964,
+    "window_open": false,
+    "rightHR": 4.99,
+    "panel_dim": [
+        1,
+        1
+    ],
     "topBarHeight": 224,
     "jumpW": 0,
-    "prev_action": "",
     "jumpH": 0,
-    "rightIcons": 49.9,
-    "group1_command": null
+    "rightIcons": 49.9
 }
