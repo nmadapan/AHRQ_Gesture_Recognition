@@ -14,10 +14,11 @@ plt.rcdefaults()
 ## Skeleton
 skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L6'
 # skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
+
 ## Fingers
 ENABLE_FINGERS = False
 pickle_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\fingers_pkl'
-fingers_pkl_fname = os.path.basename(skel_folder_path)+'_fingers_from_hand_base_sorted.pkl'
+fingers_pkl_fname = os.path.basename(skel_folder_path)+'_fingers_from_hand_base.pkl'
 #######################
 
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
@@ -68,5 +69,6 @@ plt.grid(True)
 #plt.show()
 
 clf, _, _ = fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60)
+print 'Saving in: ', out_pkl_fname
 with open(out_pkl_fname, 'wb') as fp:
 	pickle.dump({'fe': fe, 'out': out}, fp)
