@@ -39,6 +39,7 @@ calibrationPath = "calibration" + "_".join(list(str(e) for e in [width, height, 
 
 # Close all other windows and open either command prompt or the Citrix Viewer
 def openWindow(toOpen):
+	# Look into "start" command for Windows
 	if (platform.system() == "Windows"):
 		window_names = auto.getWindows().keys()
 		for window_name in window_names:
@@ -47,36 +48,31 @@ def openWindow(toOpen):
 				xef_window_name = window_name
 		xef_window = auto.getWindow(xef_window_name)
 		xef_window.maximize()
-	else:
-		# auto.hotkey("command", "space")
-		# auto.typewrite(toOpen)
-		# auto.press("enter")
-		auto.hotkey("command", "tab")
+	else: os.system("open -a " + toOpen.replace(" ", "\\ "))
 
 #Remove images already saved (avoids issues with git)
 def removeImages():
 	paths = [os.path.join("SCA_Images", "RightClick"), os.path.join("SCA_Images", "Window", "Closes"),
 		os.path.join("SCA_Images", "Window"), os.path.join("SCA_Images", "Layout"), os.path.join("SCA_Images")]
 	for path in paths:
-		if (not os.path.exists(path)):
-			continue
+		if (not os.path.exists(path)): continue
 		for file in os.listdir(path):
-			if file.endswith(".png"):
-				os.remove(os.path.join(path, file))
+			if file.endswith(".png"): os.remove(os.path.join(path, file))
 	os.remove(calibrationPath)
 
 # Prompt notification if choosing to remove the images
 def removeImagesPrompt():
 	openWindow(prompt)
+	(status["hold_action"], status["defaultCommand"], status["group1_command"]) = (None, None, None)
+	f = open(calibrationPath, "w")
+	f.write(json.dumps(status, indent=4, separators=(',', ': ')))
+	f.close()
 	while True:
 		ans = raw_input("Do you want to remove the images saved in the folder? (y/n)")
-		if (len(ans) == 1 and ans.lower() == "y"):
-			removeImages()
+		if (len(ans) == 1 and (ans.lower() == "y" or ans.lower() == "n")):
+			if ans.lower() == "y": removeImages()
 			break
-		elif (len(ans) != 1 or ans.lower() != "n"):
-			print "Unrecognized request, please enter either 'y' or 'n'"
-		else:
-			break
+		else: print "Unrecognized request, please enter either 'y' or 'n'"
 	print ""
 
 # If exiting the synapse program, remove all images before closing synapse.
@@ -197,8 +193,8 @@ def get_bbox(before, after, thresholds = None, draw = False):
 	return (x1, y1, x2, y2)
 
 if (not os.path.exists(calibrationPath)):
-	status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1], "rulers": {"len": 0},
-		"toUse": "Keyboard", "hold_action": None, "defaultCommand": None, "group1_command": None}
+	status = {"prev_action": "", "panel_dim": [1, 1], "window_open": False, "active_panel": [1, 1],
+		"rulers": {"len": 0}, "toUse": "Keyboard", "hold_action": None, "defaultCommand": None, "group1_command": None}
 else:
 	f = open(calibrationPath, "r")
 	status = json.loads(" ".join([line.rstrip('\n') for line in f]))
@@ -216,6 +212,7 @@ def moveToActivePanel():
 	moveToY = status["firstH"] + (status["active_panel"][0] - 1) * (status["jumpH"])
 	auto.moveTo(moveToX, moveToY)
 
+openWindow(viewer)
 
 class Calibration(object):
 	def __init__(self):
@@ -232,10 +229,13 @@ class Calibration(object):
 			self.resetAll()
 			(status["topBarHeight"], status["optionH"], status["rightHR"], status["rightPlus"], status["rightIcons"],
 				status["rightOffset"], status["rightBoxW"], status["rightBoxH"]) = self.getAll()
+			f = open(calibrationPath, "w")
+			f.write(json.dumps(status, indent=4, separators=(',', ': ')))
+			f.close()
 
 	def getAll(self):
-		return (self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons,
-			self.rightOffset, self.rightBoxW, self.rightBoxH)
+		return (self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons, self.rightOffset,
+			self.rightBoxW, self.rightBoxH)
 	
 	def resetAll(self):
 		print "\nWarming up synapse system...\n"
@@ -292,14 +292,12 @@ class Calibration(object):
 		auto.click()
 		auto.click(button='right')
 		located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
-		if (located is not None):
-			(rightx1, righty1, w, h) = located
+		if (located is not None): (rightx1, righty1, w, h) = located
 		else:
 			print "Cannot find " + option + " on calibration reset. Attempting reset on rightClick."
 			self.resetRightClick()
 			located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
-			if (located is not None):
-				(rightx1, righty1, w, h) = located
+			if (located is not None): (rightx1, righty1, w, h) = located
 			else:
 				print "Failed to reset " + option + "."
 				return
@@ -354,8 +352,6 @@ def findRightClick(offset):
 		print "Error when performing right click function."
 		return False
 
-openWindow(viewer)
-
 # TODO: for window open, layout
 # Windows: wo at (326, 78) and layout at (642, 80)
 #	topBarHeight == 176
@@ -387,9 +383,8 @@ def gestureCommands(sequence):
 		return False
 	
 	if (status["defaultCommand"] != command): status["defaultCommand"] = None
-	elif (status["group1_command"] != command): status["group1_command"] = None
+	if (status["group1_command"] != command): status["group1_command"] = None
 	if (status["defaultCommand"] is None and status["group1_command"] is None): auto.mouseUp()
-
 
 	if (command == "Admin" and action != "Admin"):
 		if (action == "Quit"):
@@ -424,14 +419,10 @@ def gestureCommands(sequence):
 				sequence = status["hold_action"]
 				status["hold_action"] = "held"
 				return gestureCommands(sequence)
-	elif (command == "Scroll" and command != action):
+	elif (command == "Scroll" and action != "Scroll"):
 		moveToActivePanel()
 		auto.click()
 		scrollAmount = (50 if status["params"] == "" else int(status["params"]))
-		"""if (status["toUse"] != "Keyboard" and platform.system() != "Windows"):
-			scrollAmount = (-1 * scrollAmount if action == "Up" else scrollAmount)
-			auto.scroll(scrollAmount)
-		else:"""
 		auto.PAUSE = 0
 		for i in range(scrollAmount): auto.press("right" if action == "Up" else "left")
 		auto.PAUSE = 0.25
@@ -595,6 +586,25 @@ def gestureCommands(sequence):
 			auto.moveTo(moveToX, moveToY)
 	elif (command == "Ruler" and action != "Ruler"):
 		if (action == "Measure"):
+			openWindow(prompt)
+			while (1):
+				rawInput = raw_input("Enter coordinates separated by underscores (2 or 4 non-negative integers): ")
+				try:
+					if (len(rawInput.split("_")) == 2):
+						moveToActivePanel()
+						rawInput = "_".join(list(str(p) for p in auto.position())) + "_" + rawInput
+						break
+					elif (len(rawInput.split("_")) == 4): break
+					else: promptNotify("Coordinates must have only 2 or 4 non-negative integers.", 0)
+					#return False
+				except ValueError:
+					promptNotify("Coordinates must be non-negative integers.", 0)
+					#return False
+			status["params"] = rawInput
+			points = status["params"].split("_")
+			(x1, y1, x2, y2) = (int(points[0]), int(points[1]), int(points[2]), int(points[3]))
+			openWindow(viewer)
+			time.sleep(2)
 			moveToActivePanel()
 			auto.click(button='right')
 			if (status["toUse"] == "img_recog"):
@@ -609,21 +619,6 @@ def gestureCommands(sequence):
 			else:
 				auto.press("r")
 				auto.press("enter")
-			status["params"] = raw_input("Enter coordinates separated by underscores (either 2 or 4 parameters): ")
-			points = status["params"].split("_")
-			try:
-				if (len(points) == 4):
-					(x1, y1, x2, y2) = (int(points[0]), int(points[1]), int(points[2]), int(points[3]))
-				elif (len(points) == 2):
-					moveToActivePanel()
-					(x1, y1) = auto.position()
-					(x2, y2) = (int(points[0]), int(points[1]))
-				else:
-					promptNotify("Coordinates must have only 2 or 4 non-negative integers.", 0)
-					return False
-			except ValueError:
-				promptNotify("Coordinates must be non-negative integers.", 0)
-				return False
 			auto.moveTo(x1, y1)
 			auto.mouseDown()
 			auto.moveTo(x2, y2)
@@ -632,7 +627,7 @@ def gestureCommands(sequence):
 			curr = 1
 			while (curr <= status["rulers"]["len"]):
 				if (curr not in status["rulers"]):
-					status["rulers"][curr] = str(x1) + "_" + str(y1) + "_" + str(x2) + "_" + str(y2)
+					status["rulers"][curr] = status["params"]
 					break
 				curr += 1
 			print "ID of Ruler Measurement: " + str(curr)
@@ -640,16 +635,13 @@ def gestureCommands(sequence):
 			if (status["params"] == ""):
 				promptNotify("Ruler delete ID not specified.", 0)
 				return False
-			elif (len(status["params"].split("_")) != 1):
-				promptNotify("Ruler delete ID must only be one positive integer.", 0)
-				return False
 			try:
 				rulerID = int(status["params"])
 				if (rulerID not in status["rulers"]):
 					print "Ruler delete ID is not in the list of rulers."
 					return False
 			except ValueError:
-				print "Ruler delete ID should be a positive integer value."
+				print "Ruler delete ID should be one positive integer value."
 				return False
 			points = status["rulers"][rulerID].split("_")
 			status["rulers"].pop(rulerID, None)
@@ -678,8 +670,7 @@ def gestureCommands(sequence):
 			else:
 				auto.PAUSE = 0.1
 				auto.press("0")
-				for i in range(5):
-					auto.press("down")
+				for i in range(5): auto.press("down")
 				auto.press("enter")
 				auto.pause = 0.25
 			#os.remove(beforeRCRuler)
@@ -702,42 +693,36 @@ def gestureCommands(sequence):
 			box = (1.0 * scale, status["topBarHeight"] + 1.0 * scale, -1.0 * scale, -1.0 * scale)
 			box = tuple(boundBoxNoDash[i] + box[i] for i in range(4))
 			afterHoverPath = os.path.join("SCA_Images", "Window", "afterHover.png")
-			if (not os.path.exists(afterHoverPath)): ImageGrab.grab(bbox=box).save(afterHoverPath)
-			if (platform.system() == "Windows"): auto.moveTo(326.0 * scale, 78.0 * scale)
-			else: auto.moveTo((435.0 / 2.0) * scale, (107.0 / 2.0) * scale)
+			ImageGrab.grab(bbox=box).save(afterHoverPath)
+			# 219,53 on mac from topBar, without scale
+			if (platform.system() == "Windows"): auto.moveTo(326.0 * width / 1920.0, 78.0 * height / 1080.0)
+			else: auto.moveTo(435.0 / 2.0, (107.0 + 44.0) / 2.0)
 			auto.click()
-			time.sleep(3)
-			"""
+			time.sleep(5)
 			seriesThumbnailPath = os.path.join("SCA_Images", "Window", "seriesThumbnail.png")
-			if (not os.path.exists(seriesThumbnailPath)): ImageGrab.grab(bbox=box).save(seriesThumbnailPath)
+			ImageGrab.grab(bbox=box).save(seriesThumbnailPath)
 			diffSeriesPath = os.path.join("SCA_Images", "Window", "diffSeries.png")
-			if (not os.path.exists(diffSeriesPath)):
-				diffBox = get_bbox(afterHoverPath, seriesThumbnailPath)
-				(x1, y1, x2, y2) = (diffBox[i] + box[(i % 2)] for i in range(4))
-				ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffSeriesPath)
-			else:
-				(x1, y1, w, h) = auto.locateOnScreen(diffSeriesPath)
-				(x2, y2) = (x1 + w, y1 + h)
-			#(x1, y1) = (x2 - (83.0 / 2880.0) * nativeW,  y1 + (2.0 / 2880.0) * nativeW)
-			#(x2, y2) = (x1 + (90.0 / 2880.0) * nativeW, y1 + (40.0 / 2880.0) * nativeW)
-			(x1, y1) = (x2 - (10.0 * scale) - (90.0 / 2880.0) * nativeW, y1 + (2.0 * scale))
-			(x2, y2) = (x2 - (10.0 * scale), y1 + (2.0 * scale) + (40.0 / 1800.0) * nativeH)
+			diffBox = get_bbox(afterHoverPath, seriesThumbnailPath)
+			(x1, y1, x2, y2) = (diffBox[i] + box[(i % 2)] for i in range(4))
+			ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffSeriesPath)
+			(tempX, tempY) = (x2, y1)
+			auto.moveTo(tempX, tempY)
+			(x1, y1) = (tempX + ((-14.0 - 90.0) * scale / 2.0), tempY + (3.0) * scale / 2.0)
+			(x2, y2) = (tempX + (-14.0) * scale / 2.0, tempY + (43.0) * scale / 2.0)
 			seriesClosePath = os.path.join("SCA_Images", "Window", "Closes", "seriesClose.png")
 			seriesClose_RedPath = os.path.join("SCA_Images", "Window", "Closes", "seriesClose_Red.png")
 			seriesClose_GrayPath = os.path.join("SCA_Images", "Window", "Closes", "seriesClose_Gray.png")
-			if (not os.path.exists(seriesClosePath)): ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(seriesClosePath)
-			if (not os.path.exists(seriesClose_RedPath)):
-				auto.moveTo((x1 + x2) / (scale * 2.0), (y1 + y2) / (scale * 2.0))
-				ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(seriesClose_RedPath)
-			if (not os.path.exists(seriesClose_GrayPath)):
-				auto.moveTo(0, (y1 + y2) / (scale * 2.0))
-				auto.click()
-				ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(seriesClose_GrayPath)
-			"""
+			ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(seriesClosePath)
+			auto.moveTo((x1 + x2) / (scale * 2.0), (y1 + y2) / (scale * 2.0))
+			ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(seriesClose_RedPath)
+			auto.moveTo(0, (y1 + y2) / (scale * 2.0))
+			auto.click()
+			ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(seriesClose_GrayPath)
 			status["window_open"] = (not status["window_open"])
 		elif (action == "Close" and status["window_open"]):
-			for file in os.listdir(os.path.join("SCA_Images", "Window", "Closes", "Test")):
-				close = auto.locateOnScreen(os.path.join("SCA_Images", "Window", "Closes", "Test", file))
+			for file in os.listdir(os.path.join("SCA_Images", "Window", "Closes")):
+				if (not file.endswith(".png")): continue
+				close = auto.locateOnScreen(os.path.join("SCA_Images", "Window", "Closes", file))
 				if (close is not None):
 					(x1, y1, w, h) = close
 					auto.moveTo((2 * x1 + w) / (scale * 2.0), (2 * y1 + h) / (scale * 2.0))
@@ -789,28 +774,27 @@ def gestureCommands(sequence):
 		box = (1.0 * scale, status["topBarHeight"], -1.0 * scale, -1.0 * scale)
 		box = tuple(boundBoxNoDash[i] + box[i] for i in range(4))
 		afterHoverPath = os.path.join("SCA_Images", "Layout", "afterHover.png")
-		if (not os.path.exists(afterHoverPath)): ImageGrab.grab(bbox=box).save(os.path.join("SCA_Images", "Layout", "afterHover.png"))
-		if (platform.system() == "Windows"): auto.moveTo(642.0 * scale, 80.0 * scale)
-		else: auto.moveTo((857.0 / 2.0) * scale, (109.0 / 2.0) * scale)
+		ImageGrab.grab(bbox=box).save(afterHoverPath)
+		# 429,54 on mac from topBar, without scale
+		if (platform.system() == "Windows"): auto.moveTo(642.0 * width / 1920.0, 80.0 * height / 1080.0)
+		else: auto.moveTo(857.0 / 2.0, (109.0 + 44.0) / 2.0)
 		auto.click()
 		time.sleep(5)
 		windowPath = os.path.join("SCA_Images", "Layout", "window.png")
-		if (not os.path.exists(windowPath)): ImageGrab.grab(bbox=box).save(os.path.join("SCA_Images", "Layout", "window.png"))
+		ImageGrab.grab(bbox=box).save(windowPath)
+		diffLayoutPath = os.path.join("SCA_Images", "Layout", "diffLayout.png")
 		diffBox = get_bbox(afterHoverPath, windowPath)
 		(x1, y1, x2, y2) = (diffBox[i] + box[(i % 2)] for i in range(4))
-		diffLayoutPath = os.path.join("SCA_Images", "Layout", "diffLayout.png")
-		if (not os.path.exists(diffLayoutPath)): ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffLayoutPath)
-		# x1 += (68.0 / 1920.0) * nativeW
-		# x1 = x1 / scale
-		# y1 += (95.0 / 1080.0) * nativeH
-		# y1 = y1 / scale
-		# jumpX = (91.0 / 1920.0) * nativeW / scale
-		"""x1 += (92.0 / 2880.0) * width
-		y1 += (128.0 / 1800.0) * height
-		jumpX = (122.0 / 2880.0) * width"""
+		ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffLayoutPath)
+		auto.moveTo(x1, y1)
+		time.sleep(2)
+		auto.moveTo(x1 / scale, y1 / scale)
+		time.sleep(2)
+		(x1, y1) = ((x1 + 91.0) / 2.0, (y1 + 127.0) / 2.0)
+		jumpX = (122.0 / 2.0)
 		(status["panel_dim"][0], status["panel_dim"][1]) = (1, actionID)
-		#x1 += (status["panel_dim"][1] - 1) * jumpX
-		(x1, y1) = (472.0 + (actionID - 1) * 62.0, 217.0)
+		#(x1, y1) = (472.0 + (actionID - 1) * 62.0, 217.0)
+		x1 += (status["panel_dim"][1] - 1) * jumpX
 		auto.moveTo(x1, y1)
 		auto.click()
 		resetPanelMoves()
