@@ -5,9 +5,7 @@
 			{
 				"S1":
 				{
-					"name": "Rahul",
-					"arm_length": 0.7000,
-					"finger_length": 300
+					"name": "Rahul"
 				},
 				"S2":
 				{
@@ -168,7 +166,7 @@
 					"name": "Xiayu",
 					"arm_length": 0.7000,
 					"finger_length": 300
-				}
+				}							
 			}
 	}		
 }
