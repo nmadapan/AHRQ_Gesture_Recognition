@@ -434,9 +434,9 @@ def smart_interpn(yp, reps, kind = 'copy'):
 		* kind: type of interpolation. 'linear' (linear interpolation) or 'copy' (copy whenever replications happen).
 	Return:
 		np.ndarray with no. of rows equal to the size of 'reps' and no. of columns same as 'yp'.
-	How to use: 
+	How to use:
 		* 'yp': np.ndarray of size 7 x 3
-		* If 'reps' looks like [0 0 1 1 2 2 3 4 5 5 6]. 'reps' has 11 elements. 
+		* If 'reps' looks like [0 0 1 1 2 2 3 4 5 5 6]. 'reps' has 11 elements.
 			- It basically means 0th row is repeated twice, 1st row is repeated twice and so on.
 		* Now the idea is to interpolate w.r.t the given 'reps'
 		* It outputs the an np.ndarray of size 11 x 3. Type of interpolation is determined by the argument 'kind'

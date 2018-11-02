@@ -9,7 +9,7 @@ import os
 
 
 class SynapseCommand():
-	def __init__(lexicon, subject_n command_json_path='commands.json'):
+	def __init__(self, lexicon, subject_n, command_json_path='commands.json'):
 		self.cmd_dict = json_to_dict('commands.json')
 		self.command = None # the command to be currently executed
 		self.context = None # the context of the command if this command is executed in two parts
@@ -20,40 +20,41 @@ class SynapseCommand():
 		self.modifier_replaced = 0
 		self.subject_n = subject_n
 
-		# Gesture desambiguation lists 
+		# Gesture desambiguation lists
 		data_folder = os.path.join("..","Data")
 		# Context commands
 		self.context_list = file_to_list(os.join.path(data_folder),lexicon+"_context.txt")
-		# Modifiers that are so similar that can be confused 
+		# Modifiers that are so similar that can be confused
 		self.similar_modifiers = file_to_list(os.join.path(data_folder),lexicon+"_similar_m.txt")
-		# Gestures that are so similar that can be confused 
+		# Gestures that are so similar that can be confused
 		self.similar_gestures = file_to_list(os.join.path(data_folder),lexicon+"_similar_g.txt")
-		# Repeated gestures (were not trained to be different in the ML) 
+		# Repeated gestures (were not trained to be different in the ML)
 		self.repeated_gestures = file_to_list(os.join.path(data_folder),lexicon+"_reps.txt")
 
 
 	def get_similar_command(self,list):
+		pass
 
 
 
 	def get_command(self, rcv_command):
 		#####################
 		# Get the current synapse command based on the
-		# context and the modifier. 
+		# context and the modifier.
 		#####################
 		rcv_context_num, rcv_modifier_num = rcv_command.split("_")
-		# if there is a context switch, make the command set the 
-		# command to exectute and the current context to the context command. 
-		if rcv_modifier_num == "0": 
+		# if there is a context switch, make the command set the
+		# command to exectute and the current context to the context command.
+		if rcv_modifier_num == "0":
 			self.context = rcv_command
 			self.command = rcv_command
 			# if the context needs the modifier to desambiguate,
 			# add the entire list of possible contexts to the contexts and
-			# don't execute anything. 
+			# don't execute anything.
 
-			# then in the modifiers, check if you have a list of contexts, if you do, 
-			# desambiguate according to the context. 
-		# if a modifier with context is executed 
+			# then in the modifiers, check if you have a list of contexts, if you do,
+			# desambiguate according to the context.
+		# if a modifier with context is executed
 		elif rcv_context_num in [num.split("_")[0] for num in context_list]:
 			# Check if the context was executed
 			if self.context is None:
@@ -62,13 +63,13 @@ class SynapseCommand():
 				self.command = None
 				return None
 
-			# Check if the modifier is a modifier of that context 
+			# Check if the modifier is a modifier of that context
 			current_context_num = self.context.split("_")[0]
 			elif rcv_context_num == current_context_num:
 					self.command = rcv_command
 			# Check if the modifier is correct but re-used under another label
 
-			
+
 			# Check if the modifier is one that it can get confused with.
 			elif any([rcv_command in mod_list for mod_list in self.similar_modifiers]):
 				# Get the list of possible similar modifiers
@@ -98,7 +99,7 @@ class SynapseCommand():
 
 	def update_gesture(self, received_):
 		pass
-	
+
 	def write_results(self,filename):
 		file = open(filename, "w")
 		file_dict = {

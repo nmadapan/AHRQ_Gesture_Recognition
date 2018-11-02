@@ -58,7 +58,7 @@ class FeatureExtractor():
 		self.num_feature_types = None
 
 		self.skel_file_order = None # What is the order in which skeleton files are read.
-		self.dominant_type = None # What is the dominant type of each instance in the skeleton files (in the same order). 
+		self.dominant_type = None # What is the dominant type of each instance in the skeleton files (in the same order).
 		self.svm_clf = None # The trained svm classifier is saved in this variable.
 
 		# num_joints can either be 1 or 2
@@ -85,28 +85,28 @@ class FeatureExtractor():
 
 		## Other variables - updated by generate_io()
 		self.num_classes = None
-		self.class_labels = None 
-		self.id_to_labels = None 
-		self.label_to_ids = None 
-		self.inst_per_class = None 
+		self.class_labels = None
+		self.id_to_labels = None
+		self.label_to_ids = None
+		self.inst_per_class = None
 		self.num_instances = None # total no. of instances
 
 		## Other variables - updated batch_generate_features()
 		self.skel_file_order = None # order in which files are being read
-		self.dominant_type = None # list of list. one sublist per skeleton file. 
-			# Size of sublist is no. of gesture instances in that skeleton file. 
+		self.dominant_type = None # list of list. one sublist per skeleton file.
+			# Size of sublist is no. of gesture instances in that skeleton file.
 			# Each sublist = [1 0 0 1 0], 1-> right is dominant, left otherwise.
 
 	###### OFFLINE Function ########
 	def init_calib_params(self, json_param_path):
 		########################
 		# Description:
-		#		Given the json params file, initialize all of the 
-		#		class variables with those values	
+		#		Given the json params file, initialize all of the
+		#		class variables with those values
 		#		i.e. trajectories of hand, elbow, shoulder of both hands.
 		# Input arguments:
 		########################
-		
+
 		# Initialize variables from json param path
 		param_dict = json_to_dict(json_param_path)
 		for key, value in param_dict.items(): setattr(self, key, value)
@@ -115,14 +115,14 @@ class FeatureExtractor():
 	def extract_raw_features(self, skel_filepath, annot_filepath):
 		########################
 		# Description:
-		#	Given the skeleton file and its annotation file, it extracts raw features, 
+		#	Given the skeleton file and its annotation file, it extracts raw features,
 		#		i.e. trajectories of hand, elbow, shoulder of both hands.
 		# Input arguments:
-		#	1. skel_filepath: full path of skeleton file. 
+		#	1. skel_filepath: full path of skeleton file.
 		#		It contains M rows, and each row has 75 values (3 for each of 25 kinect joints)
 		#	2. annot_filepath: full path of annotation file
-		#		It contains start and end gesture ids. It will have 2 x K rows, and each row has one integer. 
-		#		K - No of gesture instances. 
+		#		It contains start and end gesture ids. It will have 2 x K rows, and each row has one integer.
+		#		K - No of gesture instances.
 		# Return:
 		#	xf - dictionary of raw trajectories
 		#	xf['left'] and xf['right'] are lists of 1D numpy arrays
@@ -188,20 +188,20 @@ class FeatureExtractor():
 		########################
 		# Input arguments:
 		#	1. skel_filepath: full path of skeleton file
-		#		It contains M rows, and each row has 75 values (3 for each of 25 kinect joints)		
+		#		It contains M rows, and each row has 75 values (3 for each of 25 kinect joints)
 		#	2. annot_filepath: full path of annotation file
-		#		It contains start and end gesture ids. It will have 2 x K rows, and each row has one integer. 
-		#		K - No of gesture instances. 		
+		#		It contains start and end gesture ids. It will have 2 x K rows, and each row has one integer.
+		#		K - No of gesture instances.
 		# Return:
 		#	'result' - list of elements. Number of elements = no. of gesture instances in the skeleton file.
-		#	Each element is a dictionary where keys are of three kinds: 
+		#	Each element is a dictionary where keys are of three kinds:
 		#		1. feature types (refer to available_types), 2. class label ('label') and 3. order of feature type ids ('types_order')
 		#		For feature types, value is the following:
 		#			* None if the flag of that feature type (self.type_flags) is False
 		#			* If there are 20 frames, 2 joints - then, flattened numpy array of size is (3*2*20) -->
 		#			* [x_hand .., y_hand .., z_hand, x_elbow .., y_elbow .., z_elbow ..]
 		#		For class label, value is groupID_commandID. For instance, 3_0.
-		#		'types_order', it is a list of ids: dominant ids followed by non dominant feature ids. 
+		#		'types_order', it is a list of ids: dominant ids followed by non dominant feature ids.
 		########################
 
 		result = []
@@ -297,14 +297,14 @@ class FeatureExtractor():
 		#		If skeleton file name is 1_1_S2_L6_Scroll_Up_skel.txt, then the name of annotation file is 1_1_S2_L6_Scroll_Up_annot2.txt
 		# Return:
 		#	result - list of elements. Number of elements = no. of gesture instances in all skeleton files.
-		#	Each element is a dictionary where keys are of three kinds: 
+		#	Each element is a dictionary where keys are of three kinds:
 		#		1. feature types (refer to available_types), 2. class label ('label') and 3. order of feature type ids ('types_order')
 		#		For feature types, value is the following:
 		#			* None if the flag of that feature type (self.type_flags) is False
 		#			* If there are 20 frames, 2 joints - then, flattened numpy array of size is (3*2*20) -->
 		#			* [x_hand .., y_hand .., z_hand, x_elbow .., y_elbow .., z_elbow ..]
 		#		For class label, value is groupID_commandID. For instance, 3_0.
-		#		'types_order', it is a list of ids: dominant ids followed by non dominant feature ids. 
+		#		'types_order', it is a list of ids: dominant ids followed by non dominant feature ids.
 		########################
 
 		# Error checks
@@ -340,7 +340,7 @@ class FeatureExtractor():
 		for skel_filepath, annot_filepath in combos:
 			temp_features = self.generate_features(skel_filepath, annot_filepath)
 			temp_dom_type = []
-			for feat in temp_features: 
+			for feat in temp_features:
 				features.append(feat)
 				temp_dom_type.append(int(feat['types_order'][0]==0))
 			self.dominant_type.append(temp_dom_type)
@@ -438,12 +438,12 @@ class FeatureExtractor():
 		# Input arguments:
 		#	colproc_skel_data: a list of tuples [(a, b), (c, d)] --> a and c belong to right hand and b and d for left hand.
 		#	'a' is a list of right hand followed right elbow coordinates [x_hand, y_hand, z_hand, x_elbow, y_elbow, z_elbow]
-		#		These coordinates are relative to the right shoulder. similarly for the left hand. 
+		#		These coordinates are relative to the right shoulder. similarly for the left hand.
 		#
 		# Return:
-		#	features: dictionary. 
+		#	features: dictionary.
 		#	key: feature types --> value: flattened numpy array or None
-		#	key: types_order --> value: dominant feature type ids followed by the nondominant ones. 
+		#	key: types_order --> value: dominant feature type ids followed by the nondominant ones.
 		########################
 
 		features = {feat_type: None for feat_type in self.available_types}
@@ -504,14 +504,14 @@ class FeatureExtractor():
 			features['types_order'] = list(range(self.num_available_types))
 
 		return features
-	
+
 	###### ONLINE Function ########
 	def generate_features_realtime(self, colproc_skel_data):
 		########################
 		# Input arguments:
 		#	colproc_skel_data: a list of tuples [(a, b), (c, d)] --> a and c belong to right hand and b and d for left hand.
 		#	'a' is a list of right hand followed right elbow coordinates [x_hand, y_hand, z_hand, x_elbow, y_elbow, z_elbow]
-		#		These coordinates are relative to the right shoulder. similarly for the left hand. 
+		#		These coordinates are relative to the right shoulder. similarly for the left hand.
 		#
 		# Return:
 		#	feature instance: numpy.ndarray (1 x feature_size)
@@ -530,9 +530,9 @@ class FeatureExtractor():
 					mod_feat = mod_feat.transpose().flatten()
 				else:
 					mod_feat = feature[feat_type]
-				
+
 				inst = inst + mod_feat.tolist()
-		dom_rhand = feature['types_order'][0] == 0 # True if right hand is dominant. False otherwise. 
+		dom_rhand = feature['types_order'][0] == 0 # True if right hand is dominant. False otherwise.
 		return dom_rhand, np.array([inst])
 
 	###### ONLINE Function ########
@@ -543,6 +543,7 @@ class FeatureExtractor():
 		#
 		# Return:
 		#	class label <string>. for instance, '3_0'
+		#	class name <string>. for instance, Rotate_X
 		########################
 
 		## Predict
@@ -557,15 +558,15 @@ class FeatureExtractor():
 	###### Miscellaneous Function ########
 	def find_type_order(self, left, right):
 		#####
-		# Description: 
-		#	Determines what hand is dominant. It returns dominant feature type IDs followed by nondominant ones. 
+		# Description:
+		#	Determines what hand is dominant. It returns dominant feature type IDs followed by nondominant ones.
 		#	If none of them are dominant, it returns RIGHT feature type IDs followed by LEFT ones
 		#	Threshold to determine dominancy is ('dominant_first_thresh' = 0.08m). It is found by observation.
 		# Input arguments:
 		#	'left': numpy.ndarray (_ x 3/6)
 		#	'right': numpy.ndarray (_ x 3/6)
 		# Return:
-		#	list of all ids. Dominant ids followed by nondominant ids. 
+		#	list of all ids. Dominant ids followed by nondominant ids.
 		#####
 		left_std = np.max(np.std(left, axis = 0))
 		right_std = np.max(np.std(right, axis = 0))
