@@ -40,8 +40,6 @@ SUBJECT_ID = 'S1'
 MIN_FRAMES_IN_GESTURE = 20
 
 ## DATA PATHS
-# Path where _reps.txt files are presetn
-REPS_PATH = r'..\\Data\\'
 # path to trained *_data.pickle file.
 TRAINED_PKL_PATH = 'H:\\AHRQ\\Study_IV\\NewData\\' + LEXICON_ID + '_data.pickle'
 # Path to json file consiting of list of command ids and command names
@@ -53,25 +51,21 @@ BASE_WRITE_DIR = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\
 
 def print_global_constants():
 	print('Synapse: ', end = '')
-	if(ENABLE_SYNAPSE_SOCKET): 
+	if(ENABLE_SYNAPSE_SOCKET):
 		print('ENABLED')
 		print('IP: {0}, PORT: {1}'.format(IP_SYNAPSE, PORT_SYNAPSE))
 	else: print('DISABLED')
 
 	print('\nCPM: ', end = '')
-	if(ENABLE_CPM_SOCKET): 
+	if(ENABLE_CPM_SOCKET):
 		print('ENABLED')
 		print('IP: {0}, PORT: {1}'.format(IP_CPM, PORT_CPM))
-	else: print('DISABLED')	
+	else: print('DISABLED')
 
 	print('\nLEXICON ID: ', LEXICON_ID)
 	print('SUBJECT ID: ', SUBJECT_ID)
 
 	print('\nMinimum size of gesture: ', MIN_FRAMES_IN_GESTURE)
-
-	print('\nPath to _reps.txt: ', REPS_PATH, end = ' --> ')
-	reps_flag = len(glob(os.path.join(REPS_PATH, LEXICON_ID+'_reps.txt'))) != 0
-	print(reps_flag)
 
 	print('\nPath to trained pickle: ', TRAINED_PKL_PATH, end = ' --> ')
 	pkl_flag = os.path.isfile(TRAINED_PKL_PATH)
@@ -85,32 +79,29 @@ def print_global_constants():
 	write_dir_flag = os.path.isdir(BASE_WRITE_DIR)
 	print(write_dir_flag)
 
-	return (reps_flag and pkl_flag and cmd_flag and write_dir_flag)
+	return (pkl_flag and cmd_flag and write_dir_flag)
 
 if not print_global_constants():
 	print('ERROR! One or more files DOES NOT exist !!!')
-sys.exit()
+	sys.exit()
 
 '''
-10/31
-	* All threads exit when main exits 
-	* Got a good idea about thread Conditions. 
-		* Changes have been made to access_kinect thread and gen_skel thread.
+Key Assumptions:
+	1. In realtime: body skeleton, RGB skeleton and RGB images are synchronized in time.
+		When we fill the buffers (body skeleton and RGB skeleton) are in sync.
+		* When we access the buffers, we assume that RGB skeleton and RGB images are in sync.
+
+Tricks/Hacks:
+	1. When using thread conditions, producer (who notifies consumers) should notify consumers without basing on any flags.
+'''
+
+'''
 11/01
-	* Make modification to the skel_instance data structure, so it contains information [DONE]
-		* about if the hands are below or above the threshold. [DONE]
-	* Do not send frames to CPM if hands are below the threshold. Modify code in the CPM. [DONE]
-	* If the no. of frames in skeleton are less than a threshold, ignore. Make changes to run(). [DONE]
-	
-	* How does calibration works for finger lengths. 
-		* What functions to call. How to update the calibration file. 
+	* How does calibration works for finger lengths.
+		* What functions to call. How to update the calibration file.
 		* Ask Rahul. Also, incorporate in both offline and online codes.
 		* Finishing the calibration
-	* Need to fix other threads w.r.t Condition variables. 
-	* Communication between the threads. Using the flags properly. 
-	* When we fill the buffers (buf_body_skel and buf_rgb_skel), we assume that body_skel and rgb_skel are in sync
-		* When we access the buffers (buf_rgb_skel and buf_rgb), we assume that both of them are in sync which maynot be the case
-		* FIX this
+	* Communication between the threads. Using the flags properly.
 '''
 
 class Realtime:
@@ -118,7 +109,6 @@ class Realtime:
 		###################
 		### DATA PATHS ####
 		###################
-		self.reps_path = REPS_PATH
 		self.trained_pkl_fpath = TRAINED_PKL_PATH
 		self.cmd_dict = json_to_dict(CMD_JSON_PATH)
 		self.base_write_dir = BASE_WRITE_DIR
@@ -142,8 +132,6 @@ class Realtime:
 		self.fl_stream_ready = False # th_access_kinect
 		self.fl_skel_ready = False # th_gen_skel
 		self.fl_cpm_ready = False # th_gen_cpm
-		# If true, we have command to execute ==> now call synapse, else command is not ready yet.
-		self.fl_cmd_ready = False
 		self.fl_gest_started = False
 		# Synapse running, # th_synapse. If False, meaning synapse is executing a command. So stop everything else.
 		self.fl_synapse_running = False
@@ -192,9 +180,6 @@ class Realtime:
 		self.command_to_execute = None # Updated in run()
 		self.skel_instance = None # Updated in self.th_gen_skel(). It is a tuple (timestamp, feature_vector of skeleton - ndarray(1 x _)). It is a flattened array.
 		self.cpm_instance = None # Updated in self.th_gen_cpm(). It is a tuple (timestamp, feature_vector of finger lengths - ndarray(num_frames, 10)).
-		self.cmd_reps = {} # Updated by self.update_cmd_reps()
-		self.prev_executed_cmds = [] # Updated by self.update_cmd_reps()
-		self.update_cmd_reps()
 
 		######################################
 		### LOAD TARINED FEATURE EXTRACTOR ###
@@ -205,16 +190,6 @@ class Realtime:
 			self.feat_ext = res['fe'] # res['out'] exists but we dont need training data.
 		self.feat_ext.update_rt_params(subject_id = SUBJECT_ID, lexicon_id = LEXICON_ID) ## This will let us know which normalization parameters are used.
 		print(self.feat_ext.subject_params)
-
-	def update_cmd_reps(self):
-		rep_path = os.path.join(self.reps_path, LEXICON_ID + '_reps.txt')
-		if(not os.path.isfile(rep_path)): raise IOError('reps.txt file does NOT exist')
-		with open(rep_path, 'r') as fp:
-			lines = fp.readlines()
-			if(len(lines) == 0): raise ValueError('reps file is empty')
-		lines = [line.strip().split(' ') for line in lines]
-		for line in lines:
-			self.cmd_reps[line[0]] = line[1:]
 
 	def th_access_kinect(self):
 		##
@@ -233,7 +208,7 @@ class Realtime:
 
 		while(self.fl_alive):
 			# if(self.fl_synapse_running): continue # If synapse is running, stop producing the rgb/skeleton data
-			# elif(self.fl_skel_ready and self.fl_cpm_ready): continue # If previous skeleton features and op features are not used, stop producing.
+			# elif(self.fl_skel_ready and self.fl_cpm_ready): continue # If previous skeleton features and cpm features are not used, stop producing.
 
 			## Refresh kinect frames
 			rgb_flag = self.kr.update_rgb()
@@ -248,7 +223,7 @@ class Realtime:
 					* If fl_gest_started = true, gesture has started.
 					* If fl_gest_started = false, hands are below the threshold and gesture has ended.
 				'''
-				start_y_coo = self.thresh_level * (skel_pts[3*self.neck_id+1] - skel_pts[3*self.base_id+1]) ## Threshold level 
+				start_y_coo = self.thresh_level * (skel_pts[3*self.neck_id+1] - skel_pts[3*self.base_id+1]) ## Threshold level
 				left_y = skel_pts[3*self.left_hand_id+1] - skel_pts[3*self.base_id+1] # left hand
 				right_y = skel_pts[3*self.right_hand_id+1] - skel_pts[3*self.base_id+1] # right hand
 
@@ -285,12 +260,12 @@ class Realtime:
 
 			if(rgb_flag):
 				## Update RGB image buffer after gesture is started
-				if self.fl_gest_started:
-					with self.cond_rgb: # Producer. Consumers need to wait for producer's 'notify' call
+				with self.cond_rgb: # Producer. Consumers need to wait for producer's 'notify' call
+					if self.fl_gest_started:
 						ts = int(time.time()*100)
 						self.buf_rgb.append((ts, self.kr.color_image))
 						self.buf_rgb.pop(0)
-						self.cond_rgb.notify_all()
+					self.cond_rgb.notify_all()
 				## Visualization
 				if((self.kr.color_image is not None) and (self.kr.color_skel_pts is not None)):
 					image_with_skel = self.kr.draw_body(deepcopy(self.kr.color_image), self.kr.color_skel_pts)
@@ -305,10 +280,10 @@ class Realtime:
 		print('Exiting access kinect thread !!!')
 
 	def th_gen_skel(self):
-		##
+		'''
 		# Consume: skeleton data
 		# Produce: skeleton features
-		##
+		'''
 
 		## Wait for kinect stream to be ready
 		while(not self.fl_stream_ready): continue
@@ -339,7 +314,7 @@ class Realtime:
 		'''
 		Description:
 			Writes the hand bbox to self.base_write_dir
-		Input arguments:		
+		Input arguments:
 			'img': An RGB image. np.ndarray of shape (H x W x 3).
 			'bbox': list of four values. [x, y, w, h].
 				(x, y): pixel coordinates of top left corner of the bbox
@@ -353,10 +328,10 @@ class Realtime:
 		cv2.imwrite(os.path.join(self.base_write_dir, out_fname), cropped_img)
 
 	def th_gen_cpm(self):
-		##
-		# Consume: RGB data, RGB Skeletons
-		# Produce: finger lengths features
-		##
+		'''
+		Consume: RGB data, RGB Skeletons
+		Produce: finger lengths features
+		'''
 
 		## Wait for kinect stream to be ready
 		while(not self.fl_stream_ready): continue
@@ -381,9 +356,7 @@ class Realtime:
 				right_status, left_status = tuple(hands_status)
 
 				## Key assumptions: TODO:
-				# When we fill the buffers (buf_body_skel and buf_rgb_skel), we assume that body_skel and rgb_skel are in sync
-				# When we access the buffers (buf_rgb_skel and buf_rgb), we assume that both of them are in sync which maynot be the case
-				# Be cautious
+				# When we fill the buffers (buf_body_skel and buf_rgb_skel), we assume that body_skel and rgb_skel are in sync. When we access the buffers (buf_rgb_skel and buf_rgb), we assume that both of them are in sync which maynot be the case
 
 				## Step 1: Crop left and right hands
 				## Step 2: Write both the images to the disk
@@ -428,38 +401,25 @@ class Realtime:
 	def th_synapse(self):
 		#
 		while(self.fl_alive):
-			if(not self.fl_cmd_ready): continue
-			self.fl_synapse_running = True
+			if(not self.fl_synapse_running): continue
 
 			# If command is ready: Do the following:
 			# Wait for five seconds for the delivery message.
 			command_executed = self.client_synapse.send_data(self.command_to_execute)
 			# print(self.client_synapse.sock.send(self.command_to_execute))
 			# data = self.client_synapse.sock_recv(display = False)
-			print('Received: ', command_executed)
+
+			## Irrespective of whether synapse succeeded or failed, behave in the same way
+			# switch the same flags.
+
 			if(command_executed):
-				self.fl_cmd_ready = False
-				self.fl_synapse_running = False
+				print('SUCCESS: Comamnd executed: ', command_executed)
 			else:
 				print('Synapse execution failed !')
-				## What to do now
-				# sys.exit(0)
+
+			self.fl_synapse_running = False
 
 		print('Exiting Synapse thread !!!')
-
-	def get_next_cmd(self, pred_cmd):
-		# pred_cmd : predicted command name
-
-		# If there are no previous commands, return the same command
-		if(len(self.prev_executed_cmds) == 0):
-			self.prev_executed_cmds.append(pred_cmd)
-			return pred_cmd
-
-		## Temporarily
-		return pred_cmd
-		##
-		# TODO: Code to smartly select the next command goes here.
-		##
 
 	def run(self):
 		# Main thread
@@ -492,30 +452,26 @@ class Realtime:
 			else: flag = self.fl_skel_ready
 
 			if(flag):
-				# pp(self.skel_instance)
-				# pp(self.cpm_instance)
-
 				#####################
 				### SKEL FEATURE ####
 				#####################
-				# Detuple skel_instance
+				## Detuple skel_instance
 				skel_ts, _, raw_skel_frames = zip(*self.skel_instance)
+				## If no. of frames is too little, drop the gesture instance.
 				if(len(raw_skel_frames) < MIN_FRAMES_IN_GESTURE):
 					print('Less frames. Gesture Ignored. ')
+					self.fl_synapse_running = False
 					self.fl_skel_ready = False
-					if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False					
+					if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False
 					continue
-				
-				## TODO: If length of skel_instance is less than a certain number, ignore that gesture.
 				dom_rhand, final_skel_inst = self.feat_ext.generate_features_realtime(list(raw_skel_frames))
 				#####################
 
-				## Interpolate cpm instances
-				## If ENABLE_CPM_SOCKET is True, consider features from 
+				## If ENABLE_CPM_SOCKET is True, consider features from CPM
 				if(ENABLE_CPM_SOCKET):
-					###################
+					####################
 					### CPM FEATURE ####
-					###################
+					####################
 					# Detuple cpm_instance
 					cpm_ts, raw_cpm_frames = zip(*self.cpm_instance)
 					# Detuple CPM frames int right and left
@@ -531,33 +487,17 @@ class Realtime:
 					final_cpm_inst = interpn(cpm_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
 					#####################
 
-					# Append skel features followed by CPM features
+					## Append skel features followed by CPM features
 					final_overall_inst = np.append(final_skel_inst, final_cpm_inst).reshape(1, -1)
 				else: # Only skeleton
 					final_overall_inst = final_skel_inst
 
 				label, cname = self.feat_ext.pred_output_realtime(final_overall_inst)
-				self.command_to_execute = find_key(self.cmd_dict, self.get_next_cmd(cname))
+				self.command_to_execute = label
 
 				print('Predicted: ', label, cname)
 
-				#### Temporary ####
-				time.sleep(0.5)
-				#### Temporary ####
-
-				self.fl_cmd_ready = True
-
-				'''
-					* Passing the feature to the actual svm:
-						cname = self.feat_ext.pred_output_realtime(final_inst)
-					* Logic that operates over the command names. This is lexicon specific. We have L*_repetition.txt file.
-						self.command_to_execute = get_next_command(cname)
-						set self.fl_cmd_ready to True
-						set self.fl_synapse_running	to True
-						Wait for data from the server. If True, set self.fl_synapse_running	to False
-						When self.fl_synapse_running is True, stop everything else.
-					* Let the synapse thread know that command is ready. It can execute it.
-				'''
+				self.fl_synapse_running = True
 
 				self.fl_skel_ready = False
 				if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False
