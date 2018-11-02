@@ -83,13 +83,14 @@ def print_global_constants():
 
 	print('\nPath to directory to write images: ', BASE_WRITE_DIR, end = ' --> ')
 	write_dir_flag = os.path.isdir(BASE_WRITE_DIR)
-	print(write_dir_flag)
+	if(not write_dir_flag): os.mkdir(BASE_WRITE_DIR)
+	print(True)
 
 	return (reps_flag and pkl_flag and cmd_flag and write_dir_flag)
 
 if not print_global_constants():
 	print('ERROR! One or more files DOES NOT exist !!!')
-sys.exit()
+	sys.exit()
 
 '''
 10/31
