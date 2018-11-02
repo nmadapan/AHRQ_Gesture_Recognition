@@ -77,7 +77,8 @@ def print_global_constants():
 
 	print('\nPath to directory to write images: ', BASE_WRITE_DIR, end = ' --> ')
 	write_dir_flag = os.path.isdir(BASE_WRITE_DIR)
-	print(write_dir_flag)
+	if(not write_dir_flag): os.mkdir(BASE_WRITE_DIR)
+	print(True)
 
 	return (pkl_flag and cmd_flag and write_dir_flag)
 
@@ -93,9 +94,7 @@ Key Assumptions:
 
 Tricks/Hacks:
 	1. When using thread conditions, producer (who notifies consumers) should notify consumers without basing on any flags.
-'''
 
-'''
 11/01
 	* How does calibration works for finger lengths.
 		* What functions to call. How to update the calibration file.

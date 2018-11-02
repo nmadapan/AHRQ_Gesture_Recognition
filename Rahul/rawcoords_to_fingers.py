@@ -54,6 +54,8 @@ for key in fingers_data:
         for frame in gest:
             frame_f=frame[:len(frame)/2] #features of dominat hand
             frame_l=frame[len(frame)/2:] #features of non dominat hand
+            print frame_f
+            sys.exit(0)
             if fingerlens_from_base:
                 if sort_lengths:
                     gest_frames.append(sorted(fingers_length_from_base(frame_f).tolist(),reverse=True)+\
