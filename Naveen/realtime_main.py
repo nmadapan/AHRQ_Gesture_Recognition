@@ -188,7 +188,7 @@ class Realtime:
 			res = pickle.load(fp)
 			self.feat_ext = res['fe'] # res['out'] exists but we dont need training data.
 		self.feat_ext.update_rt_params(subject_id = SUBJECT_ID, lexicon_id = LEXICON_ID) ## This will let us know which normalization parameters are used.
-		print(self.feat_ext.subject_params)
+		# print(self.feat_ext.subject_params)
 
 	def th_access_kinect(self):
 		##
