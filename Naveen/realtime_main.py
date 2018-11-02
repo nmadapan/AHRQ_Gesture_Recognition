@@ -131,6 +131,8 @@ class Realtime:
 		self.fl_stream_ready = False # th_access_kinect
 		self.fl_skel_ready = False # th_gen_skel
 		self.fl_cpm_ready = False # th_gen_cpm
+		# If true, we have command to execute ==> now call synapse, else command is not ready yet.
+		self.fl_cmd_ready = False
 		self.fl_gest_started = False
 		# Synapse running, # th_synapse. If False, meaning synapse is executing a command. So stop everything else.
 		self.fl_synapse_running = False
@@ -400,7 +402,8 @@ class Realtime:
 	def th_synapse(self):
 		#
 		while(self.fl_alive):
-			if(not self.fl_synapse_running): continue
+			if(not self.fl_cmd_ready): continue
+			self.fl_synapse_running = True
 
 			# If command is ready: Do the following:
 			# Wait for five seconds for the delivery message.
@@ -416,6 +419,7 @@ class Realtime:
 			else:
 				print('Synapse execution failed !')
 
+			self.fl_cmd_ready = False
 			self.fl_synapse_running = False
 
 		print('Exiting Synapse thread !!!')
@@ -459,7 +463,7 @@ class Realtime:
 				## If no. of frames is too little, drop the gesture instance.
 				if(len(raw_skel_frames) < MIN_FRAMES_IN_GESTURE):
 					print('Less frames. Gesture Ignored. ')
-					self.fl_synapse_running = False
+					self.fl_cmd_ready = False
 					self.fl_skel_ready = False
 					if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False
 					continue
@@ -496,7 +500,7 @@ class Realtime:
 
 				print('Predicted: ', label, cname)
 
-				self.fl_synapse_running = True
+				self.fl_cmd_ready = True
 
 				self.fl_skel_ready = False
 				if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False
