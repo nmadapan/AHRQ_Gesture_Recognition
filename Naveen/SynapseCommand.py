@@ -4,6 +4,8 @@
 #
 #####################
 import json
+from helpers import file_to_list
+import os
 
 
 class SynapseCommand():
@@ -12,13 +14,27 @@ class SynapseCommand():
 		self.command = None # the command to be currently executed
 		self.context = None # the context of the command if this command is executed in two parts
 		self.prev_commands = [] # list of previously executed commands
-		self.context_list = []
+		# Error tracking variables
 		self.inconsistent_context_action_err = 0
 		self.mod_without_context_err = 0
 		self.modifier_replaced = 0
 		self.subject_n = subject_n
-		self.similar_modifiers =
-		self.similar_gestures = 
+
+		# Gesture desambiguation lists 
+		data_folder = os.path.join("..","Data")
+		# Context commands
+		self.context_list = file_to_list(os.join.path(data_folder),lexicon+"_context.txt")
+		# Modifiers that are so similar that can be confused 
+		self.similar_modifiers = file_to_list(os.join.path(data_folder),lexicon+"_similar_m.txt")
+		# Gestures that are so similar that can be confused 
+		self.similar_gestures = file_to_list(os.join.path(data_folder),lexicon+"_similar_g.txt")
+		# Repeated gestures (were not trained to be different in the ML) 
+		self.repeated_gestures = file_to_list(os.join.path(data_folder),lexicon+"_reps.txt")
+
+
+	def get_similar_command(self,list):
+
+
 
 	def get_command(self, rcv_command):
 		#####################
@@ -50,6 +66,9 @@ class SynapseCommand():
 			current_context_num = self.context.split("_")[0]
 			elif rcv_context_num == current_context_num:
 					self.command = rcv_command
+			# Check if the modifier is correct but re-used under another label
+
+			
 			# Check if the modifier is one that it can get confused with.
 			elif any([rcv_command in mod_list for mod_list in self.similar_modifiers]):
 				# Get the list of possible similar modifiers
@@ -80,7 +99,7 @@ class SynapseCommand():
 	def update_gesture(self, received_):
 		pass
 	
-	def write_results(filename):
+	def write_results(self,filename):
 		file = open(filename, "w")
 		file_dict = {
 			'subject': self.subject_n,
@@ -89,4 +108,5 @@ class SynapseCommand():
 			'modifier_replaced': self.modifier_replaced
 		}
 		file.write(json.dumps(file_dict))
+
 

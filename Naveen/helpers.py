@@ -6,6 +6,7 @@ import numpy as np
 import json
 from scipy.interpolate import interp1d
 import cv2
+import re
 
 ########################
 ### Kinect Joint IDs ###
@@ -515,3 +516,10 @@ def find_key(d, value):
 	    if val == value:
 	        return key
 	return None
+
+def file_to_list(file_path):
+	file = open(filepath, 'r')
+	l_list = [re.sub("[^\w]", " ",  line).split() for line in file.read().splitlines() ]
+	file.close()
+	return l_list
+
