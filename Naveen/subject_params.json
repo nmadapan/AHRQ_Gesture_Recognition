@@ -1,69 +1,174 @@
 {
 	"subject_params":
-					{
-						"L2":
-							{
-								"S1": 0.9200,
-								"S2": 0.9300,
-								"S3": 0.7000,
-								"S4": 0.8887,
-								"S5": 0.8300,
-								"S6": 0.8800,
-								"S1_name": "Rahulo",
-								"S2_name": "Navingo",
-								"S3_name": "Glebo",
-								"S4_name": "JuanAndres",
-								"S5_name": "JuanAntonio",
-								"S6_name": "Hose"
-							},
-						"L3":
-							{
-								"S1": 0.9200,
-								"S2": 0.9300,
-								"S3": 0.7000,
-								"S4": 0.8700,
-								"S5": 0.9000,
-								"S6": 0.6088,
-								"S1_name": "Rahulo",
-								"S2_name": "Navingo",
-								"S3_name": "Glebo",
-								"S4_name": "Jackie",
-								"S5_name": "Natalia",
-								"S6_name": "Ting"
-							},	
-						"L6":
-							{
-								"S1": 0.5500,
-								"S2": 0.5500,
-								"S3": 0.5500,
-								"S4": 0.5500,
-								"S5": 0.5500,
-								"S6": 0.5500,
-								"S7": 0.5500,
-								"S8": 0.5500,
-								"S1_name": "Rahulo",
-								"S2_name": "Navingo",
-								"S3_name": "Glebo",
-								"S4_name": "Mandira",
-								"S5_name": "Aayush",
-								"S6_name": "Won",
-								"S7_name": "Ting",
-								"S7_name": "Natalia"
-							},	
-						"L8":
-							{
-								"S1": 0.9200,
-								"S2": 0.9300,
-								"S3": 0.7000,
-								"S4": 0.9500,
-								"S5": 0.8800,
-								"S6": 0.7000,
-								"S1_name": "Rahulo",
-								"S2_name": "Navingo",
-								"S3_name": "Glebo",
-								"S4_name": "Edgar",
-								"S5_name": "Aayush",
-								"S6_name": "Xiayu"
-							}
-					}		
+	{
+		"L2":
+			{
+				"S1":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S2":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S3":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S4":
+				{
+					"name": "JuanAndres",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S5":
+				{
+					"name": "JuanAntonio",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S6":
+				{
+					"name": "Hose",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				}
+			},
+
+		"L3":
+			{
+				"S1":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S2":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S3":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S4":
+				{
+					"name": "Jackie",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S5":
+				{
+					"name": "Natalia",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S6":
+				{
+					"name": "Ting",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				}
+			},	
+		"L6":
+			{
+				"S1":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S2":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S3":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S4":
+				{
+					"name": "Mandira",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S5":
+				{
+					"name": "Aayush",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S6":
+				{
+					"name": "Won",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S7":
+				{
+					"name": "Ting",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S8":
+				{
+					"name": "Natalia",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				}
+			},	
+		"L8":
+			{
+				"S1":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S2":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S3":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S4":
+				{
+					"name": "Edgar",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S5":
+				{
+					"name": "Aayush",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S6":
+				{
+					"name": "Xiayu",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				}
+			}
+	}		
 }

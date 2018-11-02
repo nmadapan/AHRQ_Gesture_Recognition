@@ -25,11 +25,14 @@ PORT_CPM = 3000
 ## Flags
 ENABLE_SYNAPSE_SOCKET = False
 ENABLE_CPM_SOCKET = False
-ONLY_SKELETON = True
+ONLY_SKELETON = (not ENABLE_CPM_SOCKET)
 
 ## IMPORTANT
 LEXICON_ID = 'L6'
-SUBJECT_ID = 'S7'
+SUBJECT_ID = 'S1'
+
+## If a gesture has less than 20 frames ignore.
+MIN_FRAMES_IN_GESTURE = 20
 
 '''
 10/31
@@ -37,21 +40,21 @@ SUBJECT_ID = 'S7'
 	* Got a good idea about thread Conditions. 
 		* Changes have been made to access_kinect thread and gen_skel thread.
 11/01
+	* Make modification to the skel_instance data structure, so it contains information [DONE]
+		* about if the hands are below or above the threshold. [DONE]
+	* Do not send frames to CPM if hands are below the threshold. Modify code in the CPM. [DONE]
+	* If the no. of frames in skeleton are less than a threshold, ignore. Make changes to run(). [DONE]
+	
 	* How does calibration works for finger lengths. 
 		* What functions to call. How to update the calibration file. 
 		* Ask Rahul. Also, incorporate in both offline and online codes.
 		* Finishing the calibration
-	*  Need to fix other threads w.r.t Condition variables. 
+	* Need to fix other threads w.r.t Condition variables. 
 	* Communication between the threads. Using the flags properly. 
-	* Make modification to the skel_instance data structure, so it contains information 
-		* about if the hands are below or above the threshold. 
-	* Do not send frames to CPM if hands are below the threshold. Modify code in the CPM.
 	* When we fill the buffers (buf_body_skel and buf_rgb_skel), we assume that body_skel and rgb_skel are in sync
 		* When we access the buffers (buf_rgb_skel and buf_rgb), we assume that both of them are in sync which maynot be the case
 		* FIX this
-	* If the no. of frames in skeleton are less than a threshold, ignore. Make changes to run()
 '''
-
 
 class Realtime:
 	def __init__(self):
@@ -59,9 +62,9 @@ class Realtime:
 		### DATA PATHS ####
 		###################
 		# Path where _reps.txt file is present.
-		self.data_path = r'H:\AHRQ\Study_IV\Data\Data'
+		self.reps_path = r'..\\Data\\'
 		# path to trained .pickle file.
-		self.trained_pkl_fpath = 'H:\\AHRQ\\Study_IV\\Flipped_Data\\' + LEXICON_ID + '_0_data.pickle'
+		self.trained_pkl_fpath = 'H:\\AHRQ\\Study_IV\\NewData\\' + LEXICON_ID + '_data.pickle'
 		self.cmd_dict = json_to_dict('commands.json')
 		self.base_write_dir = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
 
@@ -148,9 +151,10 @@ class Realtime:
 			res = pickle.load(fp)
 			self.feat_ext = res['fe'] # res['out'] exists but we dont need training data.
 		self.feat_ext.update_rt_params(subject_id = SUBJECT_ID, lexicon_id = LEXICON_ID) ## This will let us know which normalization parameters are used.
+		print self.feat_ext.subject_params
 
 	def update_cmd_reps(self):
-		rep_path = os.path.join(self.data_path, LEXICON_ID + '_reps.txt')
+		rep_path = os.path.join(self.reps_path, LEXICON_ID + '_reps.txt')
 		if(not os.path.isfile(rep_path)): raise IOError('reps.txt file does NOT exist')
 		with open(rep_path, 'r') as fp:
 			lines = fp.readlines()
@@ -195,6 +199,9 @@ class Realtime:
 				left_y = skel_pts[3*self.left_hand_id+1] - skel_pts[3*self.base_id+1] # left hand
 				right_y = skel_pts[3*self.right_hand_id+1] - skel_pts[3*self.base_id+1] # right hand
 
+				left_status = left_y >= start_y_coo
+				right_status = right_y >= start_y_coo
+
 				## Make sure that hands are below the threshold in the beginning
 				if(not first_time):
 					fl_hands_position = (left_y < start_y_coo) and (right_y < start_y_coo)
@@ -214,10 +221,10 @@ class Realtime:
 					if(self.fl_gest_started):
 						ts = int(time.time()*100)
 						# Update body skel buffers
-						self.buf_body_skel.append((ts, skel_col_reduce(skel_pts)))
+						self.buf_body_skel.append((ts, [right_status, left_status], skel_col_reduce(skel_pts)))
 						self.buf_body_skel.pop(0) # Buffer is of fixed length. Append an element at the end and pop the first element.
 						# Update rgb skel buffers
-						self.buf_rgb_skel.append((ts, skel_col_reduce(color_skel_pts, dim=2, wrt_shoulder = False)))
+						self.buf_rgb_skel.append((ts, [right_status, left_status], skel_col_reduce(color_skel_pts, dim=2, wrt_shoulder = False)))
 						self.buf_rgb_skel.pop(0) # Buffer is of fixed length. Append an element at the end and pop the first element.
 					# The notify_all call should be outside (if condition) and inside (with condition) because if not, the cosumer
 					# can wait for this call just after the flags that allow it to enter the "consuming condition" have changed
@@ -233,7 +240,7 @@ class Realtime:
 						self.cond_rgb.notify_all()
 				## Visualization
 				if((self.kr.color_image is not None) and (self.kr.color_skel_pts is not None)):
-					image_with_skel = self.kr.draw_body(self.kr.color_image, self.kr.color_skel_pts)
+					image_with_skel = self.kr.draw_body(deepcopy(self.kr.color_image), self.kr.color_skel_pts)
 					if(image_with_skel is not None):
 						resz_img = cv2.resize(image_with_skel, None, fx = 0.5, fy = 0.5)
 						cv2.imshow('Visualization', resz_img)
@@ -304,23 +311,21 @@ class Realtime:
 		frame_count = 0 # this is zeroed internally
 		op_instance = []
 		first_time = False
-		print_first_time = True
 
 		rgb_frame = None
 		rgb_hand_coo = None
+
 		while(self.fl_alive):
 			# if(self.fl_synapse_running): continue # If synapse is running, dont do anything
 			if(self.fl_cpm_ready): continue # If previous cpm data is not used, dont do anything
 			if self.fl_gest_started:
-				if print_first_time:
-					# print "IN RGB THREAD, GESTURE STARTED: "
-					print_first_time = False
 				first_time = True
 				with self.cond_rgb:
 					self.cond_rgb.wait()
 					rgb_frame = deepcopy(self.buf_rgb[-1]) # (timestamp, ndarray)
-					_, rgb_hand_coo = deepcopy(self.buf_rgb_skel[-1]) # (timestamp, ([rx1, ry1], [lx1, ly1]))
-					frame_count += 1
+				_, hands_status, rgb_hand_coo = deepcopy(self.buf_rgb_skel[-1]) # (timestamp, ([rx1, ry1], [lx1, ly1]))
+				frame_count += 1
+				right_status, left_status = tuple(hands_status)
 
 				## Key assumptions: TODO:
 				# When we fill the buffers (buf_body_skel and buf_rgb_skel), we assume that body_skel and rgb_skel are in sync
@@ -330,40 +335,40 @@ class Realtime:
 				## Step 1: Crop left and right hands
 				## Step 2: Write both the images to the disk
 				# Right hand
-				r_fname = str(frame_count) + '_r.jpg'
-				self.save_hand_bbox(rgb_frame[1], rgb_hand_coo[0], r_fname)
+				if(right_status):
+					r_fname = str(frame_count) + '_r.jpg'
+					self.save_hand_bbox(rgb_frame[1], rgb_hand_coo[0], r_fname)
 				# Left hand
-				l_fname = str(frame_count) + '_l.jpg'
-				self.save_hand_bbox(rgb_frame[1], rgb_hand_coo[1], l_fname)
+				if(left_status):
+					l_fname = str(frame_count) + '_l.jpg'
+					self.save_hand_bbox(rgb_frame[1], rgb_hand_coo[1], l_fname)
 
 				## Step 3: Socket send image names for both images. This will return finger lengths.
 				# Right hand
-				self.client_cpm.sock.send(r_fname)
-				r_fing_data = self.client_cpm.sock_recv(display = False)
-				r_finger_lengths = str_to_nparray(r_fing_data, dlim = '_').tolist()
+				if(right_status):
+					self.client_cpm.sock.send(r_fname)
+					r_fing_data = self.client_cpm.sock_recv(display = False)
+					r_finger_lengths = str_to_nparray(r_fing_data, dlim = '_').tolist()
+				else:
+					r_finger_lengths = np.zeros(self.feat_ext.num_fingers)
 				# Left hand
-				self.client_cpm.sock.send(l_fname)
-				l_fing_data = self.client_cpm.sock_recv(display = False)
-				l_finger_lengths = str_to_nparray(l_fing_data, dlim = '_').tolist()
+				if(left_status):
+					self.client_cpm.sock.send(l_fname)
+					l_fing_data = self.client_cpm.sock_recv(display = False)
+					l_finger_lengths = str_to_nparray(l_fing_data, dlim = '_').tolist()
+				else:
+					l_finger_lengths = np.zeros(self.feat_ext.num_fingers)
+
 				## Step 4: Put the finger lengths of right and left hand together and append it to op_instance.
 				op_instance.append((rgb_frame[0], (r_finger_lengths, l_finger_lengths)))
-				# op_instance.append((rgb_frame[0], (r_finger_lengths, [])))
-				print op_instance[-1]
+
+				# print op_instance[-1]
 			if not self.fl_gest_started and first_time:
-				# print "IN RGB THREAD, GESTURE ENDED: "
 				first_time = False
-				print_first_time = True
 				frame_count = 0
-
-				## TODO: Condition it on cond_rgb, otherwise, we might run into race conditions
 				self.op_instance = deepcopy(op_instance) # [(ts1, ([left_f1, f2, .., f5], [right_f1, f2, .., f5])), ...]
-
-				# timestamps, raw_op_features = zip(*op_instance)
-				# # pp(len(raw_op_features))
-
-				# self.op_instance = (timestamps, np.array(raw_op_features))
 				op_instance = []
-				self.fl_cpm_ready = True #### Think about conditioning
+				self.fl_cpm_ready = True
 
 		print 'Exiting CPM thread !!!'
 
@@ -441,7 +446,13 @@ class Realtime:
 				### SKEL FEATURE ####
 				#####################
 				# Detuple skel_instance
-				skel_ts, raw_skel_frames = zip(*self.skel_instance)
+				skel_ts, _, raw_skel_frames = zip(*self.skel_instance)
+				if(len(raw_skel_frames) < MIN_FRAMES_IN_GESTURE):
+					print 'Less frames. Gesture Ignored. '
+					self.fl_skel_ready = False
+					if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False					
+					continue
+				
 				## TODO: If length of skel_instance is less than a certain number, ignore that gesture.
 				dom_rhand, final_skel_inst = self.feat_ext.generate_features_realtime(list(raw_skel_frames))
 				#####################

@@ -1,22 +1,32 @@
 {
-    "active_panel": [1, 1],
-    "optionH": 27,
-    "window_open": false,
+    "active_panel": [
+        1,
+        1
+    ],
     "hold_action": null,
-    "rightBoxW": 286,
     "rulers": {
         "len": 0
     },
+    "rightPlus": 4.0,
+    "rightOffset": 29.0,
     "defaultCommand": null,
-    "rightBoxH": 750,
-    "rightHR": 7.5,
-    "rightOffset": 43.5,
-    "panel_dim": [1, 1],
-    "rightPlus": 6,
     "toUse": "Keyboard",
-    "topBarHeight": 170,
+    "group1_command": null,
+    "rightBoxH": 500,
+    "prev_action": "8_2, Window Close",
+    "rightBoxW": 214,
+    "params": "",
+    "firstW": 960.0,
+    "firstH": 540.0,
+    "optionH": 18.0,
+    "window_open": false,
+    "rightHR": 5.0,
+    "panel_dim": [
+        1,
+        1
+    ],
+    "topBarHeight": 105,
     "jumpW": 0,
-    "prev_action": "",
     "jumpH": 0,
-    "rightIcons": 37.5
+    "rightIcons": 25.0
 }

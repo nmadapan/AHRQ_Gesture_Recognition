@@ -11,28 +11,27 @@ import itertools
 
 from helpers import *
 
-#####################
-# BASE class for creating features from (SKELETON files and respective annotation files)
-#
-# How to use it:
-#
-#	from FeatureExtractor import FeatureExtractor
-#	fe = FeatureExtractor(json_param_path = 'param.json')
-#		* param.json contains following variables:
-#		* all_feature_types: If True, all features types are considered.
-#		* feature_types: List of feature types to consider. It is necessary iff all_feature_types is false
-#		* num_joints: 1 --> only hand, 2 --> both hand and the elbow
-#		* randomize: If true, the data is randomized
-#		* equate_dim: If true, no. of frames in each gesture is equated via interpolation. No. of frames is
-#			equated to fixed_num_frames variable in param.json
-#		* dim_per_joint = 3; Since we have x, y, z
-#		* dominant_first: If true, dominant hand goes first followed by other hand. Else, right follows left
-#
-#	fe.extract_raw_features(skel_filepath, annot_filepath) # See the comments inside function
-#	fe.generate_features(skel_filepath, annot_filepath) # See the comments inside function
-#	fe.batch_generate_features(skel_folder_path, annot_folder_path, ignore_missing_files = False)
-#	fe.generate_io(skel_folder_path, annot_folder_path)
-#####################
+'''
+BASE class for creating features from (SKELETON files and respective annotation files)
+
+How to use it:
+	from FeatureExtractor import FeatureExtractor
+	fe = FeatureExtractor(json_param_path = 'param.json')
+		* param.json contains following variables:
+		* all_feature_types: If True, all features types are considered.
+		* feature_types: List of feature types to consider. It is necessary iff all_feature_types is false
+		* num_joints: 1 --> only hand, 2 --> both hand and the elbow
+		* randomize: If true, the data is randomized
+		* equate_dim: If true, no. of frames in each gesture is equated via interpolation. No. of frames is
+			equated to fixed_num_frames variable in param.json
+		* dim_per_joint = 3; Since we have x, y, z
+		* dominant_first: If true, dominant hand goes first followed by other hand. Else, right follows left
+
+	fe.extract_raw_features(skel_filepath, annot_filepath) # See the comments inside function
+	fe.generate_features(skel_filepath, annot_filepath) # See the comments inside function
+	fe.batch_generate_features(skel_folder_path, annot_folder_path, ignore_missing_files = False)
+	fe.generate_io(skel_folder_path, annot_folder_path)
+'''
 
 class FeatureExtractor():
 	def __init__(self, json_param_path = 'param.json', subject_param_path = 'subject_params.json'):
@@ -239,7 +238,7 @@ class FeatureExtractor():
 
 			## Position
 			if(self.type_flags['right']):
-				features['right'] = right.transpose().flatten() / self.subject_params[lexicon_id][subject_id] / 1.5
+				features['right'] = right.transpose().flatten() / self.subject_params[lexicon_id][subject_id]['arm_length']
 			## Velocity
 			if(self.type_flags['d_right']):
 				features['d_right'] = d_right.transpose().flatten() / self.max_dr
@@ -462,7 +461,7 @@ class FeatureExtractor():
 
 		## Position
 		if(self.type_flags['right']):
-			features['right'] = right.transpose().flatten() / self.subject_params[self.rt_lexicon_id][self.rt_subject_id]
+			features['right'] = right.transpose().flatten() / self.subject_params[self.rt_lexicon_id][self.rt_subject_id]['arm_length']
 		## Velocity
 		if(self.type_flags['d_right']):
 			features['d_right'] = d_right.transpose().flatten() / self.max_dr

@@ -1,0 +1,174 @@
+{
+	"subject_params":
+					{
+						"L2":
+							{
+								"S1":
+								{
+									"name": "Rahul",
+									"arm_length": 0.9200,
+									"finger_length": "",
+								},
+								"S2":
+								{
+									"name": "Naveen",
+									"arm_length": 0.9300,
+									"finger_length": "",
+								},
+								"S3":
+								{
+									"name": "Glebys",
+									"arm_length": 0.7000,
+									"finger_length": "",
+								},
+								"S4":
+								{
+									"name": "JuanAndres",
+									"arm_length": 0.8887,
+									"finger_length": "",
+								},
+								"S5":
+								{
+									"name": "JuanAntonio",
+									"arm_length": 0.8300,
+									"finger_length": "",
+								},
+								"S6":
+								{
+									"name": "Hose",
+									"arm_length": 0.8800,
+									"finger_length": "",
+								},
+							},
+
+						"L3":
+							{
+								"S1":
+								{
+									"name": "Rahul",
+									"arm_length": 0.9200,
+									"finger_length": "",
+								},
+								"S2":
+								{
+									"name": "Naveen",
+									"arm_length": 0.9300,
+									"finger_length": "",
+								},
+								"S3":
+								{
+									"name": "Glebys",
+									"arm_length": 0.7000,
+									"finger_length": "",
+								},
+								"S4":
+								{
+									"name": "Jackie",
+									"arm_length": 0.8700,
+									"finger_length": "",
+								},
+								"S5":
+								{
+									"name": "Natalia",
+									"arm_length": 0.9000,
+									"finger_length": "",
+								},
+								"S6":
+								{
+									"name": "Ting",
+									"arm_length": 0.6088,
+									"finger_length": "",
+								},
+							},	
+						"L6":
+							{
+								"S1":
+								{
+									"name": "Rahul",
+									"arm_length": 0.9200,
+									"finger_length": "",
+								},
+								"S2":
+								{
+									"name": "Naveen",
+									"arm_length": 0.9300,
+									"finger_length": "",
+								},
+								"S3":
+								{
+									"name": "Glebys",
+									"arm_length": 0.7000,
+									"finger_length": "",
+								},
+								"S4":
+								{
+									"name": "Mandira",
+									"arm_length": 0.8700,
+									"finger_length": "",
+								},
+								"S5":
+								{
+									"name": "Aayush",
+									"arm_length": 0.9000,
+									"finger_length": "",
+								},
+								"S6":
+								{
+									"name": "Won",
+									"arm_length": 0.8800,
+									"finger_length": "",
+								},
+								"S7":
+								{
+									"name": "Ting",
+									"arm_length": 0.6088,
+									"finger_length": "",
+								},
+								"S8":
+								{
+									"name": "Natalia",
+									"arm_length": 0.9000,
+									"finger_length": "",
+								},
+							},	
+						"L8":
+							{
+								"S1":
+								{
+									"name": "Rahul",
+									"arm_length": 0.9200,
+									"finger_length": "",
+								},
+								"S2":
+								{
+									"name": "Naveen",
+									"arm_length": 0.9300,
+									"finger_length": "",
+								},
+								"S3":
+								{
+									"name": "Glebys",
+									"arm_length": 0.7000,
+									"finger_length": "",
+								},
+								"S4":
+								{
+									"name": "Edgar",
+									"arm_length": 0.9500,
+									"finger_length": "",
+								},
+								"S5":
+								{
+									"name": "Aayush",
+									"arm_length": 0.8800,
+									"finger_length": "",
+								},
+								"S6":
+								{
+									"name": "Xiayu",
+									"arm_length": 0.7000,
+									"finger_length": "",
+								},						
+							}
+					}		
+}
