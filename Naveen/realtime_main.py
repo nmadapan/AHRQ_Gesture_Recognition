@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 ## Existing libraries
 import cv2
 import numpy as np
@@ -14,6 +16,10 @@ from KinectReader import kinect_reader
 from helpers import *
 from CustomSocket import Client
 
+###############################
+### CHANGE THESE PARAMETERS ###
+###############################
+
 ## TCP/IP of Synapse Computer
 IP_SYNAPSE = '10.186.47.6' # IP of computer that is running Synapse
 PORT_SYNAPSE = 10000  # Both server and client should have a common IP and Port
@@ -25,7 +31,6 @@ PORT_CPM = 3000
 ## Flags
 ENABLE_SYNAPSE_SOCKET = False
 ENABLE_CPM_SOCKET = False
-ONLY_SKELETON = (not ENABLE_CPM_SOCKET)
 
 ## IMPORTANT
 LEXICON_ID = 'L6'
@@ -33,6 +38,58 @@ SUBJECT_ID = 'S1'
 
 ## If a gesture has less than 20 frames ignore.
 MIN_FRAMES_IN_GESTURE = 20
+
+## DATA PATHS
+# Path where _reps.txt files are presetn
+REPS_PATH = r'..\\Data\\'
+# path to trained *_data.pickle file.
+TRAINED_PKL_PATH = 'H:\\AHRQ\\Study_IV\\NewData\\' + LEXICON_ID + '_data.pickle'
+# Path to json file consiting of list of command ids and command names
+CMD_JSON_PATH  = 'commands.json'
+# Path where to write images so that CPM can read from this path.
+BASE_WRITE_DIR = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
+
+###############################
+
+def print_global_constants():
+	print('Synapse: ', end = '')
+	if(ENABLE_SYNAPSE_SOCKET): 
+		print('ENABLED')
+		print('IP: {0}, PORT: {1}'.format(IP_SYNAPSE, PORT_SYNAPSE))
+	else: print('DISABLED')
+
+	print('\nCPM: ', end = '')
+	if(ENABLE_CPM_SOCKET): 
+		print('ENABLED')
+		print('IP: {0}, PORT: {1}'.format(IP_CPM, PORT_CPM))
+	else: print('DISABLED')	
+
+	print('\nLEXICON ID: ', LEXICON_ID)
+	print('SUBJECT ID: ', SUBJECT_ID)
+
+	print('\nMinimum size of gesture: ', MIN_FRAMES_IN_GESTURE)
+
+	print('\nPath to _reps.txt: ', REPS_PATH, end = ' --> ')
+	reps_flag = len(glob(os.path.join(REPS_PATH, LEXICON_ID+'_reps.txt'))) != 0
+	print(reps_flag)
+
+	print('\nPath to trained pickle: ', TRAINED_PKL_PATH, end = ' --> ')
+	pkl_flag = os.path.isfile(TRAINED_PKL_PATH)
+	print(pkl_flag)
+
+	print('\nPath to commands json file: ', CMD_JSON_PATH, end = ' --> ')
+	cmd_flag = os.path.isfile(CMD_JSON_PATH)
+	print(cmd_flag)
+
+	print('\nPath to directory to write images: ', BASE_WRITE_DIR, end = ' --> ')
+	write_dir_flag = os.path.isdir(BASE_WRITE_DIR)
+	print(write_dir_flag)
+
+	return (reps_flag and pkl_flag and cmd_flag and write_dir_flag)
+
+if not print_global_constants():
+	print('ERROR! One or more files DOES NOT exist !!!')
+sys.exit()
 
 '''
 10/31
@@ -61,12 +118,10 @@ class Realtime:
 		###################
 		### DATA PATHS ####
 		###################
-		# Path where _reps.txt file is present.
-		self.reps_path = r'..\\Data\\'
-		# path to trained .pickle file.
-		self.trained_pkl_fpath = 'H:\\AHRQ\\Study_IV\\NewData\\' + LEXICON_ID + '_data.pickle'
-		self.cmd_dict = json_to_dict('commands.json')
-		self.base_write_dir = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
+		self.reps_path = REPS_PATH
+		self.trained_pkl_fpath = TRAINED_PKL_PATH
+		self.cmd_dict = json_to_dict(CMD_JSON_PATH)
+		self.base_write_dir = BASE_WRITE_DIR
 
 		#############
 		## BUFFERS ##
@@ -79,8 +134,6 @@ class Realtime:
 		self.buf_rgb = [(None, None) for _ in range(self.buf_size)]
 		# timestamp, frame_list (50 elements) # [..., t-3, t-2, t-1, t]
 		self.buf_rgb_skel = [(None, None) for _ in range(self.buf_size)]
-		 # timestamp, frame_list
-		self.buf_finglen = [(None, None) for _ in range(self.buf_size)]
 
 		##################
 		## THREAD FLAGS ##
@@ -138,7 +191,7 @@ class Realtime:
 		##################################
 		self.command_to_execute = None # Updated in run()
 		self.skel_instance = None # Updated in self.th_gen_skel(). It is a tuple (timestamp, feature_vector of skeleton - ndarray(1 x _)). It is a flattened array.
-		self.op_instance = None # Updated in self.th_gen_cpm(). It is a tuple (timestamp, feature_vector of finger lengths - ndarray(num_frames, 10)).
+		self.cpm_instance = None # Updated in self.th_gen_cpm(). It is a tuple (timestamp, feature_vector of finger lengths - ndarray(num_frames, 10)).
 		self.cmd_reps = {} # Updated by self.update_cmd_reps()
 		self.prev_executed_cmds = [] # Updated by self.update_cmd_reps()
 		self.update_cmd_reps()
@@ -151,7 +204,7 @@ class Realtime:
 			res = pickle.load(fp)
 			self.feat_ext = res['fe'] # res['out'] exists but we dont need training data.
 		self.feat_ext.update_rt_params(subject_id = SUBJECT_ID, lexicon_id = LEXICON_ID) ## This will let us know which normalization parameters are used.
-		print self.feat_ext.subject_params
+		print(self.feat_ext.subject_params)
 
 	def update_cmd_reps(self):
 		rep_path = os.path.join(self.reps_path, LEXICON_ID + '_reps.txt')
@@ -210,10 +263,10 @@ class Realtime:
 				## Identify if the gesture started
 				if (left_y >= start_y_coo or right_y >= start_y_coo) and (not self.fl_gest_started) and first_time:
 					self.fl_gest_started = True
-					print 'Gesture started :)'
+					print('Gesture started :)')
 				if (left_y < start_y_coo and right_y < start_y_coo) and self.fl_gest_started:
 					self.fl_gest_started = False
-					print 'Gesture ended :('
+					print('Gesture ended :(')
 
 				## When you want to wait() based on a shared variables, make sure to include them in the thread.Condition.
 				with self.cond_body_skel: # Producer. Consumers will wait for the notify call #
@@ -249,7 +302,7 @@ class Realtime:
 				cv2.destroyAllWindows()
 				self.fl_alive = False
 
-		print 'Exiting access kinect thread !!!'
+		print('Exiting access kinect thread !!!')
 
 	def th_gen_skel(self):
 		##
@@ -280,7 +333,7 @@ class Realtime:
 				skel_frames = []
 				self.fl_skel_ready = True
 
-		print 'Exiting gen_skel !!!'
+		print('Exiting gen_skel !!!')
 
 	def save_hand_bbox(self, img, hand_pixel_coo, out_fname):
 		'''
@@ -309,7 +362,7 @@ class Realtime:
 		while(not self.fl_stream_ready): continue
 
 		frame_count = 0 # this is zeroed internally
-		op_instance = []
+		cpm_instance = []
 		first_time = False
 
 		rgb_frame = None
@@ -359,18 +412,18 @@ class Realtime:
 				else:
 					l_finger_lengths = np.zeros(self.feat_ext.num_fingers)
 
-				## Step 4: Put the finger lengths of right and left hand together and append it to op_instance.
-				op_instance.append((rgb_frame[0], (r_finger_lengths, l_finger_lengths)))
+				## Step 4: Put the finger lengths of right and left hand together and append it to cpm_instance.
+				cpm_instance.append((rgb_frame[0], (r_finger_lengths, l_finger_lengths)))
 
-				# print op_instance[-1]
+				# print(cpm_instance[-1])
 			if not self.fl_gest_started and first_time:
 				first_time = False
 				frame_count = 0
-				self.op_instance = deepcopy(op_instance) # [(ts1, ([left_f1, f2, .., f5], [right_f1, f2, .., f5])), ...]
-				op_instance = []
+				self.cpm_instance = deepcopy(cpm_instance) # [(ts1, ([left_f1, f2, .., f5], [right_f1, f2, .., f5])), ...]
+				cpm_instance = []
 				self.fl_cpm_ready = True
 
-		print 'Exiting CPM thread !!!'
+		print('Exiting CPM thread !!!')
 
 	def th_synapse(self):
 		#
@@ -381,18 +434,18 @@ class Realtime:
 			# If command is ready: Do the following:
 			# Wait for five seconds for the delivery message.
 			command_executed = self.client_synapse.send_data(self.command_to_execute)
-			# print self.client_synapse.sock.send(self.command_to_execute)
+			# print(self.client_synapse.sock.send(self.command_to_execute))
 			# data = self.client_synapse.sock_recv(display = False)
-			print 'Received: ', command_executed
+			print('Received: ', command_executed)
 			if(command_executed):
 				self.fl_cmd_ready = False
 				self.fl_synapse_running = False
 			else:
-				print 'Synapse execution failed !'
+				print('Synapse execution failed !')
 				## What to do now
 				# sys.exit(0)
 
-		print 'Exiting Synapse thread !!!'
+		print('Exiting Synapse thread !!!')
 
 	def get_next_cmd(self, pred_cmd):
 		# pred_cmd : predicted command name
@@ -440,7 +493,7 @@ class Realtime:
 
 			if(flag):
 				# pp(self.skel_instance)
-				# pp(self.op_instance)
+				# pp(self.cpm_instance)
 
 				#####################
 				### SKEL FEATURE ####
@@ -448,7 +501,7 @@ class Realtime:
 				# Detuple skel_instance
 				skel_ts, _, raw_skel_frames = zip(*self.skel_instance)
 				if(len(raw_skel_frames) < MIN_FRAMES_IN_GESTURE):
-					print 'Less frames. Gesture Ignored. '
+					print('Less frames. Gesture Ignored. ')
 					self.fl_skel_ready = False
 					if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False					
 					continue
@@ -458,34 +511,35 @@ class Realtime:
 				#####################
 
 				## Interpolate cpm instances
-				if(not ONLY_SKELETON):
+				## If ENABLE_CPM_SOCKET is True, consider features from 
+				if(ENABLE_CPM_SOCKET):
 					###################
-					### OP FEATURE ####
+					### CPM FEATURE ####
 					###################
-					# Detuple op_instance
-					op_ts, raw_op_frames = zip(*self.op_instance)
-					# Detuple op frames int right and left
-					right_op, left_op = zip(*raw_op_frames)
-					# Merge op features based on dom_rhand
-					if(dom_rhand): op_inst = np.append(right_op, left_op, axis = 1)
-					else: op_inst = np.append(left_op, right_op, axis = 1)
+					# Detuple cpm_instance
+					cpm_ts, raw_cpm_frames = zip(*self.cpm_instance)
+					# Detuple CPM frames int right and left
+					right_cpm, left_cpm = zip(*raw_cpm_frames)
+					# Merge CPM features based on dom_rhand
+					if(dom_rhand): cpm_inst = np.append(right_cpm, left_cpm, axis = 1)
+					else: cpm_inst = np.append(left_cpm, right_cpm, axis = 1)
 					# Synchronize rgb and skel time stamps
-					_, sync_op_ts = sync_ts(skel_ts, op_ts)
+					_, sync_cpm_ts = sync_ts(skel_ts, cpm_ts)
 					# Interpolate so that rgb and skel same no. of frames
-					op_inst = smart_interpn(np.array(op_inst), sync_op_ts, kind = 'copy') # Change kind to 'linear' for linear interpolation
-					# Interpolate op features to fixed_num_frames
-					final_op_inst = interpn(op_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
+					cpm_inst = smart_interpn(np.array(cpm_inst), sync_cpm_ts, kind = 'copy') # Change kind to 'linear' for linear interpolation
+					# Interpolate CPM features to fixed_num_frames
+					final_cpm_inst = interpn(cpm_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
 					#####################
 
-					# Append skel features followed by op features
-					final_overall_inst = np.append(final_skel_inst, final_op_inst).reshape(1, -1)
+					# Append skel features followed by CPM features
+					final_overall_inst = np.append(final_skel_inst, final_cpm_inst).reshape(1, -1)
 				else: # Only skeleton
 					final_overall_inst = final_skel_inst
 
 				label, cname = self.feat_ext.pred_output_realtime(final_overall_inst)
 				self.command_to_execute = find_key(self.cmd_dict, self.get_next_cmd(cname))
 
-				print 'Predicted: ', label, cname
+				print('Predicted: ', label, cname)
 
 				#### Temporary ####
 				time.sleep(0.5)
@@ -515,7 +569,7 @@ class Realtime:
 		if(ENABLE_CPM_SOCKET):
 			self.client_cpm.close()
 
-		print 'Exiting main thread !!!'
+		print('Exiting main thread !!!')
 
 
 if(__name__ == '__main__'):

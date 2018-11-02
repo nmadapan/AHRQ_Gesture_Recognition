@@ -40,7 +40,7 @@ if(not isdir(lexicon_path)):
 	sys.exit(lexicon_path + ' does not exists!')
 
 ####################################################
-### Check the existence of file exts in data_path ##
+### Check the existency of file exts in data_path ##
 ####################################################
 
 for command_name in command_names:

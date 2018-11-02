@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 import os, sys
 from glob import glob
@@ -330,7 +332,7 @@ class FeatureExtractor():
 			else:
 				message = 'Annotation file of {} --> {}: does not exist'.format(skel_filepath, annot_filepath)
 				if(not ignore_missing_files): raise IOError(message)
-				else: print message
+				else: print(message)
 
 		features = []
 		self.dominant_type = [] # 1 for right hand, 0 otherwise
@@ -522,7 +524,7 @@ class FeatureExtractor():
 			if(feature[feat_type] is not None):
 				if(self.equate_dim):
 					# Interpolate or Extrapolate to fixed dimension
-					# print feature[feat_type].shape
+					# print(feature[feat_type].shape)
 					mod_feat = feature[feat_type].reshape(self.dim_per_joint*self.num_joints, -1).transpose()
 					mod_feat = interpn(mod_feat, self.fixed_num_frames)
 					mod_feat = mod_feat.transpose().flatten()
@@ -548,7 +550,7 @@ class FeatureExtractor():
 		pred_test_output
 		label = self.id_to_labels[pred_test_output[0]]
 		cname = self.label_to_name[label]
-		# print cname
+		# print(cname)
 
 		return label, cname
 
@@ -630,12 +632,12 @@ class FeatureExtractor():
 		# Train Predict
 		pred_train_output = clf.predict(train_input)
 		train_acc = float(np.sum(pred_train_output == np.argmax(train_output, axis = 1))) / pred_train_output.size
-		print 'Train Acc: ', train_acc
+		print('Train Acc: ', train_acc)
 
 		# Test Predict
 		pred_test_output = clf.predict(test_input)
 		test_acc = float(np.sum(pred_test_output == np.argmax(test_output, axis = 1))) / pred_test_output.size
-		print 'Test Acc: ', test_acc
+		print('Test Acc: ', test_acc)
 
 		conf_mat = confusion_matrix(np.argmax(test_output, axis = 1), pred_test_output)
 		self.plot_confusion_matrix(conf_mat, list(range(num_classes)), normalize = True)
