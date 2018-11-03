@@ -108,7 +108,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 	# x_sum = np.mean(dif, axis = 0)
 	# y_sum = np.mean(dif, axis = 1)
- 
+
 	# x_sum = medfilt(x_sum, 211)
 	# y_sum = medfilt(y_sum, 211)
 
@@ -129,7 +129,7 @@ signal.signal(signal.SIGINT, signal_handler)
 	# print x_thresh, y_thresh
 	# # plt.hist(y_sum, bins = 20)
 	# # plt.plot(y_sum)
-	# # plt.show()	
+	# # plt.show()
 	# # sys.exit(0)
 	# x_sum, y_sum = x_sum > x_thresh, y_sum > y_thresh
 
@@ -236,7 +236,7 @@ class Calibration(object):
 	def getAll(self):
 		return (self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons, self.rightOffset,
 			self.rightBoxW, self.rightBoxH)
-	
+
 	def resetAll(self):
 		print "\nWarming up synapse system...\n"
 		self.resetTopBarHeight()
@@ -381,7 +381,7 @@ def gestureCommands(sequence):
 	else:
 		print "Invalid command entered!\n"
 		return False
-	
+
 	if (status["defaultCommand"] != command): status["defaultCommand"] = None
 	if (status["group1_command"] != command): status["group1_command"] = None
 	if (status["defaultCommand"] is None and status["group1_command"] is None): auto.mouseUp()
@@ -830,6 +830,6 @@ def gestureCommands(sequence):
 
 	if (command != "Admin"): status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
 	status["hold_action"] = None
-	
+
 	return True
 
