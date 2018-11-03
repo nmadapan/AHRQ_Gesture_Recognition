@@ -552,9 +552,7 @@ def gestureCommands(sequence):
 						else: return False
 					auto.click()
 					moveToActivePanel()
-				else:
-					auto.press("p")
-					auto.press("enter")
+				else: (auto.press(e) for e in ["p", "enter"])
 			if (command == action):
 				status["defaultCommand"] = command
 				auto.mouseDown()
@@ -616,9 +614,7 @@ def gestureCommands(sequence):
 					else: return False
 				auto.click()
 				time.sleep(2)
-			else:
-				auto.press("r")
-				auto.press("enter")
+			else: (auto.press(e) for e in ["r", "enter"])
 			auto.moveTo(x1, y1)
 			auto.mouseDown()
 			auto.moveTo(x2, y2)
@@ -742,9 +738,7 @@ def gestureCommands(sequence):
 						return False
 					auto.click()
 					moveToActivePanel()
-				else:
-					auto.press("0")
-					auto.press("w")
+				else: (auto.press(e) for e in ["0", "w"])
 			if (command == action):
 				status["defaultCommand"] = command
 				auto.mouseDown()
@@ -810,15 +804,13 @@ def gestureCommands(sequence):
 				if (status["hold_action"] != "held"):
 					(status["hold_action"], status["params"]) = (commandAction, "RightClick")
 					return gestureCommands("0_6")
-				else:
-					return False
+				else: return False
 			located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "presets.png"))
 			if (located is None):
 				if (status["hold_action"] != "held"):
 					(status["hold_action"], status["params"]) = (commandAction, "Presets")
 					return gestureCommands("0_7")
-				else:
-					return False
+				else: return False
 			(x1, y1, w, h) = located
 			y1 = y1 / scale
 			y1 += status["rightPlus"] + (status["optionH"] * (actionID + 0.5))
@@ -827,15 +819,11 @@ def gestureCommands(sequence):
 		else:
 			auto.PAUSE = 0.1
 			auto.press("0")
-			# for i in range(9):
-			# 	auto.press("down")
 			auto.press("i")
 			auto.press("right")
 			time.sleep(0.5)
 			auto.press("0")
-			auto.press("down")
-			for i in range(actionID):
-				auto.press("down")
+			for i in range(actionID + 1): auto.press("down")
 			auto.press("enter")
 			auto.PAUSE = 0.25
 		time.sleep(1)
