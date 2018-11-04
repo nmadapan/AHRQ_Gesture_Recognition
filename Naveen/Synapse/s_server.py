@@ -1,16 +1,18 @@
-import os, sys, time, inspect
+import os, sys, time, inspect, socket, signal
 from threading import Thread
+import cv2 as cv
+
 ######### Add parent directory at the beggining of the path #######
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0,parentdir)
 ###################################################################
-# import synapseCommandAction as sca
+import synapseCommandAction as sca
 
 from CustomSocket import Server
 
 class SynapseServer(Server):
-    def run(self, only_once = True):
+    def run(self, only_once = False):
         ########################
         # Receives a data string from a client, prints it, sends True/False to the client
         # If only_once is True, it will receive only one data string. Otherwise, it will receive infinitely.
@@ -37,8 +39,9 @@ class SynapseServer(Server):
                 print('Connection Closed')
                 self.connect_status = False
                 self.client.close()
-                if(only_once): break
-
+                if(only_once):
+                    self.sock.close()
+                    break
 
 if __name__ == '__main__':
     #### Variables #######
