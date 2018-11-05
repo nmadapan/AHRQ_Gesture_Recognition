@@ -188,7 +188,7 @@ class Client():
         #   Infinitely wait for a delivery message after sending 'Handshake' to the server
         #   It releases when server sends 'True' back
         ######################
-        print('\nWaiting for delivery message: .', )
+        if(display): print('\nWaiting for delivery message: .', )
         data = None
         data_received = False
         start = time.time()

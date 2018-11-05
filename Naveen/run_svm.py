@@ -12,7 +12,7 @@ plt.rcdefaults()
 ## Initialization ##
 ####################
 ## Skeleton
-skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L6'
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L8'
 # skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
 
 ## Fingers
@@ -29,6 +29,14 @@ out_pkl_fname = os.path.join(dirname, fileprefix+'_data.pickle')
 
 fe = FeatureExtractor(json_param_path = 'param.json')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
+
+# full_list = []
+# for sublist in fe.dominant_type:
+# 	full_list += sublist
+
+# print(np.mean(np.array(full_list) == 0))
+
+# sys.exit()
 
 if(ENABLE_FINGERS):
 	# # ## Appending finger lengths
@@ -69,6 +77,7 @@ plt.grid(True)
 #plt.show()
 
 clf, _, _ = fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60)
+
 print 'Saving in: ', out_pkl_fname
 with open(out_pkl_fname, 'wb') as fp:
 	pickle.dump({'fe': fe, 'out': out}, fp)

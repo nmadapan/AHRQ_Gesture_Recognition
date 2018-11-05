@@ -598,7 +598,7 @@ class FeatureExtractor():
 		plt.title(title)
 		plt.colorbar()
 		tick_marks = np.arange(len(classes))
-		plt.xticks(tick_marks, classes, rotation=45)
+		plt.xticks(tick_marks, classes, rotation=90)
 		plt.yticks(tick_marks, classes)
 
 		fmt = 'd' if normalize else 'd'
@@ -641,7 +641,11 @@ class FeatureExtractor():
 		print('Test Acc: ', test_acc)
 
 		conf_mat = confusion_matrix(np.argmax(test_output, axis = 1), pred_test_output)
-		self.plot_confusion_matrix(conf_mat, list(range(num_classes)), normalize = True)
+		cname_list = []
+		for idx in range(num_classes):
+			cname_list.append(self.label_to_name[self.id_to_labels[idx]])
+
+		self.plot_confusion_matrix(conf_mat, cname_list, normalize = True)
 
 		self.svm_clf = clf
 
