@@ -108,7 +108,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 	# x_sum = np.mean(dif, axis = 0)
 	# y_sum = np.mean(dif, axis = 1)
- 
+
 	# x_sum = medfilt(x_sum, 211)
 	# y_sum = medfilt(y_sum, 211)
 
@@ -129,7 +129,7 @@ signal.signal(signal.SIGINT, signal_handler)
 	# print x_thresh, y_thresh
 	# # plt.hist(y_sum, bins = 20)
 	# # plt.plot(y_sum)
-	# # plt.show()	
+	# # plt.show()
 	# # sys.exit(0)
 	# x_sum, y_sum = x_sum > x_thresh, y_sum > y_thresh
 
@@ -236,7 +236,7 @@ class Calibration(object):
 	def getAll(self):
 		return (self.topBarHeight, self.optionH, self.rightHR, self.rightPlus, self.rightIcons, self.rightOffset,
 			self.rightBoxW, self.rightBoxH)
-	
+
 	def resetAll(self):
 		print "\nWarming up synapse system...\n"
 		self.resetTopBarHeight()
@@ -381,7 +381,7 @@ def gestureCommands(sequence):
 	else:
 		print "Invalid command entered!\n"
 		return False
-	
+
 	if (status["defaultCommand"] != command): status["defaultCommand"] = None
 	if (status["group1_command"] != command): status["group1_command"] = None
 	if (status["defaultCommand"] is None and status["group1_command"] is None): auto.mouseUp()
@@ -552,9 +552,7 @@ def gestureCommands(sequence):
 						else: return False
 					auto.click()
 					moveToActivePanel()
-				else:
-					auto.press("p")
-					auto.press("enter")
+				else: (auto.press(e) for e in ["p", "enter"])
 			if (command == action):
 				status["defaultCommand"] = command
 				auto.mouseDown()
@@ -616,9 +614,7 @@ def gestureCommands(sequence):
 					else: return False
 				auto.click()
 				time.sleep(2)
-			else:
-				auto.press("r")
-				auto.press("enter")
+			else: (auto.press(e) for e in ["r", "enter"])
 			auto.moveTo(x1, y1)
 			auto.mouseDown()
 			auto.moveTo(x2, y2)
@@ -742,9 +738,7 @@ def gestureCommands(sequence):
 						return False
 					auto.click()
 					moveToActivePanel()
-				else:
-					auto.press("0")
-					auto.press("w")
+				else: (auto.press(e) for e in ["0", "w"])
 			if (command == action):
 				status["defaultCommand"] = command
 				auto.mouseDown()
@@ -810,15 +804,13 @@ def gestureCommands(sequence):
 				if (status["hold_action"] != "held"):
 					(status["hold_action"], status["params"]) = (commandAction, "RightClick")
 					return gestureCommands("0_6")
-				else:
-					return False
+				else: return False
 			located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "presets.png"))
 			if (located is None):
 				if (status["hold_action"] != "held"):
 					(status["hold_action"], status["params"]) = (commandAction, "Presets")
 					return gestureCommands("0_7")
-				else:
-					return False
+				else: return False
 			(x1, y1, w, h) = located
 			y1 = y1 / scale
 			y1 += status["rightPlus"] + (status["optionH"] * (actionID + 0.5))
@@ -827,21 +819,17 @@ def gestureCommands(sequence):
 		else:
 			auto.PAUSE = 0.1
 			auto.press("0")
-			# for i in range(9):
-			# 	auto.press("down")
 			auto.press("i")
 			auto.press("right")
 			time.sleep(0.5)
 			auto.press("0")
-			auto.press("down")
-			for i in range(actionID):
-				auto.press("down")
+			for i in range(actionID + 1): auto.press("down")
 			auto.press("enter")
 			auto.PAUSE = 0.25
 		time.sleep(1)
 
 	if (command != "Admin"): status["prev_action"] = str(commandID) + "_" + str(actionID) + ", " + str(command) + " " + str(action)
 	status["hold_action"] = None
-	
+
 	return True
 
