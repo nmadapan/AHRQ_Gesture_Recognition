@@ -212,7 +212,7 @@ def interpn(yp, num_points=num_points, kind = 'linear'):
     return y
 
 
-def create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file,frames_folder,\
+def create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file,rgb_skel_file,frames_folder,\
                         num_fingers = num_fingers, dominant_hand = dominant_hand):
 
     '''
@@ -256,6 +256,9 @@ def create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file
     right_files=glob.glob(os.path.join(frames_folder,'*_l*'))
     num_gestures=len(rgb_frame_nums)/2
     full_gesture_data=[]
+    with open(rgb_skel_file, 'r') as fp:
+        lines = fp.readlines()
+        lines = [map(float, line.split(' ')) for line in lines]
 
     if hand_all_coords:
         num_zeros_coords=num_hand_all_coords*2
@@ -274,27 +277,34 @@ def create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file
         gesture_left_frames=left_files[rgb_gest_start:rgb_gest_end+1]
         gesture_right_frames=right_files[rgb_gest_start:rgb_gest_end+1]
 
-        skel_frames_to_rgb=skel_gest_start + s_to_r #skeleton frames corresponding to rgb
+        skel_frames_to_rgb=skel_gest_start + s_to_r #skeleton frames corresponding to rgb. Must be equal to the #rgb_frames
 
-
-        gesture_left_frames=[left_files[i] for i in np.array(r_to_s)+rgb_gest_start] #or rgb_gest_start
-        gesture_right_frames=[right_files[i] for i in np.array(r_to_s)+rgb_gest_start] #or skel_gest_start #TO VERIFY
+        # gesture_left_frames=[left_files[i] for i in np.array(r_to_s)+rgb_gest_start] #or rgb_gest_start
+        # gesture_right_frames=[right_files[i] for i in np.array(r_to_s)+rgb_gest_start] #or skel_gest_start #TO VERIFY
+        # print(gesture_left_frames[0],gesture_left_frames[-1])
+        gesture_left_frames=left_files[rgb_gest_start:rgb_gest_end+1]
+        gesture_right_frames=right_files[rgb_gest_start:rgb_gest_end+1]
 
         print('rgb gesture start:',rgb_gest_start,'rgb gesture end:',rgb_gest_end)
         print('skel gesture start:',skel_gest_start,'skel gesture end:',skel_gest_end)
+        print(len(skel_frames_to_rgb)==len(gesture_left_frames))
+        print(len(skel_frames_to_rgb),len(gesture_left_frames))
+        print(skel_frames_to_rgb[0],skel_frames_to_rgb[-1])
+
 
         gesture_data=[]
         num_gest_frames = len(gesture_left_frames)
 
-        start_y_coo = thresh_level * (skel_frames_to_rgb[0][3*neck_id+1] - skel_frames_to_rgb[0][3*base_id+1])
+    #start_y_coo is found using the first frame of the gesture
+        start_y_coo = thresh_level * (lines[skel_frames_to_rgb[0]][2*neck_id+1] - lines[skel_frames_to_rgb[0]][2*base_id+1])
+
         for j in range(0,num_gest_frames):
         # dominant hand is assumed to be left. if not the replace dominat_hand with not dominant_hand
             frame_l=cv2.imread(gesture_left_frames[j])
             frame_r=cv2.imread(gesture_right_frames[j])
 
-            # if hand is completely out of the frame, then the bounding box is of size 0.
-            left_y = skel_frames_to_rgb[j][3*left_hand_id+1] - skel_frames_to_rgb[j][3*base_id+1]
-            right_y = skel_frames_to_rgb[j][3*right_hand_id+1] - skel_frames_to_rgb[j][3*base_id+1]
+            left_y = skel_frames_to_rgb[j][2*left_hand_id+1] - skel_frames_to_rgb[j][2*base_id+1]
+            right_y = skel_frames_to_rgb[j][2*right_hand_id+1] - skel_frames_to_rgb[j][2*base_id+1]
             if left_y <= start_y_coo:
                 left_fingers = np.zeros(num_zeros_coords).tolist()
             else:
@@ -325,9 +335,9 @@ def create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file
         # However it shouldn't matter much as we are interpolating the gestures to fixed number of frames
         ###############################################################################################################
             gesture_data_updated.append(gesture_data[r_to_s[k]])
+
         # if due to some error there is only one frame in a gesture, it can't be interpolated to num_frames.
         # that is being handled with try and catch
-
         try:
             frames_data=interpn(np.array(gesture_data_updated))
             full_gesture_data.append(np.array(frames_data).flatten().tolist())
@@ -342,10 +352,12 @@ def create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file
 # annot_skel_file=r'H:\AHRQ\Study_IV\Flipped_Data\L2\Annotations\1_1_S6_L2_Scroll_Up_annot2.txt'
 # rgb_ts_file = r'H:\AHRQ\Study_IV\Flipped_Data\L2\1_1_S6_L2_Scroll_Up_rgbts.txt'
 # skel_ts_file = r'H:\AHRQ\Study_IV\Flipped_Data\L2\1_1_S6_L2_Scroll_Up_skelts.txt'
+# rgb_skel_file = r'H:\AHRQ\Study_IV\Flipped_Data\L2\1_1_S6_L2_Scroll_Up_color.txt'
 # frames_folder=r'H:\AHRQ\Study_IV\Data\Data_cpm\Frames\L2\1_1_S6_L2_Scroll_Up'
 # print('extracting fingerlengths from gesture', frames_folder)
-# create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file,
+# data=create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file,skel_file,
 #                     frames_folder=frames_folder)
+# print(data)
 # sys.exit(0)
 
 
@@ -365,7 +377,9 @@ for lexicon in lexicons[2:4]:
     annot_rgb_files,annot_skel_files=get_annot_files(lexicon_name)
     rgb_ts_files = glob.glob(os.path.join(lexicon,"*_rgbts.txt"))
     skel_ts_files =glob.glob(os.path.join(lexicon,"*_skelts.txt"))
+    rgb_skel_files =glob.glob(os.path.join(lexicon,"*_color.txt"))
     gestures=get_gesture_names(annot_rgb_files)
+
     gest_dict = {}
     for gesture in gestures:
         print('extracting fingerlengths from gesture', gesture)
@@ -373,9 +387,10 @@ for lexicon in lexicons[2:4]:
         annot_skel_file = [file for file in annot_skel_files if gesture in file][0]
         rgb_ts_file = [file for file in rgb_ts_files if gesture in file][0]
         skel_ts_file = [file for file in skel_ts_files if gesture in file][0]
+        rgb_skel_file = [file for file in rgb_skel_files if gesture in file][0]
         frames_folder = [folder for folder in frames_folders if gesture in folder][0]
         start=time.time()
-        data_to_write = create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file,
+        data_to_write = create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file,rgb_skel_file,\
                 frames_folder=frames_folder)
         print('Time taken',time.time()-start)
         data_to_write_list=[]
