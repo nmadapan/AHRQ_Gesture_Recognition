@@ -555,9 +555,12 @@ def find_key(d, value):
 	        return key
 	return None
 
-def file_to_list(file_path):
-	file = open(filepath, 'r')
-	l_list = [re.sub("[^\w]", " ",  line).split() for line in file.read().splitlines() ]
-	file.close()
-	return l_list
+def file_to_list(filepath):
+        if os.path.exists(filepath):
+            file = open(filepath, 'r')
+            l_list = [re.sub("[^\w]", " ",  line).split() for line in file.read().splitlines() ]
+            file.close()
+            return l_list
+        else:
+            return []
 
