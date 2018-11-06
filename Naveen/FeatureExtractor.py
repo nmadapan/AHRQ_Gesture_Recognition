@@ -619,7 +619,7 @@ class FeatureExtractor():
 		plt.show()
 
 	###### OFFLINE Function ########
-	def run_svm(self, data_input, data_output, train_per = 0.8, kernel = 'linear'):
+	def run_svm(self, data_input, data_output, train_per = 0.8, kernel = 'linear', inst_var_name = 'svm_clf'):
 		num_inst = data_input.shape[0]
 		feat_dim = data_input.shape[1]
 		num_classes = data_output.shape[1]
@@ -653,6 +653,6 @@ class FeatureExtractor():
 
 		self.plot_confusion_matrix(conf_mat, cname_list, normalize = True)
 
-		self.svm_clf = clf
+		setattr(self, inst_var_name, deepcopy(clf))
 
 		return clf, train_acc, test_acc

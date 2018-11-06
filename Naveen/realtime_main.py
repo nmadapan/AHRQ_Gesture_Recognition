@@ -35,7 +35,7 @@ ENABLE_CPM_SOCKET = False
 DATA_WRITE_FLAG = True
 
 ## IMPORTANT
-LEXICON_ID = 'L8'
+LEXICON_ID = 'L6'
 SUBJECT_ID = 'S1'
 
 ## If a gesture has less than 20 frames ignore.
