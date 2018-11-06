@@ -1,24 +1,31 @@
 import numpy as np
 import pickle,sys
 
-pkl_path = r'H:\AHRQ\Study_IV\Data\Data_cpm\fingers\L2\L2_fingers_from_coord3.pkl'
-# write_pkl_path = r'H:\AHRQ\Study_IV\Data\Data_cpm\fingers\L6\L6_fingers_pp.pkl'
+def match_ts(rgb_ts,skel_ts):
+    '''
+        Description: 
+            This function maps skeleton time stamps to rgb time stamps and vice versa
+        Input Arguments:
+            rgb_ts - path to the file with rgb time stamps
+            skel_ts - path to the file with skeleton time stamps
+        Returns:
+            s_to_r - mapping from skeleton time stamps to rgb time stamps 
+            r_to_s - mapping from rgb time stamps to skeleton time stamps
+    '''
+    rgb_ts=np.array(rgb_ts)
+    skel_ts=np.array(skel_ts)
+    s_to_r=np.argmin(abs(rgb_ts.reshape(-1,1)-skel_ts.reshape(1,-1)),axis=1)
+    r_to_s=np.argmin(abs(rgb_ts.reshape(-1,1)-skel_ts.reshape(1,-1)),axis=0)
+    return s_to_r,r_to_s
 
-# with open(pkl_path, 'rb') as fp:
-#     fingers_data = pickle.load(fp)
 
+a=np.random.randn(5)
+b=np.random.randn(7)
 
-# for key in fingers_data:
-# 	print np.array(fingers_data[key][1]).shape, fingers_data[key][1]
-# 	sys.exit(0)
-# # # for key in fingers_data.keys()[:130]:		
-# # print np.array(fingers_data['11_2_S6_L2_ContrastPresets_X']).shape
+print a
+print b
 
-# # print type(fingers_data)
-# # print np.array(fingers_data['6_1_S1_L6_Pan_Left']).shape
-# print np.sign(1-3)
+a_,b_ = match_ts(a,b)
 
-a=[1,2]
-b=[3,4]
-
-print (1-4)**2
+print a_
+print b_
