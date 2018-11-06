@@ -1,0 +1,31 @@
+{
+    "active_panel": [
+        1,
+        1
+    ],
+    "optionH": 21.132,
+    "window_open": false,
+    "hold_action": null,
+    "rightBoxW": 492,
+    "rulers": {
+        "len": 0
+    },
+    "defaultCommand": null,
+    "rightBoxH": 1174,
+    "rightHR": 5.87,
+    "rightOffset": 68.092,
+    "firstH": 450.0,
+    "panel_dim": [
+        1,
+        1
+    ],
+    "rightPlus": 4.696,
+    "toUse": "Keyboard",
+    "group1_command": null,
+    "topBarHeight": 1754,
+    "jumpW": 0,
+    "prev_action": "",
+    "jumpH": 0,
+    "rightIcons": 58.7,
+    "firstW": 720.0
+}
