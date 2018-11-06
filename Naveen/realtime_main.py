@@ -31,16 +31,15 @@ PORT_CPM = 3000
 ## Flags
 ENABLE_SYNAPSE_SOCKET = False
 ENABLE_CPM_SOCKET = False
+# If True, write data to disk
+DATA_WRITE_FLAG = True
 
 ## IMPORTANT
-LEXICON_ID = 'L8'
+LEXICON_ID = 'L6'
 SUBJECT_ID = 'S1'
 
 ## If a gesture has less than 20 frames ignore.
 MIN_FRAMES_IN_GESTURE = 20
-
-## If True, write data to disk
-WRITE_FLAG = True
 
 ## DATA PATHS
 # path to trained *_data.pickle file.
@@ -64,6 +63,8 @@ def print_global_constants():
 		print('ENABLED')
 		print('IP: {0}, PORT: {1}'.format(IP_CPM, PORT_CPM))
 	else: print('DISABLED')
+
+	print('\nWriting realtime data to {0}: --> {1}'.format(BASE_WRITE_DIR, DATA_WRITE_FLAG))
 
 	print('\nLEXICON ID: ', LEXICON_ID)
 	print('SUBJECT ID: ', SUBJECT_ID)
@@ -103,7 +104,6 @@ Tricks/Hacks:
 		* What functions to call. How to update the calibration file.
 		* Ask Rahul. Also, incorporate in both offline and online codes.
 		* Finishing the calibration
-	* Communication between the threads. Using the flags properly.
 '''
 
 class Realtime:
@@ -143,6 +143,13 @@ class Realtime:
 		# TODO: If synapse breaks down, we should restart. So we need to save the current state info.
 		##
 
+		######################################
+		### LOAD TARINED FEATURE EXTRACTOR ###
+		######################################
+		## Use previously trained Feature extractor
+		self.feat_ext = None ## Updated in load_feature_extractor()
+		self.load_feature_extractor()
+
 		########################
 		### INTIALIZE KINECT ###
 		########################
@@ -151,14 +158,7 @@ class Realtime:
 		self.neck_id = 2
 		self.left_hand_id = 7
 		self.right_hand_id = 11
-		self.thresh_level = 0.3 #TODO: It seems to be working.
-
-		######################################
-		### LOAD TARINED FEATURE EXTRACTOR ###
-		######################################
-		## Use previously trained Feature extractor
-		self.feat_ext = None ## Updated in load_feature_extractor()
-		self.load_feature_extractor()
+		self.thresh_level = self.feat_ext.gesture_thresh_level
 
 		#########################
 		### THREAD CONDITIONS ###
@@ -191,7 +191,6 @@ class Realtime:
 		self.command_to_execute = None # Updated in run()
 		self.skel_instance = None # Updated in self.th_gen_skel(). It is a tuple (timestamp, feature_vector of skeleton - ndarray(1 x _)). It is a flattened array.
 		self.cpm_instance = None # Updated in self.th_gen_cpm(). It is a tuple (timestamp, feature_vector of finger lengths - ndarray(num_frames, 10)).
-
 		self.gesture_count = 0
 
 	def load_feature_extractor(self):

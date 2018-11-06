@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 import pickle
 import sys, os
@@ -12,7 +14,7 @@ plt.rcdefaults()
 ## Initialization ##
 ####################
 ## Skeleton
-skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L8'
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L6'
 # skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
 
 ## Fingers
@@ -28,7 +30,9 @@ fileprefix = os.path.basename(skel_folder_path)
 out_pkl_fname = os.path.join(dirname, fileprefix+'_data.pickle')
 
 fe = FeatureExtractor(json_param_path = 'param.json')
+print('Generating IO: ', end = '')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
+print('DONE !!!')
 
 # full_list = []
 # for sublist in fe.dominant_type:
@@ -40,6 +44,7 @@ out = fe.generate_io(skel_folder_path, annot_folder_path)
 
 if(ENABLE_FINGERS):
 	# # ## Appending finger lengths
+	print('Appending finger lengths: ', end = '')
 	with open(os.path.join(pickle_path1, fingers_pkl_fname), 'rb') as fp:
 		fingers_data = pickle.load(fp)
 	data_merge=[]
@@ -50,6 +55,7 @@ if(ENABLE_FINGERS):
 		for line in np.round(fingers_data.get(key),4):
 			data_merge.append(line)
 	out['data_input'] = np.concatenate([out['data_input'], np.array(data_merge)], axis = 1)
+	print('DONE !!!')
 
 # Randomize data input and output
 temp = zip(out['data_input'], out['data_output'])
@@ -60,8 +66,8 @@ if(fe.equate_dim):
 	out['data_input'] = np.array(out['data_input'])
 	out['data_output'] = np.array(out['data_output'])
 
-# print fe.label_to_ids
-# print fe.label_to_name
+# print(fe.label_to_ids)
+# print(fe.label_to_name)
 
 ## Plotting histogram - No. of instances per class
 objects = tuple(fe.inst_per_class.keys())
@@ -76,8 +82,10 @@ plt.title('No. of instances per class')
 plt.grid(True)
 #plt.show()
 
-clf, _, _ = fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60)
+print('Train SVM: ', end = '')
+clf, _, _ = fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60, inst_var_name = 'svm_clf')
+print('DONE !!! Storing variable in svm_clf')
 
-print 'Saving in: ', out_pkl_fname
+print('Saving in: ', out_pkl_fname)
 with open(out_pkl_fname, 'wb') as fp:
 	pickle.dump({'fe': fe, 'out': out}, fp)

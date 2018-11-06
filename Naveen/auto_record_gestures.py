@@ -7,24 +7,19 @@ from datetime import datetime
 from helpers import *
 from KinectReader import kinect_reader
 
-#####################
-#
-# Description:
-#
-# How to use:
-#
-#####################
-
-# Initialization
-
-# Default settings
+#########################
+### GLOBAL PARAMETERS ###
+#########################
 base_write_folder = ".\\" # Where to write the files
 images_folder = os.path.join('.', 'Images') ####### Change this
 kinect_studio_open_time = 3 # 'in seconds
 fixed_num_gestures = 20
+kinect_joint_names_path = 'kinect_joint_names.json'
+json_param_path = 'param.json'
+#####################
 
 ## Flags
-global record_active, gest_count, xef_flag, gui_flag, gc_flag 
+global record_active, gest_count, xef_flag, gui_flag, gc_flag
 xef_flag = False
 gui_flag = False
 gc_flag = False
@@ -38,8 +33,8 @@ class XEF(Thread):
 		super(XEF, self).__init__(name = 'xef')
 		self.kstudio_path = 'kstudio'
 
-	def run(self): 
-		global record_active, gest_count, xef_flag, gui_flag, gc_flag 
+	def run(self):
+		global record_active, gest_count, xef_flag, gui_flag, gc_flag
 		xef_flag = True
 		try:
 			os.system(self.kstudio_path)
@@ -54,14 +49,14 @@ class GUI():
 		self.width, self.height = auto.size()
 
 	def run_gui(self):
-		global record_active, gest_count, xef_flag, gui_flag, gc_flag 
+		global record_active, gest_count, xef_flag, gui_flag, gc_flag
 		rex = re.compile('Microsoft\\xae Kinect Studio', re.IGNORECASE)
 
 		## Waiting for Kinect Studio to open
 		while(True):
 			window_names = auto.getWindows().keys()
 			matched_keys = [window_name for window_name in window_names if rex.search(window_name) is not None]
-			if(len(matched_keys) != 0): 
+			if(len(matched_keys) != 0):
 				xef_window_name = matched_keys[0]
 				break
 			time.sleep(0.2)
@@ -73,7 +68,7 @@ class GUI():
 		while(True):
 			res = auto.locateCenterOnScreen(os.path.join(images_folder, 'record.PNG'))
 			res_act = auto.locateCenterOnScreen(os.path.join(images_folder, 'record_activated.PNG'))
-			if(res is None or res_act is None): 
+			if(res is None or res_act is None):
 				time.sleep(0.2)
 				# print 'record.PNG not found'
 			if res is not None:
@@ -84,7 +79,7 @@ class GUI():
 			if res_act is not None:
 				cx, cy = res_act
 				auto.click(cx, cy)
-				auto.moveTo(self.width/2, self.height/2)			
+				auto.moveTo(self.width/2, self.height/2)
 				break
 
 		## Connect Kinect Studio
@@ -137,26 +132,31 @@ class GUI():
 			else:
 				# Close kinect studio if they are open
 				matched_keys = [window_name for window_name in auto.getWindows().keys() if xef_rex.search(window_name) is not None]
-				if(len(matched_keys) != 0): 
+				if(len(matched_keys) != 0):
 					os.system('taskkill /f /im kstudio.exe') # Works only on windows
 					break
 
 		gui_flag = False
 
-## Global parameters
-torso_id = 0
-neck_id = 2
-left_hand_id = 7
-right_hand_id = 11
-thresh_level = 0.2
+## Initialization: Kinect Joint Names
+kinect_joint_names_dict = json_to_dict(kinect_joint_names_path)
+torso_id = kinect_joint_names_dict['JointType_SpineBase'] # 0
+neck_id = kinect_joint_names_dict['JointType_Neck'] # 2
+left_hand_id = kinect_joint_names_dict['JointType_HandLeft'] # 7
+right_hand_id = kinect_joint_names_dict['JointType_HandRight'] # 11
+
+## Initialization: gesture threshold level
+param_dict = json_to_dict(json_param_path)
+thresh_level = param_dict['gesture_thresh_level']
+
 base_id = torso_id
 
 def get_gest_count(kr):
-	global record_active, gest_count, xef_flag, gui_flag, gc_flag 
+	global record_active, gest_count, xef_flag, gui_flag, gc_flag
 	start_flag = False
 	frame_count = 0
 	while(not gui_flag): time.sleep(0.1)
-	
+
 	wait_for_kinect(kr)
 	gc_flag = True
 
@@ -168,10 +168,10 @@ def get_gest_count(kr):
 				start_y_coo = thresh_level * (skel_pts[3*neck_id+1] - skel_pts[3*base_id+1])
 				left_y = skel_pts[3*left_hand_id+1] - skel_pts[3*base_id+1]
 				right_y = skel_pts[3*right_hand_id+1] - skel_pts[3*base_id+1]
-				if (left_y >= start_y_coo or right_y >= start_y_coo) and (not start_flag): 
+				if (left_y >= start_y_coo or right_y >= start_y_coo) and (not start_flag):
 					start_flag = True
 					frame_count = 0
-				if (left_y < start_y_coo and right_y < start_y_coo) and start_flag: 
+				if (left_y < start_y_coo and right_y < start_y_coo) and start_flag:
 					start_flag = False
 				if(start_flag):
 					frame_count += 1
@@ -195,7 +195,7 @@ time.sleep(kinect_studio_open_time)
 # Initialize the function that opens and holds the XEF File
 xef_thread = XEF()
 
-# Open the XEF File. This line is non blocking call. 
+# Open the XEF File. This line is non blocking call.
 xef_thread.start()
 time.sleep(kinect_studio_open_time)
 
@@ -203,7 +203,7 @@ time.sleep(kinect_studio_open_time)
 gui = GUI()
 gui_thread = Thread(name = 'clicks_on_gui', target = gui.run_gui)
 
-gui_thread.start()	
+gui_thread.start()
 
 gc_thread = Thread(name = 'gest_count', target = get_gest_count, args = (kr, ))
 gc_thread.start()
