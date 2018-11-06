@@ -33,11 +33,14 @@ ENABLE_SYNAPSE_SOCKET = False
 ENABLE_CPM_SOCKET = False
 
 ## IMPORTANT
-LEXICON_ID = 'L6'
+LEXICON_ID = 'L8'
 SUBJECT_ID = 'S1'
 
 ## If a gesture has less than 20 frames ignore.
 MIN_FRAMES_IN_GESTURE = 20
+
+## If True, write data to disk
+WRITE_FLAG = True
 
 ## DATA PATHS
 # path to trained *_data.pickle file.
@@ -150,6 +153,13 @@ class Realtime:
 		self.right_hand_id = 11
 		self.thresh_level = 0.3 #TODO: It seems to be working.
 
+		######################################
+		### LOAD TARINED FEATURE EXTRACTOR ###
+		######################################
+		## Use previously trained Feature extractor
+		self.feat_ext = None ## Updated in load_feature_extractor()
+		self.load_feature_extractor()
+
 		#########################
 		### THREAD CONDITIONS ###
 		#########################
@@ -182,6 +192,9 @@ class Realtime:
 		self.skel_instance = None # Updated in self.th_gen_skel(). It is a tuple (timestamp, feature_vector of skeleton - ndarray(1 x _)). It is a flattened array.
 		self.cpm_instance = None # Updated in self.th_gen_cpm(). It is a tuple (timestamp, feature_vector of finger lengths - ndarray(num_frames, 10)).
 
+		self.gesture_count = 0
+
+	def load_feature_extractor(self):
 		######################################
 		### LOAD TARINED FEATURE EXTRACTOR ###
 		######################################
@@ -190,7 +203,15 @@ class Realtime:
 			res = pickle.load(fp)
 			self.feat_ext = res['fe'] # res['out'] exists but we dont need training data.
 		self.feat_ext.update_rt_params(subject_id = SUBJECT_ID, lexicon_id = LEXICON_ID) ## This will let us know which normalization parameters are used.
-		print(self.feat_ext.subject_params)
+
+		## Check if the no. of features in trained classifer and no. of features in realtime are same.
+		num_clf_features = self.feat_ext.svm_clf.support_vectors_.shape[1] ## No. of features in trained classifier
+		# No. of body skeleton features (No of finger length featuers.)
+		num_skel_features = len(self.feat_ext.feature_types) * self.feat_ext.num_joints * self.feat_ext.fixed_num_frames * self.feat_ext.dim_per_joint
+		if(num_clf_features != num_skel_features):
+			assert ENABLE_CPM_SOCKET, 'ERROR! Trained classifier requires both body skeleton and finger lengths. Set ENABLE_CPM_SOCKET to True.'
+		else:
+			assert (not ENABLE_CPM_SOCKET), 'ERROR! Trained classifier requires ONLY body skeleton. Set ENABLE_CPM_SOCKET to False.'
 
 	def th_access_kinect(self):
 		##
@@ -305,7 +326,7 @@ class Realtime:
 			elif first_time:
 				first_time = False
 				frame_count = 0
-				self.skel_instance = deepcopy(skel_frames) # [(ts1, ([left_x, y, z], [right_x, y, z])), ...]
+				self.skel_instance = deepcopy(skel_frames) # [(ts1, ([right_x, y, z], [left_x, y, z])), ...]
 				skel_frames = []
 				self.fl_skel_ready = True
 
@@ -344,6 +365,8 @@ class Realtime:
 		rgb_frame = None
 		rgb_hand_coo = None
 
+		list_of_rgb_frames = []
+
 		while(self.fl_alive):
 			# if(self.fl_synapse_running): continue # If synapse is running, dont do anything
 			if(self.fl_cpm_ready): continue # If previous cpm data is not used, dont do anything
@@ -352,7 +375,7 @@ class Realtime:
 				with self.cond_rgb:
 					self.cond_rgb.wait()
 					rgb_frame = deepcopy(self.buf_rgb[-1]) # (timestamp, ndarray)
-				_, hands_status, rgb_hand_coo = deepcopy(self.buf_rgb_skel[-1]) # (timestamp, ([rx1, ry1], [lx1, ly1]))
+				_, hands_status, rgb_hand_coo = deepcopy(self.buf_rgb_skel[-1]) # (timestamp, [right_hand_status, left_hand_status] ([rx1, ry1], [lx1, ly1]))
 				frame_count += 1
 				right_status, left_status = tuple(hands_status)
 
@@ -390,6 +413,7 @@ class Realtime:
 				cpm_instance.append((rgb_frame[0], (r_finger_lengths, l_finger_lengths)))
 
 				# print(cpm_instance[-1])
+
 			if not self.fl_gest_started and first_time:
 				first_time = False
 				frame_count = 0
@@ -468,6 +492,7 @@ class Realtime:
 					if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False
 					continue
 				dom_rhand, final_skel_inst = self.feat_ext.generate_features_realtime(list(raw_skel_frames))
+				self.gesture_count += 1
 				#####################
 
 				## If ENABLE_CPM_SOCKET is True, consider features from CPM

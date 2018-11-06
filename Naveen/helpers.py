@@ -480,6 +480,44 @@ def interpn(yp, num_points, kind = 'linear'):
 		y[:, dim] = f(x)
 	return y
 
+def save_list(list_of_values, out_file_path):
+	# list_of_values: list of sublists where each sublist can be a list of values (integers, floats or strings)
+	#	It can be a list of values too.
+	if(not isinstance(list_of_values[0], list)):
+		with open(out_file_path, 'w') as fp:
+			for value in list_of_values:
+				fp.write(str(value) + '\n')
+	else:
+		with open(out_file_path, 'w') as fp:
+			for sublist in list_of_values:
+				for value in sublist:
+					fp.write(str(value) + ' ')
+				fp.write('\n')
+
+def save_video(list_of_frames, out_video_path, display = False):
+	# list_of_frames: list of RGB or Grayscale frames
+
+	assert len(list_of_frames) > 0, 'Error! list_of_frames is empty'
+
+	# Define the codec and create VideoWriter object
+	fourcc = cv2.VideoWriter_fourcc(*'XVID')
+
+	if(list_of_frames[0].ndim == 2):
+		height, width = list_of_frames[0].shape
+	else:
+		height, width, _ = list_of_frames[0].shape
+
+	out = cv2.VideoWriter(out_video_path, fourcc, 30, (width,height))
+
+	for frame in list_of_frames:
+		out.write(frame)
+		if(display):
+			cv2.imshow('Frame', cv2.resize(frame, None, fx = 0.5, fy = 0.5))
+			if cv2.waitKey(3) == ord('q'):
+				cv2.destroyAllWindows()
+				break
+	out.release()
+
 def flip_video(input_video_path, out_video_path):
 	'''
 	Description:
