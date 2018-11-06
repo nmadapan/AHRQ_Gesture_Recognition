@@ -36,7 +36,7 @@ How to use it:
 '''
 
 class FeatureExtractor():
-	def __init__(self, json_param_path = 'param.json', subject_param_path = 'subject_params.json'):
+	def __init__(self, json_param_path = 'param.json'):
 		## Private variables
 		self.available_types = ['right', 'd_right', 'theta_right', 'd_theta_right',\
 							 	'left', 'd_left', 'theta_left', 'd_theta_left']
@@ -44,14 +44,28 @@ class FeatureExtractor():
 		self.id_to_available_type = {idx: feat_type for idx, feat_type in zip(range(self.num_available_types), self.available_types)}
 		# right type ids: [0, 1, 2, 3], left type ids: [4, 5, 6, 7]
 
-		# Initialize variables from json param path
+		## Initialize variables from json param path
 		param_dict = json_to_dict(json_param_path)
 		for key, value in param_dict.items(): setattr(self, key, value)
 
-		subject_param_dict = json_to_dict(subject_param_path)
+		## Initialize variables from subject specific parameters
+		# The variable subject_param_path is present in param.json
+		subject_param_dict = json_to_dict(self.subject_param_path)
 		for key, value in subject_param_dict.items(): setattr(self, key, value)
 
-		# Initialize the label to class name
+		## Initialize Kinect joint names
+		kinect_joint_names_dict = json_to_dict(self.kinect_joint_names_path)
+		## Left hand
+		self.left_hand_id = kinect_joint_names_dict['JointType_HandLeft'] # 7
+		self.left_elbow_id = kinect_joint_names_dict['JointType_ElbowLeft'] # 5
+		self.left_shoulder_id = kinect_joint_names_dict['JointType_ShoulderLeft'] # 4
+		## Right hand
+		self.right_hand_id = kinect_joint_names_dict['JointType_HandRight'] # 11
+		self.right_elbow_id = kinect_joint_names_dict['JointType_ElbowRight'] # 9
+		self.right_shoulder_id = kinect_joint_names_dict['JointType_ShoulderRight'] # 8
+
+		## Initialize the label to class name
+		# The variable commands_filepath is present in param.json
 		self.label_to_name = json_to_dict(self.commands_filepath)
 
 		self.type_flags = {feat_type: False for feat_type in self.available_types} # What feature types to consider
@@ -131,14 +145,6 @@ class FeatureExtractor():
 		#	Similary xf['right']
 		########################
 
-		# Initialize joint IDs
-		left_hand_id = 7
-		left_elbow_id = 5
-		left_shoulder_id = 4
-		right_hand_id = 11
-		right_elbow_id = 9
-		right_shoulder_id = 8
-
 		# Read annotations
 		with open(annot_filepath, 'r') as fp:
 			annots = np.array([int(word.strip('\n')) for word in fp.readlines()])
@@ -154,23 +160,23 @@ class FeatureExtractor():
 		dim = self.dim_per_joint
 		if(self.num_joints == 2):
 			left = [[ \
-					line[dim*left_hand_id:dim*left_hand_id+dim], \
-					line[dim*left_elbow_id:dim*left_elbow_id+dim], \
-				 	line[dim*left_shoulder_id:dim*left_shoulder_id+dim]\
+					line[dim*self.left_hand_id:dim*self.left_hand_id+dim], \
+					line[dim*self.left_elbow_id:dim*self.left_elbow_id+dim], \
+				 	line[dim*self.left_shoulder_id:dim*self.left_shoulder_id+dim]\
 				 	] for line in lines]
 			right = [[\
-					 line[dim*right_hand_id:dim*right_hand_id+dim], \
-					 line[dim*right_elbow_id:dim*right_elbow_id+dim], \
-					 line[dim*right_shoulder_id:dim*right_shoulder_id+dim]\
+					 line[dim*self.right_hand_id:dim*self.right_hand_id+dim], \
+					 line[dim*self.right_elbow_id:dim*self.right_elbow_id+dim], \
+					 line[dim*self.right_shoulder_id:dim*self.right_shoulder_id+dim]\
 					 ] for line in lines]
 		else:
 			left = [[\
-					line[dim*left_hand_id:dim*left_hand_id+dim], \
-					line[dim*left_shoulder_id:dim*left_shoulder_id+dim]\
+					line[dim*self.left_hand_id:dim*self.left_hand_id+dim], \
+					line[dim*self.left_shoulder_id:dim*self.left_shoulder_id+dim]\
 					] for line in lines]
 			right = [[\
-					 line[dim*right_hand_id:dim*right_hand_id+dim], \
-					 line[dim*right_shoulder_id:dim*right_shoulder_id+dim]\
+					 line[dim*self.right_hand_id:dim*self.right_hand_id+dim], \
+					 line[dim*self.right_shoulder_id:dim*self.right_shoulder_id+dim]\
 					 ] for line in lines]
 		left = np.array([np.array(line).flatten().tolist() for line in left]) # Shape - (num_total_frames x 9) if num_joints = 2
 		right = np.array([np.array(line).flatten().tolist() for line in right])
