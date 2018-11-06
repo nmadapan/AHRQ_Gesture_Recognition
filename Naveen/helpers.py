@@ -8,30 +8,38 @@ from scipy.interpolate import interp1d
 import cv2
 import re
 
+###########
+## PATHS ##
+###########
+kinect_joint_names_path = 'kinect_joint_names.json'
+
+def json_to_dict(json_filepath):
+	if(not os.path.isfile(json_filepath)):
+		raise IOError('Error! Json file: '+json_filepath+' does NOT exists!')
+	with open(json_filepath, 'r') as fp:
+		var = json.load(fp)
+	return var
+
 ########################
 ### Kinect Joint IDs ###
 ########################
 ## Refer to kinect_joint_names.json for all joint IDs
 
+kinect_joint_names_dict = json_to_dict(kinect_joint_names_path)
+
 ## Left hand
-left_hand_id = 7
-left_elbow_id = 5
-left_shoulder_id = 4
-left_wrist_id = 6
-left_handtip_id = 21
-left_thumb_id = 22
+left_hand_id = kinect_joint_names_dict['JointType_HandLeft'] # 7
+left_elbow_id = kinect_joint_names_dict['JointType_ElbowLeft'] # 5
+left_shoulder_id = kinect_joint_names_dict['JointType_ShoulderLeft'] # 4
 
 ## Right hand
-right_hand_id = 11
-right_elbow_id = 9
-right_shoulder_id = 8
-right_wrist_id = 10
-right_handtip_id = 23
-right_thumb_id = 24
+right_hand_id = kinect_joint_names_dict['JointType_HandRight'] # 11
+right_elbow_id = kinect_joint_names_dict['JointType_ElbowRight'] # 9
+right_shoulder_id = kinect_joint_names_dict['JointType_ShoulderRight'] # 8
 
 ## Torso
-torso_id = 0
-neck_id = 2
+torso_id = kinect_joint_names_dict['JointType_SpineBase'] # 0
+neck_id = kinect_joint_names_dict['JointType_Neck'] # 2
 
 def wait_for_kinect(kr, timeout = 30):
 	'''
@@ -355,14 +363,6 @@ def file_filter(xef_files_paths, base_write_folder, in_format_flag, xef_rgb_fact
 		else:
 			final_file_paths.append(xef_file_path)
 	return final_file_paths
-
-def json_to_dict(json_filepath):
-	if(not os.path.isfile(json_filepath)):
-		raise IOError('Error! Json file: '+json_filepath+' does NOT exists!')
-	with open(json_filepath, 'r') as fp:
-		var = json.load(fp)
-	return var
-
 
 def flip_skeleton(skel_path, out_path, dim_per_joint=3):
 	'''
