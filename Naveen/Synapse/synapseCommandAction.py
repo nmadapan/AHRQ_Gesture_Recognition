@@ -43,11 +43,14 @@ def openWindow(toOpen):
 	if (platform.system() == "Windows"):
 		window_names = auto.getWindows().keys()
 		for window_name in window_names:
-			auto.getWindow(window_name).minimize()
+			#auto.getWindow(window_name).minimize()
 			if (toOpen in window_name):
 				xef_window_name = window_name
-		xef_window = auto.getWindow(xef_window_name)
-		xef_window.maximize()
+				xef_window = auto.getWindow(xef_window_name)
+				xef_window.maximize()
+				xef_window.minimize()
+				xef_window.maximize()
+				break
 	else: os.system("open -a " + toOpen.replace(" ", "\\ "))
 
 #Remove images already saved (avoids issues with git)
