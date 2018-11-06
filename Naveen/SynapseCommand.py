@@ -36,7 +36,10 @@ class SynapseCommand():
         def get_lists_with_gesture(self,gesture,gesture_list):
             similar_list_index = [gesture in mod_list for mod_list in gesture_list]
             similar_list_index =  [i for i, v in enumerate(similar_list_index) if v]
-            return [gesture_list[index] for index in similar_list_index]
+            if len(similar_list_index) > 0:
+                return [gesture_list[index] for index in similar_list_index]
+            else:
+                return [[]]
 
 	def get_repeated_modifiers(self,modifier):
             repeated_with_modifier = self.get_lists_with_gesture(modifier,self.repeated_gestures)
@@ -81,42 +84,45 @@ class SynapseCommand():
 
 			# Check if the context was executed
 			if self.context is None:
-				print("You executed an action without it's context")
-				self.mod_without_context_err =+ 1
-				self.command = None
-				return None
-
+                            print("You executed an action without it's context")
+                            self.mod_without_context_err =+ 1
+                            self.command = None
+                            return None
 			# Check if the modifier is a modifier of that context
 			elif rcv_context_num == self.context.split("_")[0]:
+                                print "CORRECT MODIFIER" #delete
                                 self.command = rcv_command
 			# Check if the modifier is correct but re-used under another label
 			elif modifier_in_repeated_commads or modifier_in_similar_comands:
-                            repeated_labels = self.get_repeated_modifiers(modifier, self.repeated_gestures)
-                            if len(repeated_labels[0] != 0):
+                            repeated_labels = self.get_repeated_modifiers(rcv_command)
+                            if len(repeated_labels[0]) != 0:
                                 for rep_list in repeated_labels:
                                     # Get the modifier that has the matching context from the list
                                     replaced_command = [cmd for cmd in rep_list if \
-                                                        cmd.split("_")[0]==self.current_context_num][0]
+                                                        cmd.split("_")[0]==self.context.split("_")[0]]
+                                    if len(replaced_command) > 0:
+                                        print "REPEATED MODIFIER"
+                                        replaced_command = replaced_command[0]
+                                        self.modifier_replaced += 1
+                                        self.command = replaced_command
+                            # Check if the modifier is getting confused with a similar modifier
+                            if modifier_in_similar_comands:
+                                    print "SIMILAR MODIFIER"#delete
+                                    # Get the list of possible similar modifiers
+                                    similar_candidates = self.get_lists_with_gesture(rcv_command,self.similar_modifiers)[0]
+                                    # Get the modifier that has the matching context from the list
+                                    replaced_command = [cmd for cmd in similar_candidates if \
+                                                        cmd.split("_")[0]==self.context.split("_")[0]]
                                     if len(replaced_command) > 0:
                                         replaced_command = replaced_command[0]
                                         self.modifier_replaced += 1
                                         self.command = replaced_command
-                                    # Check if the modifier is getting confused with a similar modifier
-                                    elif modifier_in_similar_comands:
-                                            # Get the list of possible similar modifiers
-                                            similar_candidates = self.get_lists_with_gesture(modifier,self.similar_modifiers)
-                                            # Get the modifier that has the matching context from the list
-                                            replaced_command = [cmd for cmd in similar_candidates if \
-                                                                cmd.split("_")[0]==self.current_context_num]
-                                            if len(replaced_command) > 0:
-                                                replaced_command = replaced_command[0]
-                                                self.modifier_replaced += 1
-                                                self.command = replaced_command
-                                            else:
-                                                self.context_action_err()
-                                                return None
+                                    else:
+                                        self.context_action_err()
+                                        return None
 			# If the modifier is inconsistent with the context:
 			else:
+                            print "INCONSISTENT"#delete
                             self.context_action_err()
                             return None
 
@@ -125,8 +131,9 @@ class SynapseCommand():
 		# TODO maybe we want to pull the previous context but it seems
 		# that te mental model might be too much.
 		else:
-			self.command = rcv_command
-			self.context = None
+                    print "Valid Command without context" #Delete
+                    self.command = rcv_command
+                    self.context = None
 
                 self.prev_commands.append(self.command)
 		return self.command
@@ -152,14 +159,26 @@ if __name__ == '__main__':
     for comand in comand_list:
         print syn_command.get_command(comand)
 
+    print "######TEST 2###### "
     ### TEST 2 ###
     # modifier does not match context but it can be replaced by a similar modifier
+    # it should replace all of the 6_* commands onto 5_* commands
+    syn_command = SynapseCommand('L3','test')
+    comand_list = ["5_0", "6_1", "6_2", "6_1", "4_0", "4_1", "4_2"]
+    for comand in comand_list:
+        print syn_command.get_command(comand)
 
     ### TEST 3 ###
     # modifier does not match context but it can be replaced by a repeaded gesture
 
     ### TEST 4 ###
     # modifier and gesture dont match.
+    # gesture without context is made.
+    print "######TEST 3###### "
+    syn_command = SynapseCommand('L3','test')
+    comand_list = ["5_0", "8_1", "7_1", "6_2", "6_1", "4_0", "4_1", "4_2"]
+    for comand in comand_list:
+        print syn_command.get_command(comand)
 
 
 
