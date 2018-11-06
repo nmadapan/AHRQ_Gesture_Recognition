@@ -70,6 +70,9 @@ class SynapseAction:
                 ["Layout", "One-Panel", "Two-Panels", "Three-Panels", "Four-Panels"],
                 ["Contrast Presets", "I", "II"]]
 
+        # Synapse behavior parameters
+        self.menuSleep = 0.75
+
 
 # Closes/Minimizes every window and leaves active the windows
     # with the name "toOpen"
@@ -93,7 +96,7 @@ class SynapseAction:
                     if (not os.path.exists(path)): continue
                     for file in os.listdir(path):
                             if file.endswith(".png"): os.remove(os.path.join(path, file))
-            os.remove(self.calibrationPath)
+            # os.remove(self.calibrationPath)
 
 
     # Prompt notification if choosing to remove the images
@@ -289,97 +292,186 @@ class SynapseAction:
             f.close()
 
     def gestureCommands(self, sequence):
-            (commandID, actionID) = (-1, -1)
-            commandAction = sequence
+        (commandID, actionID) = (-1, -1)
+        commandAction = sequence
 
-            ##################################################################
-            ############# CHECK THAT THE COMAND IS VALID #####################
-            ##################################################################
-            if (sequence.find(" ") != -1):
-                    commandAction = sequence[:sequence.find(" ")]
-                    self.status["params"] = sequence[sequence.find(" ") + 1:]
-            elif (self.status["hold_action"] is None): self.status["params"] = ""
-            if (commandAction.find("_") != -1):
-                try:
-                    commandID = int(commandAction[:commandAction.find("_")])
-                    actionID = int(commandAction[commandAction.find("_") + 1:])
-                    command = self.actionList[commandID][0]
-                    action = self.actionList[commandID][actionID]
-                except ValueError:
-                    print "Unrecognized sequence of commands!\n"
-                    return False
-                except IndexError:
-                    print "Incorrect commands!\n"
-                    return False
-            else:
-                print "Invalid command entered!\n"
+        ##################################################################
+        ############# CHECK THAT THE COMAND IS VALID #####################
+        ##################################################################
+        if (sequence.find(" ") != -1):
+                commandAction = sequence[:sequence.find(" ")]
+                self.status["params"] = sequence[sequence.find(" ") + 1:]
+        elif (self.status["hold_action"] is None): self.status["params"] = ""
+        if (commandAction.find("_") != -1):
+            try:
+                commandID = int(commandAction[:commandAction.find("_")])
+                actionID = int(commandAction[commandAction.find("_") + 1:])
+                command = self.actionList[commandID][0]
+                action = self.actionList[commandID][actionID]
+            except ValueError:
+                print "Unrecognized sequence of commands!\n"
                 return False
-            ############# FINISH CHECKING  #####################
+            except IndexError:
+                print "Incorrect commands!\n"
+                return False
+        else:
+            print "Invalid command entered!\n"
+            return False
+        ############# FINISH CHECKING  #####################
 
-            if (self.status["defaultCommand"] != command): self.status["defaultCommand"] = None
-            if (self.status["group1_command"] != command): self.status["group1_command"] = None
-            if (self.status["defaultCommand"] is None and self.status["group1_command"] is None): auto.mouseUp()
+        if (self.status["defaultCommand"] != command): self.status["defaultCommand"] = None
+        if (self.status["group1_command"] != command): self.status["group1_command"] = None
+        if ((self.status["defaultCommand"] is None and self.status["group1_command"] is None) or
+                (actionID == 0)):
+            auto.mouseUp()
 
 
-            ####################################################
-            ################## ADMIN COMANDS ###################
-            ####################################################
+        ####################################################
+        ################## ADMIN COMANDS ###################
+        ####################################################
 
-            if (command == "Admin" and action != "Admin"):
-                    if (action == "Quit"):
-                            removeImagesPrompt()
-                            sys.exit(0)
-                    elif (action == "Get self.status"):
-                            print "------\nself.status\n------"
-                            print "Previous action: " + self.status["prev_action"]
-                            print "Panel Dimension: " + str(self.status["panel_dim"][0]) + 'x' + str(self.status["panel_dim"][1])
-                            print "Active panel: " + str(self.status["active_panel"][0]) + 'x' + str(self.status["active_panel"][1])
-                            print "Patient information window: " + ("opened" if self.status["window_open"] else "closed")
-                            print ""
-                    elif (action == "Switch ToUse"):
-                            self.status["toUse"] = ("key_shorts" if self.status["toUse"] == "img_recog" else "SCA_Images")
-                    elif (action == "Reset"):
-                            if (self.status["params"] == "All"):
-                                    calibration.resetAll()
-                            if (self.status["params"] == "TopBar"):
-                                    calibration.resetTopBarHeight()
-                            elif (self.status["params"] == "RightClick"):
-                                    calibration.resetRightClick()
-                            elif (self.status["params"] == "Presets"):
-                                    calibration.resetRightOptions("presets", 8.5)
-                            elif (self.status["params"] == "ScaleRotateFlip"):
-                                    calibration.resetRightOptions("scaleRotateFlip", 9.5)
-                            (self.status["topBarHeight"], self.status["optionH"], self.status["rightHR"], self.status["rightPlus"], self.status["rightIcons"],
-                                    self.status["rightOffset"], self.status["rightBoxW"], self.status["rightBoxH"]) = calibration.getAll()
-                            f = open(calibrationPath, "w")
-                            f.write(json.dumps(self.status, indent=4, separators=(',', ': ')))
-                            f.close()
-                            if (self.status["hold_action"] is not None):
-                                    sequence = self.status["hold_action"]
-                                    self.status["hold_action"] = "held"
-                                    return gestureCommands(sequence)
+        if (command == "Admin" and action != "Admin"):
+            if (action == "Quit"):
+                removeImagesPrompt()
+                sys.exit(0)
+            elif (action == "Get self.status"):
+                print "------\nself.status\n------"
+                print "Previous action: " + self.status["prev_action"]
+                print "Panel Dimension: " + str(self.status["panel_dim"][0]) + 'x' + str(self.status["panel_dim"][1])
+                print "Active panel: " + str(self.status["active_panel"][0]) + 'x' + str(self.status["active_panel"][1])
+                print "Patient information window: " + ("opened" if self.status["window_open"] else "closed")
+                print ""
+            # elif (action == "Switch ToUse"):
+                    # self.status["toUse"] = ("key_shorts" if self.status["toUse"] == "img_recog" else "SCA_Images")
+            elif (action == "Reset"):
+                if (self.status["params"] == "All"):
+                    calibration.resetAll()
+                if (self.status["params"] == "TopBar"):
+                    calibration.resetTopBarHeight()
+                elif (self.status["params"] == "RightClick"):
+                    calibration.resetRightClick()
+                elif (self.status["params"] == "Presets"):
+                    calibration.resetRightOptions("presets", 8.5)
+                elif (self.status["params"] == "ScaleRotateFlip"):
+                    calibration.resetRightOptions("scaleRotateFlip", 9.5)
+                (self.status["topBarHeight"], self.status["optionH"], self.status["rightHR"], self.status["rightPlus"], self.status["rightIcons"],
+                    self.status["rightOffset"], self.status["rightBoxW"], self.status["rightBoxH"]) = calibration.getAll()
+                f = open(calibrationPath, "w")
+                f.write(json.dumps(self.status, indent=4, separators=(',', ': ')))
+                f.close()
+                if (self.status["hold_action"] is not None):
+                    sequence = self.status["hold_action"]
+                    self.status["hold_action"] = "held"
+                    return gestureCommands(sequence)
 
-            ####################################################
-            ###################### SCROLL ######################
-            ####################################################
-            elif (command == "Scroll" and action != "Scroll"):
+        ####################################################
+        ###################### SCROLL ######################
+        ####################################################
+        elif (command == "Scroll" and action != "Scroll"):
+            self.moveToActivePanel()
+            auto.click()
+            scrollAmount = (50 if self.status["params"] == "" else int(self.status["params"]))
+            auto.PAUSE = 0
+            for i in range(scrollAmount): auto.press("right" if action == "Up" else "left")
+            auto.PAUSE = 0.25
+            auto.click()
+
+        ####################################################
+        ####################### FLIP #######################
+        ####################################################
+        elif (command == "Flip" and action != "Flip"):
+             self.moveToActivePanel()
+             auto.click(button='right')
+             auto.PAUSE = 0.1
+             auto.press("0")
+             auto.press("s")
+             time.sleep(self.menuSleep)
+             auto.press("0")
+             auto.press("h" if action == "Horizontal" else "v")
+             auto.PAUSE = 0.25
+
+        ####################################################
+        ##################### ROTATE #######################
+        ####################################################
+        elif (command == "Rotate" and action != "Rotate"):
+            self.moveToActivePanel()
+            auto.click(button='right')
+            auto.PAUSE = 0.1
+            auto.press("0")
+            auto.press("s")
+            time.sleep(self.menuSleep)
+            auto.press("0")
+            auto.press("r")
+            if (action != "Clockwise"): auto.press("down")
+            auto.press("enter")
+            auto.PAUSE = 0.25
+
+        ####################################################
+        ##################### ZOOM #########################
+        ####################################################
+
+        elif (command == "Zoom"):
+            splitParams = self.status["params"].split("_")
+            if (self.status["defaultCommand"] is None):
+                if (self.status["group1_command"] is None):
                     self.moveToActivePanel()
                     auto.click()
-                    scrollAmount = (50 if self.status["params"] == "" else int(self.status["params"]))
-                    auto.PAUSE = 0
-                    for i in range(scrollAmount): auto.press("right" if action == "Up" else "left")
-                    auto.PAUSE = 0.25
-                    auto.click()
+                    auto.click(button='right')
+                    auto.press("z")
+                if (command == action):
+                    self.status["defaultCommand"] = command
+                    auto.mouseDown()
+                else:
+                    if (len(splitParams) % 2 == 1 and self.status["params"] != ""):
+                        level = (-1 * int(splitParams[0]) if action == "In" else int([0]))
+                    else: level = (-100 if action == "In" else 100)
+                    if (len(splitParams) <= 1): (moveToX, moveToY) = auto.position()
+                    else:
+                        (moveToX, moveToY) = (int(splitParams[len(splitParams) - 2]), int(splitParams[len(splitParams) - 1]))
+                    auto.moveTo(moveToX, moveToY)
+                    auto.mouseDown()
+                    auto.moveTo(moveToX, moveToY + level)
+                    #auto.mouseUp()
+                    self.status["group1_command"] = command
+            else:
+                (oldLocationX, oldLocationY) = auto.position()
+                if (len(splitParams) == 1):
+                    if (self.status["params"] != ""):
+                        level = (-1 * int(splitParams[0]) if action == "In" else int(splitParams[0]))
+                    else: level = (-100 if action == "In" else 100)
+                else:
+                    print "For " + command + ", you must pass a maximum of one argument."
+                    return False
+                auto.moveTo(oldLocationX, oldLocationY + level)
 
+        return True
 if __name__ == "__main__":
     syn_action = SynapseAction()
     # set up the signal handler
     signal.signal(signal.SIGINT, syn_action.signalHandler)
     # Run the program
     syn_action.calibrate()
-    syn_action.resetTopBarHeight()
-    auto.hotkey("command", "enter")
+    command_list = ["1_0", "1_1", "1_2", "1_1"]
+    command_list = ["2_0", "2_1", "2_2", "2_1", "2_1", "2_2", "2_0","3_0", "3_1", "3_2", "3_1", "3_1", "3_2", "3_0"]
+    command_list = ["4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0"]
 
+    for cmd in command_list:
+         success = syn_action.gestureCommands(cmd)
+         print "execution of command", cmd, "flag:", success
+         time.sleep(2)
+
+    # syn_action.resetTopBarHeight()
+    # OPEN PATIENT INFO  WINDOW
+    # TODO: ONLY WORKS if the windows in in focus from before. FIGURE OUT HOW TO FOCUS THE WINDOW AUTOMATICALLY ON THE CALIBRATON
+    # syn_action.moveToActivePanel()
+    # auto.click()
+    # auto.hotkey("command", "optionLeft", "e")
+    # time.sleep(5)
+    # # CLOSE WINDOW: warning, closes any window on focus, so it's dangerous
+    # auto.hotkey("command", "optionLeft", "f4")
+    # time.sleep(1)
+
+    auto.hotkey("command", "enter")
     while True: continue
 
 
