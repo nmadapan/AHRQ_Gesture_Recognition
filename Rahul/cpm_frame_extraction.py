@@ -4,6 +4,7 @@ import sys,os, time
 import cv2
 from copy import copy, deepcopy
 from utils import *
+import glob
 
 left_hand_id = 7
 left_wrist_id = 6
@@ -236,4 +237,4 @@ def generate_data():
             # print os.path.basename(rgb_skel_file),os.path.basename(rgb_ts_file),os.path.basename(skel_ts_file),os.path.basename(gesture_video)
 
 
-generate_data()
+# generate_data()

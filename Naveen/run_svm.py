@@ -14,13 +14,13 @@ plt.rcdefaults()
 ## Initialization ##
 ####################
 ## Skeleton
-skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L6'
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
 # skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
 
 ## Fingers
 ENABLE_FINGERS = False
 pickle_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\fingers_pkl'
-fingers_pkl_fname = os.path.basename(skel_folder_path)+'_fingers_from_hand_base.pkl'
+fingers_pkl_fname = os.path.basename(skel_folder_path)+'_fingers_from_hand_base_no_subsample.pkl'
 #######################
 
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')

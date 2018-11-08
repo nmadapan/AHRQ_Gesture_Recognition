@@ -30,12 +30,13 @@ PORT_CPM = 3000
 
 ## Flags
 ENABLE_SYNAPSE_SOCKET = False
-ENABLE_CPM_SOCKET = False
+ENABLE_CPM_SOCKET = True
 # If True, write data to disk
-DATA_WRITE_FLAG = True
+DATA_WRITE_FLAG = False
+DEBUG = True
 
 ## IMPORTANT
-LEXICON_ID = 'L6'
+LEXICON_ID = 'L2'
 SUBJECT_ID = 'S1'
 
 ## If a gesture has less than 20 frames ignore.
@@ -227,6 +228,9 @@ class Realtime:
 		skel_pts = None
 		color_skel_pts = None
 
+		body_frame_count = 0
+		rgb_frame_count = 0
+
 		while(self.fl_alive):
 			# if(self.fl_synapse_running): continue # If synapse is running, stop producing the rgb/skeleton data
 			# elif(self.fl_skel_ready and self.fl_cpm_ready): continue # If previous skeleton features and cpm features are not used, stop producing.
@@ -262,12 +266,15 @@ class Realtime:
 					print('Gesture started :)')
 				if (left_y < start_y_coo and right_y < start_y_coo) and self.fl_gest_started:
 					self.fl_gest_started = False
+					if(DEBUG): print('True no. of frames: Body -', body_frame_count, ' RGB - ', rgb_frame_count)
+					rgb_frame_count, body_frame_count = 0, 0
 					print('Gesture ended :(')
 
 				## When you want to wait() based on a shared variables, make sure to include them in the thread.Condition.
 				with self.cond_body_skel: # Producer. Consumers will wait for the notify call #
 					# Update the skel buffer after gesture is started
 					if(self.fl_gest_started):
+						body_frame_count += 1
 						ts = int(time.time()*100)
 						# Update body skel buffers
 						self.buf_body_skel.append((ts, [right_status, left_status], skel_col_reduce(skel_pts)))
@@ -283,6 +290,7 @@ class Realtime:
 				## Update RGB image buffer after gesture is started
 				with self.cond_rgb: # Producer. Consumers need to wait for producer's 'notify' call
 					if self.fl_gest_started:
+						rgb_frame_count += 1
 						ts = int(time.time()*100)
 						self.buf_rgb.append((ts, self.kr.color_image))
 						self.buf_rgb.pop(0)
@@ -324,6 +332,7 @@ class Realtime:
 				frame_count += 1
 			elif first_time:
 				first_time = False
+				if(DEBUG): print('Actual no. of frames: Body -', frame_count)
 				frame_count = 0
 				self.skel_instance = deepcopy(skel_frames) # [(ts1, ([right_x, y, z], [left_x, y, z])), ...]
 				skel_frames = []
@@ -399,14 +408,14 @@ class Realtime:
 					r_fing_data = self.client_cpm.sock_recv(display = False)
 					r_finger_lengths = str_to_nparray(r_fing_data, dlim = '_').tolist()
 				else:
-					r_finger_lengths = np.zeros(self.feat_ext.num_fingers)
+					r_finger_lengths = np.zeros(self.feat_ext.num_fingers).tolist()
 				# Left hand
 				if(left_status):
 					self.client_cpm.sock.send(l_fname)
 					l_fing_data = self.client_cpm.sock_recv(display = False)
 					l_finger_lengths = str_to_nparray(l_fing_data, dlim = '_').tolist()
 				else:
-					l_finger_lengths = np.zeros(self.feat_ext.num_fingers)
+					l_finger_lengths = np.zeros(self.feat_ext.num_fingers).tolist()
 
 				## Step 4: Put the finger lengths of right and left hand together and append it to cpm_instance.
 				cpm_instance.append((rgb_frame[0], (r_finger_lengths, l_finger_lengths)))
@@ -415,6 +424,7 @@ class Realtime:
 
 			if not self.fl_gest_started and first_time:
 				first_time = False
+				if(DEBUG): print('Actual no. of frames: RGB -', frame_count)
 				frame_count = 0
 				self.cpm_instance = deepcopy(cpm_instance) # [(ts1, ([left_f1, f2, .., f5], [right_f1, f2, .., f5])), ...]
 				cpm_instance = []
@@ -490,7 +500,9 @@ class Realtime:
 					self.fl_skel_ready = False
 					if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False
 					continue
+				if(DEBUG): print('No. of frames in body skel feature: ', len(raw_skel_frames))
 				dom_rhand, final_skel_inst = self.feat_ext.generate_features_realtime(list(raw_skel_frames))
+				if(DEBUG): print('Size of body skel feature: ', final_skel_inst.shape)
 				self.gesture_count += 1
 				#####################
 
@@ -501,6 +513,7 @@ class Realtime:
 					####################
 					# Detuple cpm_instance
 					cpm_ts, raw_cpm_frames = zip(*self.cpm_instance)
+					if(DEBUG): print('No. of frames in CPM feature: ', len(raw_cpm_frames))
 					# Detuple CPM frames int right and left
 					right_cpm, left_cpm = zip(*raw_cpm_frames)
 					# Merge CPM features based on dom_rhand
@@ -509,9 +522,11 @@ class Realtime:
 					# Synchronize rgb and skel time stamps
 					_, sync_cpm_ts = sync_ts(skel_ts, cpm_ts)
 					# Interpolate so that rgb and skel same no. of frames
-					cpm_inst = smart_interpn(np.array(cpm_inst), sync_cpm_ts, kind = 'copy') # Change kind to 'linear' for linear interpolation
+					# cpm_inst = smart_interpn(cpm_inst, sync_cpm_ts, kind = 'copy') # Change kind to 'linear' for linear interpolation
+					cpm_inst = cpm_inst[sync_cpm_ts, :]
 					# Interpolate CPM features to fixed_num_frames
 					final_cpm_inst = interpn(cpm_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
+					if(DEBUG): print('Size of CPM feature: ', final_cpm_inst.shape)
 					#####################
 
 					## Append skel features followed by CPM features
