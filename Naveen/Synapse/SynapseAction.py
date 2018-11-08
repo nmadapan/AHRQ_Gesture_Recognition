@@ -28,14 +28,14 @@ class SynapseAction:
         self.scale = self.nativeW / self.width
         # Get the Synapse window
         (self.macH, self.viewer, self.prompt) = ((0, "\\\\Remote", "Command Prompt") if platform.system() == "Windows"
-                else (44.0 * self.nativeW / 2880.0, "Citrix Viewer", "Terminal"))
+            else (44.0 * self.nativeW / 2880.0, "Citrix Viewer", "Terminal"))
         # Border around the window
         self.border = (20.0 * self.nativeW / 2880.0) + (4.0 * self.scale)
         self.boundBoxNoDash = (self.border, self.macH + self.border, self.nativeW - self.border, self.nativeH - self.border)
         # Get the path for the calibration file
         if calibrationPath is None:
             self.calibrationPath = "calibration" + "_".join(list(str(e) for \
-                    e in [self.width, self.height, self.scale])).replace(".", "-") + ".txt"
+                e in [self.width, self.height, self.scale])).replace(".", "-") + ".txt"
 
         # Variables of the synapse window
         # TODO all of this variables should probably go. Check that the code that uses them
@@ -50,25 +50,26 @@ class SynapseAction:
 
         # Status of the system:
         self.status = {"prev_action": "", "panel_dim": [1, 1],
-                "window_open": False, "active_panel": [1, 1],
-                "rulers": {"len": 0}, "toUse": "Keyboard",
-                "hold_action": None, "topBarHeight": None, "defaultCommand": None, "group1_command": None,
-                "firstW": None, "firstH": None, "jumpW": None,"jumpH": None}
+            "window_open": False, "active_panel": [1, 1],
+            "rulers": {"len": 0}, "toUse": "Keyboard",
+            # "hold_action": None,
+            "topBarHeight": None, "defaultCommand": None, "group1_command": None,
+            "firstW": None, "firstH": None, "jumpW": None,"jumpH": None}
 
         # Command action list. The first row is an internal action list for self management
 
         self.actionList = [["Admin", "Quit", "Get Status", "Switch ToUse", "Reset"],
-                ["Scroll", "Up", "Down"],
-                ["Flip", "Horizontal", "Vertical"],
-                ["Rotate", "Clockwise", "Counter-Clockwise"],
-                ["Zoom", "In", "Out"],
-                ["Switch Panel", "Left", "Right", "Up", "Down"],
-                ["Pan", "Left", "Right", "Up", "Down"],
-                ["Ruler", "Measure", "Delete"],
-                ["Window", "Open", "Close"],
-                ["Manual Contrast", "Increase", "Decrease"],
-                ["Layout", "One-Panel", "Two-Panels", "Three-Panels", "Four-Panels"],
-                ["Contrast Presets", "I", "II"]]
+            ["Scroll", "Up", "Down"],
+            ["Flip", "Horizontal", "Vertical"],
+            ["Rotate", "Clockwise", "Counter-Clockwise"],
+            ["Zoom", "In", "Out"],
+            ["Switch Panel", "Left", "Right", "Up", "Down"],
+            ["Pan", "Left", "Right", "Up", "Down"],
+            ["Ruler", "Measure", "Delete"],
+            ["Window", "Open", "Close"],
+            ["Manual Contrast", "Increase", "Decrease"],
+            ["Layout", "One-Panel", "Two-Panels", "Three-Panels", "Four-Panels"],
+            ["Contrast Presets", "I", "II"]]
 
         # Synapse behavior parameters
         self.menuSleep = 0.75
@@ -76,57 +77,60 @@ class SynapseAction:
 
 # Closes/Minimizes every window and leaves active the windows
     # with the name "toOpen"
-    def openWindow(self, toOpen):
-            # Look into "start" command for Windows
-            if (platform.system() == "Windows"):
-                    window_names = auto.getWindows().keys()
-                    for window_name in window_names:
-                            auto.getWindow(window_name).minimize()
-                            if (toOpen in window_name):
-                                    xef_window_name = window_name
-                    xef_window = auto.getWindow(xef_window_name)
+    def openWindow(self, toOpen, windowOpen=False):
+        # Look into "start" command for Windows
+        if (platform.system() == "Windows"):
+            window_names = auto.getWindows().keys()
+            for window_name in window_names:
+                auto.getWindow(window_name).minimize()
+                if (toOpen in window_name and (windowOpen or "Patient Information" not in window_name)):
+                    xef_window = auto.getWindow(window_name)
                     xef_window.maximize()
-            else: os.system("open -a " + toOpen.replace(" ", "\\ "))
+                    xef_window.minimize()
+                    xef_window.maximize()
+                    break
+        else: os.system("open -a " + toOpen.replace(" ", "\\ "))
 
     # Remove images generated in the process of running the program
     def removeImages(self):
-            paths = [os.path.join("SCA_Images", "RightClick"), os.path.join("SCA_Images", "Window", "Closes"),
-                    os.path.join("SCA_Images", "Window"), os.path.join("SCA_Images", "Layout"), os.path.join("SCA_Images")]
-            for path in paths:
-                    if (not os.path.exists(path)): continue
-                    for file in os.listdir(path):
-                            if file.endswith(".png"): os.remove(os.path.join(path, file))
-            # os.remove(self.calibrationPath)
+        paths = [os.path.join("SCA_Images", "RightClick"), os.path.join("SCA_Images", "Window", "Closes"),
+            os.path.join("SCA_Images", "Window"), os.path.join("SCA_Images", "Layout"), os.path.join("SCA_Images")]
+        for path in paths:
+            if (not os.path.exists(path)): continue
+            for file in os.listdir(path):
+                    if file.endswith(".png"): os.remove(os.path.join(path, file))
+        # os.remove(self.calibrationPath)
 
 
     # Prompt notification if choosing to remove the images
     def removeImagesPrompt(self):
-            (self.status["hold_action"], self.status["defaultCommand"], self.status["group1_command"]) = (None, None, None)
+            #(self.status["hold_action"], self.status["defaultCommand"], self.status["group1_command"]) = (None, None, None)
+            (self.status["defaultCommand"], self.status["group1_command"]) = (None, None)
             f = open(self.calibrationPath, "w")
             f.write(json.dumps(self.status, indent=4, separators=(',', ': ')))
             f.close()
             while True:
-                    ans = raw_input("Do you want to remove the images saved in the folder? (y/n)")
-                    if (len(ans) == 1 and (ans.lower() == "y" or ans.lower() == "n")):
-                            if ans.lower() == "y": self.removeImages()
-                            break
-                    else: print "Unrecognized request, please enter either 'y' or 'n'"
+                ans = raw_input("Do you want to remove the images saved in the folder? (y/n)")
+                if (len(ans) == 1 and (ans.lower() == "y" or ans.lower() == "n")):
+                        if ans.lower() == "y": self.removeImages()
+                        break
+                else: print "Unrecognized request, please enter either 'y' or 'n'"
             print ""
 
     def get_bbox(self, before, after, thresholds = None, draw = False):
             if (type(before) != type(after)):
-                    return ValueError('before and after should have same type')
+                return ValueError('before and after should have same type')
             if (isinstance(before, str)):
-                    if (not os.path.isfile(before)):
-                            sys.exit(before + ' does NOT exist')
-                    if (not os.path.isfile(after)):
-                            sys.exit(after + ' does NOT exist')
-                    before = cv2.imread(before)
-                    after = cv2.imread(after)
+                if (not os.path.isfile(before)):
+                    sys.exit(before + ' does NOT exist')
+                if (not os.path.isfile(after)):
+                    sys.exit(after + ' does NOT exist')
+                before = cv2.imread(before)
+                after = cv2.imread(after)
             elif (isinstance(before, np.ndarray)):
-                    assert before.ndim == 3 and after.ndim == 3, 'before and after needs to be rgb arrays'
-                    assert (before.shape[0] == after.shape[0]) and (before.shape[1] == after.shape[1]),\
-                             'before and after arrays should be of same dimension'
+                assert before.ndim == 3 and after.ndim == 3, 'before and after needs to be rgb arrays'
+                assert (before.shape[0] == after.shape[0]) and (before.shape[1] == after.shape[1]),\
+                    'before and after arrays should be of same dimension'
 
             dif = cv2.cvtColor(np.uint8(np.abs(after - before)), cv2.COLOR_BGR2GRAY)
             _, dif = cv2.threshold(dif,127,255,0)
@@ -135,12 +139,12 @@ class SynapseAction:
             y_sum = np.mean(dif, axis = 1)
 
             if (thresholds == None):
-                    x_thresh = np.mean(x_sum)
-                    #y_thresh = x_thresh
-                    y_thresh = np.mean(y_sum)
+                x_thresh = np.mean(x_sum)
+                #y_thresh = x_thresh
+                y_thresh = np.mean(y_sum)
             else:
-                    x_thresh = thresholds[0]
-                    y_thresh = thresholds[1]
+                x_thresh = thresholds[0]
+                y_thresh = thresholds[1]
 
             x_sum, y_sum = x_sum > x_thresh, y_sum > y_thresh
 
@@ -148,9 +152,9 @@ class SynapseAction:
             y1, y2 = np.argmax(y_sum), y_sum.size - np.argmax(np.flip(y_sum, 0)) - 1
 
             if (draw):
-                    after = cv2.rectangle(after,(x1,y1),(x2,y2),(0,255,0),4)
-                    cv2.imshow('Frame', cv2.resize(after, None, fx=0.5, fy=0.5))
-                    cv2.waitKey(0)
+                after = cv2.rectangle(after,(x1,y1),(x2,y2),(0,255,0),4)
+                cv2.imshow('Frame', cv2.resize(after, None, fx=0.5, fy=0.5))
+                cv2.waitKey(0)
 
             return (x1, y1, x2, y2)
 
@@ -172,13 +176,13 @@ class SynapseAction:
             time.sleep(3)
             auto.click()
             ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.nativeH)).\
-                 save(os.path.join("SCA_Images", "fullscreen.png"))
+                save(os.path.join("SCA_Images", "fullscreen.png"))
             auto.moveTo(auto.position()[0], 0)
             time.sleep(3)
             ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.nativeH)).\
-                    save(os.path.join("SCA_Images", "afterTopBar.png"))
+                save(os.path.join("SCA_Images", "afterTopBar.png"))
             topBarBox = self.get_bbox(os.path.join("SCA_Images", "fullscreen.png"), \
-                    os.path.join("SCA_Images", "afterTopBar.png"))
+                os.path.join("SCA_Images", "afterTopBar.png"))
             self.status["topBarHeight"] = topBarBox[3] - topBarBox[1] + 1
             ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.status["topBarHeight"] + self.macH)).save(os.path.join("SCA_Images", "topBar.png"))
 
@@ -218,13 +222,13 @@ class SynapseAction:
             located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
             if (located is not None): (rightx1, righty1, w, h) = located
             else:
-                    print "Cannot find " + option + " on calibration reset. Attempting reset on rightClick."
-                    self.resetRightClick()
-                    located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
-                    if (located is not None): (rightx1, righty1, w, h) = located
-                    else:
-                            print "Failed to reset " + option + "."
-                            return
+                print "Cannot find " + option + " on calibration reset. Attempting reset on rightClick."
+                self.resetRightClick()
+                located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
+                if (located is not None): (rightx1, righty1, w, h) = located
+                else:
+                    print "Failed to reset " + option + "."
+                    return
             moveToX = (rightx1 + w / 2.0) / self.scale
             moveToY = (righty1 / self.scale) + (self.optionH * offset) + self.rightHR
             auto.moveTo(moveToX, moveToY)
@@ -262,12 +266,12 @@ class SynapseAction:
     def findRightClick(self,offset):
             located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
             if (located is not None):
-                    (x1, y1, w, h) = located
-                    auto.moveTo((x1 / self.scale) + (w / 2.0) * self.scale, (y1 + (offset / 1000.0) * self.status["rightBoxH"]) / self.scale)
-                    return True
+                (x1, y1, w, h) = located
+                auto.moveTo((x1 / self.scale) + (w / 2.0) * self.scale, (y1 + (offset / 1000.0) * self.status["rightBoxH"]) / self.scale)
+                return True
             else:
-                    print "Error when performing right click function."
-                    return False
+                print "Error when performing right click function."
+                return False
 
     # Handles the killing signals of the class
     def signalHandler(self, sig, frame):
@@ -296,12 +300,13 @@ class SynapseAction:
         commandAction = sequence
 
         ##################################################################
-        ############# CHECK THAT THE COMAND IS VALID #####################
+        ############# CHECK THAT THE COMMAND IS VALID ####################
         ##################################################################
         if (sequence.find(" ") != -1):
-                commandAction = sequence[:sequence.find(" ")]
-                self.status["params"] = sequence[sequence.find(" ") + 1:]
-        elif (self.status["hold_action"] is None): self.status["params"] = ""
+            commandAction = sequence[:sequence.find(" ")]
+            self.status["params"] = sequence[sequence.find(" ") + 1:]
+        #elif (self.status["hold_action"] is None): self.status["params"] = ""
+        else: self.status["params"] = ""
         if (commandAction.find("_") != -1):
             try:
                 commandID = int(commandAction[:commandAction.find("_")])
@@ -322,15 +327,15 @@ class SynapseAction:
         # RESET CONTEXT AND MODIFIER
         if (self.status["defaultCommand"] != command and self.status["defaultCommand"] is not None):
             # if is changing from one command to another and not from a reset`
-            print "reseting context", self.status["defaultCommand"],  command
+            print "resetting context", self.status["defaultCommand"],  command
             self.status["defaultCommand"] = None
-            auto.press("esc")
+            auto.mouseUp()
         if (self.status["group1_command"] != command and self.status["group1_command"] is not None):
             # if is changing from one command to another and not from a reset`
-            print "reseting modifier", self.status["group1_command"], command
+            print "resetting modifier", self.status["group1_command"], command
             self.status["defaultCommand"] = None
             self.status["group1_command"] = None
-            auto.press("esc")
+            auto.mouseUp()
 
 
         ####################################################
@@ -341,15 +346,13 @@ class SynapseAction:
             if (action == "Quit"):
                 removeImagesPrompt()
                 sys.exit(0)
-            elif (action == "Get self.status"):
+            elif (action == "Get Status"):
                 print "------\nself.status\n------"
                 print "Previous action: " + self.status["prev_action"]
                 print "Panel Dimension: " + str(self.status["panel_dim"][0]) + 'x' + str(self.status["panel_dim"][1])
                 print "Active panel: " + str(self.status["active_panel"][0]) + 'x' + str(self.status["active_panel"][1])
                 print "Patient information window: " + ("opened" if self.status["window_open"] else "closed")
                 print ""
-            # elif (action == "Switch ToUse"):
-                    # self.status["toUse"] = ("key_shorts" if self.status["toUse"] == "img_recog" else "SCA_Images")
             elif (action == "Reset"):
                 if (self.status["params"] == "All"):
                     calibration.resetAll()
@@ -366,14 +369,15 @@ class SynapseAction:
                 f = open(calibrationPath, "w")
                 f.write(json.dumps(self.status, indent=4, separators=(',', ': ')))
                 f.close()
-                if (self.status["hold_action"] is not None):
-                    sequence = self.status["hold_action"]
-                    self.status["hold_action"] = "held"
-                    return gestureCommands(sequence)
+                # if (self.status["hold_action"] is not None):
+                #     sequence = self.status["hold_action"]
+                #     self.status["hold_action"] = "held"
+                #     return gestureCommands(sequence)
 
         ####################################################
         ###################### SCROLL ######################
         ####################################################
+
         elif (command == "Scroll" and action != "Scroll"):
             self.moveToActivePanel()
             auto.click()
@@ -386,20 +390,22 @@ class SynapseAction:
         ####################################################
         ####################### FLIP #######################
         ####################################################
+
         elif (command == "Flip" and action != "Flip"):
-             self.moveToActivePanel()
-             auto.click(button='right')
-             auto.PAUSE = 0.1
-             auto.press("0")
-             auto.press("s")
-             time.sleep(self.menuSleep)
-             auto.press("0")
-             auto.press("h" if action == "Horizontal" else "v")
-             auto.PAUSE = 0.25
+            self.moveToActivePanel()
+            auto.click(button='right')
+            auto.PAUSE = 0.1
+            auto.press("0")
+            auto.press("s")
+            time.sleep(self.menuSleep)
+            auto.press("0")
+            auto.press("h" if action == "Horizontal" else "v")
+            auto.PAUSE = 0.25
 
         ####################################################
         ##################### ROTATE #######################
         ####################################################
+
         elif (command == "Rotate" and action != "Rotate"):
             self.moveToActivePanel()
             auto.click(button='right')
@@ -423,14 +429,14 @@ class SynapseAction:
             # or an a modifier alone
             if actionID == 0 or\
             (self.status["defaultCommand"] is None and commandID !=0):
-                    self.moveToActivePanel()
-                    auto.click()
-                    auto.click(button='right')
-                    auto.PAUSE = 0.1
-                    auto.press("z")
-                    auto.mouseDown()
-                    # add the context if we are just performing a context
-                    self.status["defaultCommand"] = command
+                self.moveToActivePanel()
+                auto.click()
+                auto.click(button='right')
+                auto.PAUSE = 0.1
+                auto.press("z")
+                auto.mouseDown()
+                # add the context if we are just performing a context
+                self.status["defaultCommand"] = command
             # if we are performing a zoom in or a zoom out
             if actionID != 0:
                 # Get the level, acording to the params or default
@@ -452,19 +458,19 @@ class SynapseAction:
         ################## SWITCH PANEL ####################
         ####################################################
 
-	elif (command == "Switch Panel" and action != "Switch Panel"):
-		ind = int(actionID / 3)
-		self.status["active_panel"][ind] += (-1 if action == "Left" or action == "Up" else 1)
-		self.status["active_panel"][ind] = max(1, self.status["active_panel"][ind])
-		self.status["active_panel"][ind] = min(self.status["active_panel"][ind], self.status["panel_dim"])
-		self.moveToActivePanel()
-		auto.click()
+        elif (command == "Switch Panel" and action != "Switch Panel"):
+            ind = int(actionID / 3)
+            self.status["active_panel"][ind] += (-1 if action == "Left" or action == "Up" else 1)
+            self.status["active_panel"][ind] = max(1, self.status["active_panel"][ind])
+            self.status["active_panel"][ind] = min(self.status["active_panel"][ind], self.status["panel_dim"])
+            self.moveToActivePanel()
+            auto.click()
 
         ####################################################
         ###################### PAN #########################
         ####################################################
 
-	elif (command == "Pan"):
+        elif (command == "Pan"):
             splitParams = self.status["params"].split("_")
             # If performing just the context
             # or an a modifier alone
@@ -485,33 +491,76 @@ class SynapseAction:
 
             # if we are performing a pan modifier
             if actionID != 0:
-                    if (len(splitParams) % 2 == 1 and self.status["params"] != ""):
-                            level = (int(splitParams[0]) if action == "Left" or action == "Up" else -1 * int(splitParams[0]))
-                    else:
-                        level = (40 if action == "Left" or action == "Up" else -40)
-                    if (len(splitParams) <= 1):
-                        (moveToX, moveToY) = auto.position()
-                    else:
-                        (moveToX, moveToY) = (int(splitParams[len(splitParams) - 2]), int(splitParams[len(splitParams) - 1]))
+                if (len(splitParams) % 2 == 1 and self.status["params"] != ""):
+                    level = (int(splitParams[0]) if action == "Left" or action == "Up" else -1 * int(splitParams[0]))
+                else:
+                    level = (40 if action == "Left" or action == "Up" else -40)
+                if (len(splitParams) <= 1):
+                    (moveToX, moveToY) = auto.position()
+                else:
+                    (moveToX, moveToY) = (int(splitParams[len(splitParams) - 2]), int(splitParams[len(splitParams) - 1]))
 
-                    if (action == "Left" or action == "Right"):
-                        (toMoveX, toMoveY) = (moveToX + level, moveToY)
-                    else:
-                        (toMoveX, toMoveY) = (moveToX, moveToY + level)
-                    auto.moveTo(moveToX, moveToY)
-                    if self.status["defaultCommand"] is not None:
-                        auto.mouseDown()
-                    auto.moveTo(toMoveX, toMoveY)
-                    #auto.mouseUp()
-                    self.status["group1_command"] = command
+                if (action == "Left" or action == "Right"):
+                    (toMoveX, toMoveY) = (moveToX + level, moveToY)
+                else:
+                    (toMoveX, toMoveY) = (moveToX, moveToY + level)
+                auto.moveTo(moveToX, moveToY)
+                if self.status["defaultCommand"] is not None:
+                    auto.mouseDown()
+                auto.moveTo(toMoveX, toMoveY)
+                self.status["group1_command"] = command
 
         ####################################################
         ###################### WINDOW ######################
         ####################################################
 
+        # General way it should work, but it would have issues.
+        # For now, don't test Window Open/Close (no 8_1 or 8_2)
+        elif (command == "Window" and action != "Window"):
+            if (action == "Open" and not self.status["window_open"]):
+                if (platform.system() == "Windows"): auto.hotkey("win", "alt", "e")
+                else: auto.hotkey("command", "altright", "e")
+                time.sleep(5)
+            elif (action == "Close" and self.status["window_open"]):
+                if (platform.system() == "Windows"):
+                    self.openWindow(self.viewer, True)
+                    auto.hotkey("fn", "alt", "f4")
+                else: auto.hotkey("command", "altright", "f4")
+
         ####################################################
         ################ MANUAL CONTRAST ###################
         ####################################################
+
+        elif (command == "Manual Contrast"):
+            splitParams = self.status["params"].split("_")
+            if (self.status["defaultCommand"] is None):
+                if (self.status["group1_command"] is None):
+                    self.moveToActivePanel()
+                    auto.click(button='right')
+                    (auto.press(e) for e in ["0", "w"])
+                if (command == action):
+                    self.status["defaultCommand"] = command
+                    auto.mouseDown()
+                else:
+                    if (splitParams[0] != ""):
+                        level = (-1 * int(splitParams[0]) if action == "Decrease" else int(splitParams[0]))
+                    else:
+                        level = (-50 if action == "Decrease" else 50)
+                    (oldLocationX, oldLocationY) = auto.position()
+                    auto.mouseDown()
+                    auto.moveTo(oldLocationX, oldLocationY + level)
+                    self.status["group1_command"] = command
+            else:
+                (oldLocationX, oldLocationY) = auto.position()
+                if (len(splitParams) == 1):
+                    if (self.status["params"] != ""):
+                        level = (-1 * int(splitParams[0]) if action == "Decrease" else int(splitParams[0]))
+                    else:
+                        level = (-50 if action == "Decrease" else 50)
+                else:
+                    print "For " + command + ", you must pass a maximum of one argument."
+                    return False
+                auto.moveTo(oldLocationX, oldLocationY + level)
 
         ####################################################
         ##################### LAYOUT #######################
@@ -521,9 +570,23 @@ class SynapseAction:
         ################ CONTRAST PRESETS ##################
         ####################################################
 
+        elif (command == "Contrast Presets" and action != "Contrast Presets"):
+            self.moveToActivePanel()
+            auto.click()
+            auto.click(button='right')
+            auto.PAUSE = 0.1
+            (auto.press(e) for e in ["0", "i", "right"])
+            time.sleep(0.5)
+            auto.press("0")
+            for i in range(actionID + 1): auto.press("down")
+            auto.press("enter")
+            auto.PAUSE = 0.25
+            time.sleep(1)
 
 
         return True
+
+
 if __name__ == "__main__":
     syn_action = SynapseAction()
     # set up the signal handler
@@ -531,15 +594,17 @@ if __name__ == "__main__":
     # Run the program
     syn_action.calibrate()
     command_list = ["1_0", "1_1", "1_2", "1_1", "2_0", "2_1", "2_2", "2_1", "2_1", "2_2", "2_0","3_0", "3_1", "3_2", "3_1", "3_1", "3_2", "3_0", "4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0", "6_0", "6_1", "6_1", "6_2", "6_2", "6_0", "6_0", "6_1", "6_2"]
-    command_list = [ "4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0"]
-    command_list = [ "4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0", "6_0", "6_1", "6_1", "6_2", "6_2", "6_0", "6_0", "6_1", "6_2"]
+    command_list = ["4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0"]
+    command_list = ["4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0", "6_0", "6_1", "6_1", "6_2", "6_2", "6_0", "6_0", "6_1", "6_2"]
     # command_list = ["4_1", "6_0", "6_1", "6_1", "6_2", "6_2", "6_0", "6_0", "6_1", "6_2"]
     # command_list = ["4_1", "6_0", "6_1", "6_1", "6_1", "6_1", "6_1", "6_1", "6_1", "6_1"]
 
+    # For now, don't test Window Open/Close (no 8_1 or 8_2)
+
     for cmd in command_list:
-         success = syn_action.gestureCommands(cmd)
-         print "execution of command", cmd, "flag:", success
-         time.sleep(2)
+        success = syn_action.gestureCommands(cmd)
+        print "execution of command", cmd, "flag:", success
+        time.sleep(2)
 
     # syn_action.resetTopBarHeight()
     # OPEN PATIENT INFO  WINDOW
@@ -552,7 +617,8 @@ if __name__ == "__main__":
     # auto.hotkey("command", "optionLeft", "f4")
     # time.sleep(1)
 
-    auto.hotkey("command", "enter")
+    #auto.hotkey("command", "enter")
+    syn_action.openWindow(syn_action.prompt)
     while True: continue
 
 
