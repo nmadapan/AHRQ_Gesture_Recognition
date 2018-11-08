@@ -324,12 +324,13 @@ class SynapseAction:
             # if is changing from one command to another and not from a reset`
             print "reseting context", self.status["defaultCommand"],  command
             self.status["defaultCommand"] = None
+            auto.press("esc")
         if (self.status["group1_command"] != command and self.status["group1_command"] is not None):
             # if is changing from one command to another and not from a reset`
             print "reseting modifier", self.status["group1_command"], command
             self.status["defaultCommand"] = None
             self.status["group1_command"] = None
-            auto.click()
+            auto.press("esc")
 
 
         ####################################################
@@ -425,11 +426,11 @@ class SynapseAction:
                     self.moveToActivePanel()
                     auto.click()
                     auto.click(button='right')
+                    auto.PAUSE = 0.1
                     auto.press("z")
                     auto.mouseDown()
                     # add the context if we are just performing a context
-                    if actionID == 0:
-                        self.status["defaultCommand"] = command
+                    self.status["defaultCommand"] = command
             # if we are performing a zoom in or a zoom out
             if actionID != 0:
                 # Get the level, acording to the params or default
@@ -447,40 +448,80 @@ class SynapseAction:
                     #auto.mouseUp()
                     self.status["group1_command"] = command
 
-        # elif (command == "Zoom"):
-            # splitParams = self.status["params"].split("_")
-            # if (self.status["defaultCommand"] is None):
-                # # If performing just the context
-                # if (self.status["group1_command"] is None):
-                    # self.moveToActivePanel()
-                    # auto.click()
-                    # auto.click(button='right')
-                    # auto.press("z")
-                # if (command == action):
-                    # self.status["defaultCommand"] = command
-                    # auto.mouseDown()
-                # else:
-                    # if (len(splitParams) % 2 == 1 and self.status["params"] != ""):
-                        # level = (-1 * int(splitParams[0]) if action == "In" else int([0]))
-                    # else: level = (-100 if action == "In" else 100)
-                    # if (len(splitParams) <= 1): (moveToX, moveToY) = auto.position()
-                    # else:
-                        # (moveToX, moveToY) = (int(splitParams[len(splitParams) - 2]), int(splitParams[len(splitParams) - 1]))
-                    # auto.moveTo(moveToX, moveToY)
-                    # auto.mouseDown()
-                    # auto.moveTo(moveToX, moveToY + level)
-                    # #auto.mouseUp()
-                    # self.status["group1_command"] = command
-            # else:
-                # (oldLocationX, oldLocationY) = auto.position()
-                # if (len(splitParams) == 1):
-                    # if (self.status["params"] != ""):
-                        # level = (-1 * int(splitParams[0]) if action == "In" else int(splitParams[0]))
-                    # else: level = (-100 if action == "In" else 100)
-                # else:
-                    # print "For " + command + ", you must pass a maximum of one argument."
-                    # return False
-                # auto.moveTo(oldLocationX, oldLocationY + level)
+        ####################################################
+        ################## SWITCH PANEL ####################
+        ####################################################
+
+	elif (command == "Switch Panel" and action != "Switch Panel"):
+		ind = int(actionID / 3)
+		self.status["active_panel"][ind] += (-1 if action == "Left" or action == "Up" else 1)
+		self.status["active_panel"][ind] = max(1, self.status["active_panel"][ind])
+		self.status["active_panel"][ind] = min(self.status["active_panel"][ind], self.status["panel_dim"])
+		self.moveToActivePanel()
+		auto.click()
+
+        ####################################################
+        ###################### PAN #########################
+        ####################################################
+
+	elif (command == "Pan"):
+            splitParams = self.status["params"].split("_")
+            # If performing just the context
+            # or an a modifier alone
+            if actionID == 0 or\
+            (self.status["defaultCommand"] is None and commandID !=0):
+                self.moveToActivePanel()
+                auto.click()
+                auto.click(button='right')
+                auto.PAUSE = 0.1
+                auto.press("0")
+                auto.press("p")
+                auto.PAUSE = 0
+                auto.press("enter")
+                # (auto.press(e) for e in ["p", "enter"])
+                auto.mouseDown()
+                # add the context if we are just performing a context
+                self.status["defaultCommand"] = command
+
+            # if we are performing a pan modifier
+            if actionID != 0:
+                    if (len(splitParams) % 2 == 1 and self.status["params"] != ""):
+                            level = (int(splitParams[0]) if action == "Left" or action == "Up" else -1 * int(splitParams[0]))
+                    else:
+                        level = (40 if action == "Left" or action == "Up" else -40)
+                    if (len(splitParams) <= 1):
+                        (moveToX, moveToY) = auto.position()
+                    else:
+                        (moveToX, moveToY) = (int(splitParams[len(splitParams) - 2]), int(splitParams[len(splitParams) - 1]))
+
+                    if (action == "Left" or action == "Right"):
+                        (toMoveX, toMoveY) = (moveToX + level, moveToY)
+                    else:
+                        (toMoveX, toMoveY) = (moveToX, moveToY + level)
+                    auto.moveTo(moveToX, moveToY)
+                    if self.status["defaultCommand"] is not None:
+                        auto.mouseDown()
+                    auto.moveTo(toMoveX, toMoveY)
+                    #auto.mouseUp()
+                    self.status["group1_command"] = command
+
+        ####################################################
+        ###################### WINDOW ######################
+        ####################################################
+
+        ####################################################
+        ################ MANUAL CONTRAST ###################
+        ####################################################
+
+        ####################################################
+        ##################### LAYOUT #######################
+        ####################################################
+
+        ####################################################
+        ################ CONTRAST PRESETS ##################
+        ####################################################
+
+
 
         return True
 if __name__ == "__main__":
@@ -489,15 +530,16 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, syn_action.signalHandler)
     # Run the program
     syn_action.calibrate()
-    command_list = ["1_0", "1_1", "1_2", "1_1"]
-    command_list = ["2_0", "2_1", "2_2", "2_1", "2_1", "2_2", "2_0","3_0", "3_1", "3_2", "3_1", "3_1", "3_2", "3_0"]
-    command_list = ["4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0"]
-    # command_list = ["4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2"]
+    command_list = ["1_0", "1_1", "1_2", "1_1", "2_0", "2_1", "2_2", "2_1", "2_1", "2_2", "2_0","3_0", "3_1", "3_2", "3_1", "3_1", "3_2", "3_0", "4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0", "6_0", "6_1", "6_1", "6_2", "6_2", "6_0", "6_0", "6_1", "6_2"]
+    command_list = [ "4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0"]
+    command_list = [ "4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0", "6_0", "6_1", "6_1", "6_2", "6_2", "6_0", "6_0", "6_1", "6_2"]
+    # command_list = ["4_1", "6_0", "6_1", "6_1", "6_2", "6_2", "6_0", "6_0", "6_1", "6_2"]
+    # command_list = ["4_1", "6_0", "6_1", "6_1", "6_1", "6_1", "6_1", "6_1", "6_1", "6_1"]
 
     for cmd in command_list:
          success = syn_action.gestureCommands(cmd)
          print "execution of command", cmd, "flag:", success
-         time.sleep(1)
+         time.sleep(2)
 
     # syn_action.resetTopBarHeight()
     # OPEN PATIENT INFO  WINDOW
