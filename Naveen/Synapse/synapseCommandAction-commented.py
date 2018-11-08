@@ -433,65 +433,65 @@ def gestureCommands(sequence):
 	elif (command == "Flip" and action != "Flip"):
 		moveToActivePanel()
 		auto.click(button='right')
-		if (status["toUse"] == "img_recog"):
-			located = findRightClick(352)
-			if (not located):
-				if (status["hold_action"] != "held"):
-					(status["hold_action"], status["params"]) = (commandAction, "RightClick")
-					return gestureCommands("0_6")
-				else: return False
-			time.sleep(1)
-			located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "scaleRotateFlip.png"))
-			if (located is None):
-				if (status["hold_action"] != "held"):
-					(status["hold_action"], status["params"]) = (commandAction, "ScaleRotateFlip")
-					return gestureCommands("0_8")
-				else: return False
-			(x1, y1, w, h) = located
-			y1 = y1 / scale;
-			y1 += (status["rightPlus"] + (status["optionH"] * 0.5) if action == "Horizontal" else status["rightPlus"] + (status["optionH"] * 1.5))
-			auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
-			auto.click()
-		else:
-			auto.PAUSE = 0.1
-			#auto.press("0")
-			auto.press("s")
-			time.sleep(0.5)
-			#auto.press("0")
-			auto.press("h" if action == "Horizontal" else "v")
-			auto.PAUSE = 0.25
+		# if (status["toUse"] == "img_recog"):
+			# located = findRightClick(352)
+			# if (not located):
+				# if (status["hold_action"] != "held"):
+					# (status["hold_action"], status["params"]) = (commandAction, "RightClick")
+					# return gestureCommands("0_6")
+				# else: return False
+			# time.sleep(1)
+			# located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "scaleRotateFlip.png"))
+			# if (located is None):
+				# if (status["hold_action"] != "held"):
+					# (status["hold_action"], status["params"]) = (commandAction, "ScaleRotateFlip")
+					# return gestureCommands("0_8")
+				# else: return False
+			# (x1, y1, w, h) = located
+			# y1 = y1 / scale;
+			# y1 += (status["rightPlus"] + (status["optionH"] * 0.5) if action == "Horizontal" else status["rightPlus"] + (status["optionH"] * 1.5))
+			# auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
+			# auto.click()
+		# else:
+                auto.PAUSE = 0.1
+                #auto.press("0")
+                auto.press("s")
+                time.sleep(0.5)
+                #auto.press("0")
+                auto.press("h" if action == "Horizontal" else "v")
+                auto.PAUSE = 0.25
 	elif (command == "Rotate" and action != "Rotate"):
 		moveToActivePanel()
 		auto.click(button='right')
-		if (status["toUse"] == "img_recog"):
-			located = findRightClick(352)
-			if (not located):
-				if (status["hold_action"] != "held"):
-					(status["hold_action"], status["params"]) = (commandAction, "RightClick")
-					return gestureCommands("0_6")
-				else: return False
-			time.sleep(1)
-			located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "scaleRotateFlip.png"))
-			if (located is None):
-				if (status["hold_action"] != "held"):
-					(status["hold_action"], status["params"]) = (commandAction, "ScaleRotateFlip")
-					return gestureCommands("0_8")
-				else: return False
-			(x1, y1, w, h) = located
-			y1 = y1 / scale
-			y1 += (status["rightPlus"] + (status["optionH"] * 2.5) if action == "Clockwise" else status["rightPlus"] + (status["optionH"] * 3.5))
-			auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
-			auto.click()
-		else:
-			auto.PAUSE = 0.1
-			#auto.press("0")
-			auto.press("s")
-			time.sleep(0.5)
-			#auto.press("0")
-			auto.press("r")
-			if (action != "Clockwise"): auto.press("down")
-			auto.press("enter")
-			auto.PAUSE = 0.25
+		# if (status["toUse"] == "img_recog"):
+			# located = findRightClick(352)
+			# if (not located):
+				# if (status["hold_action"] != "held"):
+					# (status["hold_action"], status["params"]) = (commandAction, "RightClick")
+					# return gestureCommands("0_6")
+				# else: return False
+			# time.sleep(1)
+			# located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "scaleRotateFlip.png"))
+			# if (located is None):
+				# if (status["hold_action"] != "held"):
+					# (status["hold_action"], status["params"]) = (commandAction, "ScaleRotateFlip")
+					# return gestureCommands("0_8")
+				# else: return False
+			# (x1, y1, w, h) = located
+			# y1 = y1 / scale
+			# y1 += (status["rightPlus"] + (status["optionH"] * 2.5) if action == "Clockwise" else status["rightPlus"] + (status["optionH"] * 3.5))
+			# auto.moveTo((x1 / scale) + (w / 2.0) * scale, y1)
+			# auto.click()
+		# else:
+                auto.PAUSE = 0.1
+                #auto.press("0")
+                auto.press("s")
+                time.sleep(0.5)
+                #auto.press("0")
+                auto.press("r")
+                if (action != "Clockwise"): auto.press("down")
+                auto.press("enter")
+                auto.PAUSE = 0.25
 	elif (command == "Zoom"):
 		splitParams = status["params"].split("_")
 		if (status["defaultCommand"] is None):
@@ -499,15 +499,16 @@ def gestureCommands(sequence):
 				moveToActivePanel()
 				auto.click()
 				auto.click(button='right')
-				if (status["toUse"] == "img_recog"):
-					if (not findRightClick(54)):
-						if (status["hold_action"] != "held"):
-							(status["hold_action"], status["params"]) = (commandAction, "RightClick")
-							return gestureCommands("0_6")
-						else: return False
-					auto.click()
-					moveToActivePanel()
-				else: auto.press("z")
+				# if (status["toUse"] == "img_recog"):
+					# if (not findRightClick(54)):
+						# if (status["hold_action"] != "held"):
+							# (status["hold_action"], status["params"]) = (commandAction, "RightClick")
+							# return gestureCommands("0_6")
+						# else: return False
+					# auto.click()
+					# moveToActivePanel()
+				# else: 
+                                auto.press("z")
 			if (command == action):
 				status["defaultCommand"] = command
 				auto.mouseDown()
@@ -547,15 +548,16 @@ def gestureCommands(sequence):
 				moveToActivePanel()
 				auto.click()
 				auto.click(button='right')
-				if (status["toUse"] == "img_recog"):
-					if (not findRightClick(90)):
-						if (status["hold_action"] != "held"):
-							(status["hold_action"], status["params"]) = (commandAction, "RightClick")
-							return gestureCommands("0_6")
-						else: return False
-					auto.click()
-					moveToActivePanel()
-				else: (auto.press(e) for e in ["p", "enter"])
+				# if (status["toUse"] == "img_recog"):
+					# if (not findRightClick(90)):
+						# if (status["hold_action"] != "held"):
+							# (status["hold_action"], status["params"]) = (commandAction, "RightClick")
+							# return gestureCommands("0_6")
+						# else: return False
+					# auto.click()
+					# moveToActivePanel()
+				# else:
+                                (auto.press(e) for e in ["p", "enter"])
 			if (command == action):
 				status["defaultCommand"] = command
 				auto.mouseDown()
@@ -585,107 +587,108 @@ def gestureCommands(sequence):
 			if (action == "Left" or action == "Right"): (toMoveX, toMoveY) = (oldLocationX + level, oldLocationY)
 			else: (toMoveX, toMoveY) = (oldLocationX, oldLocationY + level)
 			auto.moveTo(moveToX, moveToY)
-	elif (command == "Ruler" and action != "Ruler"):
-		if (action == "Measure"):
-			openWindow(prompt)
-			while (1):
-				rawInput = raw_input("Enter coordinates separated by underscores (2 or 4 non-negative integers): ")
-				try:
-					if (len(rawInput.split("_")) == 2):
-						moveToActivePanel()
-						rawInput = "_".join(list(str(p) for p in auto.position())) + "_" + rawInput
-						break
-					elif (len(rawInput.split("_")) == 4): break
-					else: promptNotify("Coordinates must have only 2 or 4 non-negative integers.", 0)
-					#return False
-				except ValueError:
-					promptNotify("Coordinates must be non-negative integers.", 0)
-					#return False
-			status["params"] = rawInput
-			points = status["params"].split("_")
-			(x1, y1, x2, y2) = (int(points[0]), int(points[1]), int(points[2]), int(points[3]))
-			openWindow(viewer)
-			time.sleep(2)
-			moveToActivePanel()
-			auto.click(button='right')
-			if (status["toUse"] == "img_recog"):
-				located = findRightClick(126)
-				if (not located):
-					if (status["hold_action"] != "held"):
-						(status["hold_action"], status["params"]) = (commandAction, "RightClick")
-						return gestureCommands("0_6")
-					else: return False
-				auto.click()
-				time.sleep(2)
-			else: (auto.press(e) for e in ["r", "enter"])
-			auto.moveTo(x1, y1)
-			auto.mouseDown()
-			auto.moveTo(x2, y2)
-			auto.mouseUp()
-			status["rulers"]["len"] += 1
-			curr = 1
-			while (curr <= status["rulers"]["len"]):
-				if (curr not in status["rulers"]):
-					status["rulers"][curr] = status["params"]
-					break
-				curr += 1
-			print "ID of Ruler Measurement: " + str(curr)
-		elif (action == "Delete"):
-			if (status["params"] == ""):
-				promptNotify("Ruler delete ID not specified.", 0)
-				return False
-			try:
-				rulerID = int(status["params"])
-				if (rulerID not in status["rulers"]):
-					print "Ruler delete ID is not in the list of rulers."
-					return False
-			except ValueError:
-				print "Ruler delete ID should be one positive integer value."
-				return False
-			points = status["rulers"][rulerID].split("_")
-			status["rulers"].pop(rulerID, None)
-			status["rulers"]["len"] -= 1
-			auto.moveTo((int(points[2]) + int(points[0])) / 2.0, (int(points[3]) + int(points[1])) / 2.0)
-			auto.click()
-			beforeRCRuler = os.path.join("SCA_Images", "beforeRCRuler.png")
-			ImageGrab.grab(bbox=boundBoxNoDash).save(beforeRCRuler)
-			auto.click(button='right')
-			if (status["toUse"] == "img_recog"):
-				afterRCRuler = os.path.join("SCA_Images", "afterRCRuler.png")
-				ImageGrab.grab(bbox=boundBoxNoDash).save(afterRCRuler)
-				diffRCRuler = os.path.join("SCA_Images", "diffRCRuler.png")
-				diffBox = get_bbox(beforeRCRuler, afterRCRuler)
-				(x1, y1, x2, y2) = (diffBox[i] + boundBoxNoDash[(i % 2)] for i in range(4))
-				print str((x1, y1))
-				auto.moveTo(x1, y1)
-				ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffRCRuler)
-				moveToX = (x1 + status["rightIcons"] + x2) / (2.0 * scale)
-				moveToY = (y1 / scale) + status["rightPlus"] + (status["optionH"] * 4.5)
-				print str((moveToX, moveToY))
-				auto.moveTo(moveToX, moveToY)
-				auto.click()
-				#os.remove(afterRCRuler)
-				#os.remove(diffRCRuler)
-			else:
-				auto.PAUSE = 0.1
-				auto.press("0")
-				for i in range(5): auto.press("down")
-				auto.press("enter")
-				auto.pause = 0.25
-			#os.remove(beforeRCRuler)
-			"""auto.click()
-			beforeMeasure = ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("SCA_Images", "beforeMeasure.png"))
-			auto.click(button="right")
-			afterMeasure = ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("SCA_Images", "afterMeasure.png"))
-			(x1, y1, x2, y2) = get_bbox(os.path.join("SCA_Images", "beforeMeasure.png"), os.path.join("SCA_Images", "afterMeasure.png"))
-			diffX = x2 - x1
-			x1 += boundBoxNoDash[0] + (status["rightIcons"] / scale) + (diffX / 2.0)
-			y1 += boundBoxNoDash[1] + status["rightPlus"] + (status["optionH"] * 4.5)
-			#(moveToX, moveToY) = ((x1 + x2) / 2.0, status["rightPlus"] + (status["optionH"] * 4.5))
-			#auto.moveTo(x1 + (79.0 / 1440.0) * width, y1 + (85.0 / 900.0) * height)
-			auto.moveTo(x1, y1)
-			auto.click()"""
+	# elif (command == "Ruler" and action != "Ruler"):
+		# if (action == "Measure"):
+			# openWindow(prompt)
+			# while (1):
+				# rawInput = raw_input("Enter coordinates separated by underscores (2 or 4 non-negative integers): ")
+				# try:
+					# if (len(rawInput.split("_")) == 2):
+						# moveToActivePanel()
+						# rawInput = "_".join(list(str(p) for p in auto.position())) + "_" + rawInput
+						# break
+					# elif (len(rawInput.split("_")) == 4): break
+					# else: promptNotify("Coordinates must have only 2 or 4 non-negative integers.", 0)
+					# #return False
+				# except ValueError:
+					# promptNotify("Coordinates must be non-negative integers.", 0)
+					# #return False
+			# status["params"] = rawInput
+			# points = status["params"].split("_")
+			# (x1, y1, x2, y2) = (int(points[0]), int(points[1]), int(points[2]), int(points[3]))
+			# openWindow(viewer)
+			# time.sleep(2)
+			# moveToActivePanel()
+			# auto.click(button='right')
+			# if (status["toUse"] == "img_recog"):
+				# located = findRightClick(126)
+				# if (not located):
+					# if (status["hold_action"] != "held"):
+						# (status["hold_action"], status["params"]) = (commandAction, "RightClick")
+						# return gestureCommands("0_6")
+					# else: return False
+				# auto.click()
+				# time.sleep(2)
+			# else: (auto.press(e) for e in ["r", "enter"])
+			# auto.moveTo(x1, y1)
+			# auto.mouseDown()
+			# auto.moveTo(x2, y2)
+			# auto.mouseUp()
+			# status["rulers"]["len"] += 1
+			# curr = 1
+			# while (curr <= status["rulers"]["len"]):
+				# if (curr not in status["rulers"]):
+					# status["rulers"][curr] = status["params"]
+					# break
+				# curr += 1
+			# print "ID of Ruler Measurement: " + str(curr)
+		# elif (action == "Delete"):
+			# if (status["params"] == ""):
+				# promptNotify("Ruler delete ID not specified.", 0)
+				# return False
+			# try:
+				# rulerID = int(status["params"])
+				# if (rulerID not in status["rulers"]):
+					# print "Ruler delete ID is not in the list of rulers."
+					# return False
+			# except ValueError:
+				# print "Ruler delete ID should be one positive integer value."
+				# return False
+			# points = status["rulers"][rulerID].split("_")
+			# status["rulers"].pop(rulerID, None)
+			# status["rulers"]["len"] -= 1
+			# auto.moveTo((int(points[2]) + int(points[0])) / 2.0, (int(points[3]) + int(points[1])) / 2.0)
+			# auto.click()
+			# beforeRCRuler = os.path.join("SCA_Images", "beforeRCRuler.png")
+			# ImageGrab.grab(bbox=boundBoxNoDash).save(beforeRCRuler)
+			# auto.click(button='right')
+			# if (status["toUse"] == "img_recog"):
+				# afterRCRuler = os.path.join("SCA_Images", "afterRCRuler.png")
+				# ImageGrab.grab(bbox=boundBoxNoDash).save(afterRCRuler)
+				# diffRCRuler = os.path.join("SCA_Images", "diffRCRuler.png")
+				# diffBox = get_bbox(beforeRCRuler, afterRCRuler)
+				# (x1, y1, x2, y2) = (diffBox[i] + boundBoxNoDash[(i % 2)] for i in range(4))
+				# print str((x1, y1))
+				# auto.moveTo(x1, y1)
+				# ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffRCRuler)
+				# moveToX = (x1 + status["rightIcons"] + x2) / (2.0 * scale)
+				# moveToY = (y1 / scale) + status["rightPlus"] + (status["optionH"] * 4.5)
+				# print str((moveToX, moveToY))
+				# auto.moveTo(moveToX, moveToY)
+				# auto.click()
+				# #os.remove(afterRCRuler)
+				# #os.remove(diffRCRuler)
+			# else:
+				# auto.PAUSE = 0.1
+				# auto.press("0")
+				# for i in range(5): auto.press("down")
+				# auto.press("enter")
+				# auto.pause = 0.25
+			# #os.remove(beforeRCRuler)
+			# """auto.click()
+			# beforeMeasure = ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("SCA_Images", "beforeMeasure.png"))
+			# auto.click(button="right")
+			# afterMeasure = ImageGrab.grab(bbox=boundBoxNoDash).save(os.path.join("SCA_Images", "afterMeasure.png"))
+			# (x1, y1, x2, y2) = get_bbox(os.path.join("SCA_Images", "beforeMeasure.png"), os.path.join("SCA_Images", "afterMeasure.png"))
+			# diffX = x2 - x1
+			# x1 += boundBoxNoDash[0] + (status["rightIcons"] / scale) + (diffX / 2.0)
+			# y1 += boundBoxNoDash[1] + status["rightPlus"] + (status["optionH"] * 4.5)
+			# #(moveToX, moveToY) = ((x1 + x2) / 2.0, status["rightPlus"] + (status["optionH"] * 4.5))
+			# #auto.moveTo(x1 + (79.0 / 1440.0) * width, y1 + (85.0 / 900.0) * height)
+			# auto.moveTo(x1, y1)
+			# auto.click()"""
 	elif (command == "Window" and action != "Window"):
+            # TODO CHANGE TO IMAGE PICTURE
 		if (action == "Open" and not status["window_open"]):
 			auto.moveTo(width / 2.0, 0)
 			time.sleep(1)
