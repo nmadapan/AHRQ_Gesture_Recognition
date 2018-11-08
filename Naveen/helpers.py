@@ -444,7 +444,7 @@ def smart_interpn(yp, reps, kind = 'copy'):
 	assert isinstance(yp, np.ndarray), 'yp is NOT a numpy array'
 	assert yp.ndim == 2, 'yp should be a 2D numpy array'
 
-	out = np.float32(yp[reps, :])
+	out = np.float64(yp[reps, :])
 
 	if(kind == 'copy'): return out
 
@@ -474,7 +474,7 @@ def interpn(yp, num_points, kind = 'linear'):
 	xp = np.linspace(0, 1, num = yp.shape[0])
 	x = np.linspace(0, 1, num = num_points)
 	y = np.zeros((x.size, yp.shape[1]))
-	yp = np.float16(yp)
+	yp = np.float64(yp)
 	for dim in range(yp.shape[1]):
 		f = interp1d(xp, yp[:, dim], kind = kind)
 		y[:, dim] = f(x)
