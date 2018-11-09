@@ -14,46 +14,12 @@ blur_nondom_hand=False
 
 skip_existing_folder = True # True if don't want to override existing folders
 
-
 read_base_path = r"H:\AHRQ\Study_IV\NewData"
 write_base_path = r"H:\AHRQ\Study_IV\Data\Data_cpm_new"
 frames_folder="Frames"
 frames_dir=os.path.join(write_base_path,frames_folder)
 if not os.path.isdir(frames_dir): create_writefolder_dir(frames_dir)
 lexicons=glob.glob(os.path.join(read_base_path,"*"))
-
-# def get_lhand_bbox(color_skel_pts, des_size = 300):
-#     ############
-#     # Input arguments:
-#     #   'color_skel_pts': A list of 50 elements. Pixel coordinates of 25 Kinect joints. 
-#     #       Format: [x1, y1, x2, y2, ...]
-#     #   'des_size': Size of the bounding box
-#     #
-#     # Return:
-#     #   'bbox': list of four values. [x, y, w, h]. 
-#     #       (x, y): pixel coordinates of top left corner of the bbox
-#     #       (w, h): width and height of the boox. 
-#     ############
-#     ## Return left hand bounding box
-#     hand = np.array(color_skel_pts[2*left_hand_id:2*left_hand_id+2])
-#     return hand.tolist(),[np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
-
-# def get_rhand_bbox(color_skel_pts, des_size = 300):
-#     ############
-#     # Input arguments:
-#     #   'color_skel_pts': A list of 50 elements. Pixel coordinates of 25 Kinect joints. 
-#     #       Format: [x1, y1, x2, y2, ...]
-#     #   'des_size': Size of the bounding box
-#     #
-#     # Return:
-#     #   'bbox': list of four values. [x, y, w, h]. 
-#     #       (x, y): pixel coordinates of top left corner of the bbox
-#     #       (w, h): width and height of the boox. 
-#     ############    
-#     ## Return right hand bounding box
-#     hand = np.array(color_skel_pts[2*right_hand_id:2*right_hand_id+2])
-#     return hand.tolist(),[np.int32(hand[0]) - des_size/2, np.int32(hand[1]) - des_size/2, des_size, des_size]
-
 
 def get_lhand_bbox(color_skel_pts, max_wh , \
                    des_size = 300):
@@ -115,15 +81,6 @@ def readlines_txt(f_name,str_to_num=False):
         f_lines=f.readlines()
         f_lines=[x.strip() for x in f_lines]
     return f_lines
-
-def match_ts(rgb_ts,skel_ts):
-    rgb_ts=[np.float(x) for x in rgb_ts]
-    skel_ts=[np.float(x) for x in skel_ts]
-    rgb_ts=np.array(rgb_ts)
-    skel_ts=np.array(skel_ts)
-    s_to_r=np.argmin(abs(rgb_ts.reshape(-1,1)-skel_ts.reshape(1,-1)),axis=1)
-    r_to_s=np.argmin(abs(rgb_ts.reshape(-1,1)-skel_ts.reshape(1,-1)),axis=0)
-    return s_to_r
 
 def blur_hand(frame,hand_coord):
     x=int(hand_coord[0])
@@ -203,8 +160,6 @@ def get_gesture_names(skel_files):
         gesture_names.append('_'.join(strings_[:-1]))
     return gesture_names
 
-
-
 def generate_data():
     for lexicon in lexicons:
         lexicon_name=os.path.basename(lexicon)
@@ -237,4 +192,4 @@ def generate_data():
             # print os.path.basename(rgb_skel_file),os.path.basename(rgb_ts_file),os.path.basename(skel_ts_file),os.path.basename(gesture_video)
 
 
-# generate_data()
+generate_data()

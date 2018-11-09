@@ -36,7 +36,7 @@ DATA_WRITE_FLAG = False
 DEBUG = True
 
 ## IMPORTANT
-LEXICON_ID = 'L2'
+LEXICON_ID = 'L6'
 SUBJECT_ID = 'S1'
 
 ## If a gesture has less than 20 frames ignore.
@@ -332,7 +332,7 @@ class Realtime:
 				frame_count += 1
 			elif first_time:
 				first_time = False
-				if(DEBUG): print('Actual no. of frames: Body -', frame_count)
+				if(DEBUG): print('Actual no. of frames: Body -', frame_count-1) ## TODO
 				frame_count = 0
 				self.skel_instance = deepcopy(skel_frames) # [(ts1, ([right_x, y, z], [left_x, y, z])), ...]
 				skel_frames = []
@@ -438,6 +438,7 @@ class Realtime:
 			if(not self.fl_cmd_ready): continue
 			self.fl_synapse_running = True
 
+
 			# If command is ready: Do the following:
 			# Wait for five seconds for the delivery message.
 			command_executed = self.client_synapse.send_data(self.command_to_execute)
@@ -503,6 +504,7 @@ class Realtime:
 				if(DEBUG): print('No. of frames in body skel feature: ', len(raw_skel_frames))
 				dom_rhand, final_skel_inst = self.feat_ext.generate_features_realtime(list(raw_skel_frames))
 				if(DEBUG): print('Size of body skel feature: ', final_skel_inst.shape)
+				if(DEBUG): print('Dominant Right Hand', dom_rhand)
 				self.gesture_count += 1
 				#####################
 
@@ -516,16 +518,27 @@ class Realtime:
 					if(DEBUG): print('No. of frames in CPM feature: ', len(raw_cpm_frames))
 					# Detuple CPM frames int right and left
 					right_cpm, left_cpm = zip(*raw_cpm_frames)
+					if(DEBUG):
+						print('Right CPM')
+						pp(np.mean(right_cpm, axis = 0))
+						print('Left CPM')
+						pp(np.mean(left_cpm, axis = 0))
+						print('Dominant Right Hand', dom_rhand)
 					# Merge CPM features based on dom_rhand
 					if(dom_rhand): cpm_inst = np.append(right_cpm, left_cpm, axis = 1)
 					else: cpm_inst = np.append(left_cpm, right_cpm, axis = 1)
-					# Synchronize rgb and skel time stamps
-					_, sync_cpm_ts = sync_ts(skel_ts, cpm_ts)
-					# Interpolate so that rgb and skel same no. of frames
-					# cpm_inst = smart_interpn(cpm_inst, sync_cpm_ts, kind = 'copy') # Change kind to 'linear' for linear interpolation
-					cpm_inst = cpm_inst[sync_cpm_ts, :]
-					# Interpolate CPM features to fixed_num_frames
+					##### %%%%%%%%%%%%%%%%%
+					# # Synchronize rgb and skel time stamps
+					# _, sync_cpm_ts = sync_ts(skel_ts, cpm_ts)
+					# # Interpolate so that rgb and skel same no. of frames
+					# # cpm_inst = smart_interpn(cpm_inst, sync_cpm_ts, kind = 'copy') # Change kind to 'linear' for linear interpolation
+					# cpm_inst = cpm_inst[sync_cpm_ts, :]
+					# # Interpolate CPM features to fixed_num_frames
+					# final_cpm_inst = interpn(cpm_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
+					##### %%%%%%%%%%%%%%%%% 
+					## Directly interpolate finger lengths independent of the skeleton frames.
 					final_cpm_inst = interpn(cpm_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
+					##### %%%%%%%%%%%%%%%%%
 					if(DEBUG): print('Size of CPM feature: ', final_cpm_inst.shape)
 					#####################
 
@@ -537,7 +550,7 @@ class Realtime:
 				label, cname = self.feat_ext.pred_output_realtime(final_overall_inst)
 				self.command_to_execute = label
 
-				print('Predicted: ', label, cname)
+				print('Predicted: ', label, cname, '\n\n')
 
 				self.fl_cmd_ready = True
 
