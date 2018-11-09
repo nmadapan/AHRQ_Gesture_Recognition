@@ -270,9 +270,9 @@ class SynapseAction:
                     return False
 
     # Handles the killing signals of the class
-    def signalHandler(self, sig, frame):
-        self.removeImagesPrompt()
-        sys.exit(0)
+    # def signalHandler(self, sig, frame):
+        # self.removeImagesPrompt()
+        # sys.exit(0)
 
     def calibrate(self):
 
@@ -292,6 +292,7 @@ class SynapseAction:
             f.close()
 
     def gestureCommands(self, sequence):
+        print "getting command:", sequence
         (commandID, actionID) = (-1, -1)
         commandAction = sequence
 
@@ -504,6 +505,8 @@ class SynapseAction:
                     auto.moveTo(toMoveX, toMoveY)
                     #auto.mouseUp()
                     self.status["group1_command"] = command
+        else:
+            return True
 
         ####################################################
         ###################### WINDOW ######################
@@ -522,12 +525,11 @@ class SynapseAction:
         ####################################################
 
 
-
         return True
 if __name__ == "__main__":
     syn_action = SynapseAction()
     # set up the signal handler
-    signal.signal(signal.SIGINT, syn_action.signalHandler)
+    # signal.signal(signal.SIGINT, syn_action.signalHandler)
     # Run the program
     syn_action.calibrate()
     command_list = ["1_0", "1_1", "1_2", "1_1", "2_0", "2_1", "2_2", "2_1", "2_1", "2_2", "2_0","3_0", "3_1", "3_2", "3_1", "3_1", "3_2", "3_0", "4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0", "6_0", "6_1", "6_1", "6_2", "6_2", "6_0", "6_0", "6_1", "6_2"]

@@ -1,13 +1,13 @@
 import os, sys, time, inspect, socket, signal
 from threading import Thread
 import cv2 as cv
+from SynapseAction import SynapseAction
 
 ######### Add parent directory at the beggining of the path #######
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0,parentdir)
 ###################################################################
-import synapseCommandAction as sca
 
 from CustomSocket import Server
 
@@ -18,12 +18,17 @@ class SynapseServer(Server):
         # If only_once is True, it will receive only one data string. Otherwise, it will receive infinitely.
         ########################
         print('--------- Server ---------')
+        syn_action = SynapseAction()
+        # signal.signal(signal.SIGINT, syn_action.signalHandler)
+        syn_action.calibrate()
         while True:
             if(not self.connect_status): self.wait_for_connection()
             try:
                 data = self.client.recv(self.buffer_size)
                 print("command received: ", data)
-                synapse_Flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
+                # synapse_Flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
+
+                synapse_Flag = syn_action.gestureCommands(cmd)
                 # synapse_Flag = True #it should return TRUE if command is executed properly
                 if synapse_Flag:
                     print("Command: ",data, "was executed")
@@ -46,8 +51,8 @@ class SynapseServer(Server):
 if __name__ == '__main__':
     #### Variables #######
     # tcp_ip = socket.gethostbyname(socket.gethostname())
-    # tcp_ip='10.186.47.6'
-    tcp_ip = 'localhost'
+    tcp_ip='10.186.42.155'
+    # tcp_ip = 'localhost'
     # print(tcp_ip)
     tcp_port = 10000
 
