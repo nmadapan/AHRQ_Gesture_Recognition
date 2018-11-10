@@ -1,5 +1,8 @@
+from __future__ import print_function
+
 import cv2, numpy as np, os, sys
 import glob
+from helpers import json_to_dict
 
 #####################
 #
@@ -20,11 +23,15 @@ import glob
 #####################
 
 ## GLOBAL PARAMETERS
-base_skel_folder = r'H:\AHRQ\Study_IV\NewData\L8'
+base_skel_folder = r'H:\AHRQ\Study_IV\NewData\L6'
 base_write_folder = os.path.join(base_skel_folder, 'Annotations')
 in_format_flag = True
 kinect_joint_names_path = 'kinect_joint_names.json'
 json_param_path = 'param.json'
+
+print('Accessing _skel.txt files from : ', base_skel_folder, '\n')
+print('Writing annotations to : ', base_write_folder, '\n')
+print('NOTE that in_format_flag is : ', in_format_flag, '\n')
 
 ## Initialization: Kinect Joint Names
 kinect_joint_names_dict = json_to_dict(kinect_joint_names_path)
@@ -46,7 +53,8 @@ else:
 
 if(not os.path.isdir(base_write_folder)): os.makedirs(base_write_folder)
 
-for skel_path in skel_file_paths:
+for skel_fidx, skel_path in enumerate(skel_file_paths):
+	if(skel_fidx % 5 == 0): print('. ', end = '')
 	## Read timestamps
 	# Read RGB timestamps
 	tbase_path = '_'.join(skel_path.split('_')[:-1])
@@ -69,7 +77,7 @@ for skel_path in skel_file_paths:
 	M = np.abs(skel_ts.reshape(-1, 1) - rgb_ts)
 	skel_to_rgb = np.argmin(M, axis = 1)
 	# rgb_to_skel = np.argmin(M, axis = 0)
-	# print M.shape
+	# print (M.shape)
 	# sys.exit(0)
 
 	## Read skeleton file
@@ -77,7 +85,7 @@ for skel_path in skel_file_paths:
 		lines = fp.readlines()
 		lines = [map(float, line.split(' ')) for line in lines]
 	if len(lines) == 0:
-		print os.path.basename(skel_path), ' has 0 lines'
+		print(os.path.basename(skel_path), ' has 0 lines')
 		continue
 	start_y_coo = thresh_level * (lines[0][3*neck_id+1] - lines[0][3*base_id+1])
 	start_flag = False
@@ -117,11 +125,12 @@ for skel_path in skel_file_paths:
 	write_file_id.close()
 	rgb_write_file_id.close()
 	if(count_gestures%2 != 0):
-		print 'Manual verification needed for: ',
-		print write_filename + ' ',
-		print 'Odd no. of entries'
+		print('Manual verification needed for: ', end = '')
+		print(write_filename + ' ', end = '')
+		print('Odd no. of entries')
 	if(count_gestures < 30):
-		print 'Manual verification needed for: ',
-		print write_filename + ' ',
-		print 'no. of gestures: ', count_gestures/2
+		print('Manual verification needed for: ', end = '')
+		print(write_filename + ' ', end = '')
+		print('no. of gestures: ', count_gestures/2)
 
+print('DONE !!! \n')

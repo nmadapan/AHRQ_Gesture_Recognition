@@ -1,0 +1,24 @@
+{
+    "active_panel": [
+        1,
+        1
+    ],
+    "window_open": false,
+    "hold_action": null, # NOT NEEDED
+    "rulers": {
+        "len": 0
+    },
+    "defaultCommand": null,
+    "firstH": 450.0,
+    "panel_dim": [
+        1,
+        1
+    ],
+    "toUse": "Keyboard", # NOT NEEDED
+    "group1_command": null,
+    "topBarHeight": 1756,
+    "jumpW": 0,
+    "prev_action": "",
+    "jumpH": 0,
+    "firstW": 720.0
+}
