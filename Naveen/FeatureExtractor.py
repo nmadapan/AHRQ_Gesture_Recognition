@@ -270,7 +270,7 @@ class FeatureExtractor():
 				theta_left[:, dim*jnt_idx:dim*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 			## Position
 			if(self.type_flags['left']):
-				features['left'] = left.transpose().flatten() / self.max_r
+				features['left'] = left.transpose().flatten() / self.subject_params[lexicon_id][subject_id]['arm_length']
 			## Velocity
 			if(self.type_flags['d_left']):
 				features['d_left'] = d_left.transpose().flatten() / self.max_dr
@@ -491,7 +491,7 @@ class FeatureExtractor():
 			theta_left[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 		## Position
 		if(self.type_flags['left']):
-			features['left'] = left.transpose().flatten() / self.max_r
+			features['left'] = left.transpose().flatten() / self.subject_params[self.rt_lexicon_id][self.rt_subject_id]['arm_length']
 		## Velocity
 		if(self.type_flags['d_left']):
 			features['d_left'] = d_left.transpose().flatten() / self.max_dr
