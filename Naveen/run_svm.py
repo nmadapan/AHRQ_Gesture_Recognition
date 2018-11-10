@@ -16,7 +16,7 @@ plt.rcdefaults()
 ## Skeleton
 skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L6'
 # skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
-
+num_points=40
 ## Fingers
 ENABLE_FINGERS = True
 pickle_base_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
@@ -42,19 +42,27 @@ print('DONE !!!')
 # print(np.mean(np.array(full_list) == 0))
 
 # sys.exit()
-
 if(ENABLE_FINGERS):
-	# # ## Appending finger lengths
+	# # ## Appending finger lengths with dominant_hand first
 	print('Appending finger lengths: ', end = '')
 	with open(os.path.join(pickle_path1, fingers_pkl_fname), 'rb') as fp:
 		fingers_data = pickle.load(fp)
 	data_merge=[]
-	for txt_file in fe.skel_file_order:
+	for idx,txt_file in enumerate(fe.skel_file_order):
 		key = os.path.splitext(txt_file)[0].split('_')[:-1]
 		s='_'
 		key=s.join(key)
-		for line in np.round(fingers_data.get(key),4):
-			data_merge.append(line)
+		dom_type=fe.dominant_type[idx]
+		for idx1,line in enumerate(np.round(fingers_data.get(key),4)):
+			if dom_type[idx1]==1:data_merge.append(line)
+			else:
+				gesture_shuffle=[]
+				gesture=np.array(line).reshape(num_points,int(len(line)/num_points))
+				for frame in gesture:
+					gesture_shuffle.append(frame[5:].tolist()+frame[:5].tolist())
+				data_merge.append(np.array(gesture_shuffle).flatten().tolist())
+
+	# 		# data_merge.append(line)
 	out['data_input'] = np.concatenate([out['data_input'], np.array(data_merge)], axis = 1)
 	print('DONE !!!')
 
