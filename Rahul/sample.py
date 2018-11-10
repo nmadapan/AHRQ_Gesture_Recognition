@@ -1,19 +1,12 @@
-# import numpy as np
-# import pickle,sys
-# from scipy.interpolate import interp1d 
+from utils import *
+import json
 
-# a= np.random.randint(1,10,(3,4))
-# print a
-# def interpn(yp, num_points=9, kind = 'nearest'):
-#     # yp is a gesture instance
-#     # No. of frames will be increased/reduced to num_points
-#     xp = np.linspace(0, 1, num = yp.shape[0])
-#     x = np.linspace(0, 1, num = num_points)
-#     y = np.zeros((x.size, yp.shape[1]))
-#     for dim in range(yp.shape[1]):
-#         f = interp1d(xp, yp[:, dim], kind = kind)
-#         y[:, dim] = f(x)
-#     return y
-# print interpn(a)
+json_file_path=r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\param.json'
+sys.path.insert(0,json_file_path)
 
-print 5/2
+variables=json_to_dict(json_file_path)
+num_points = variables['fixed_num_frames']
+equate_dim = variables['equate_dim']
+cpm_downsample_rate = variables['cpm_downsample_rate']
+
+print num_points
