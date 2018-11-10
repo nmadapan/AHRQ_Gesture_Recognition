@@ -1,5 +1,6 @@
 import numpy as np
 import pickle,os,sys
+from utils import *
 
 num_fingers=5
 norm_constant=300
@@ -12,33 +13,12 @@ fingerlens_from_base = False
 
 #FEATURES FOR HANDS
 
-def fingers_length_from_base_with_direction(key_points):
-    fingers_len=[]
-    for x in hand_base_key_points[1:]:
-        finger_len=np.sign(key_points[2*x+1]-key_points[1])*(np.abs(key_points[2*x]-key_points[0])+np.abs(key_points[2*x+1]-key_points[1]))
-        fingers_len.append(finger_len)
-    return np.round((np.array(fingers_len)/norm_constant),4)
-
-with open(os.path.join(pickle_path1,os.path.basename(pickle_path1)+ '_fingers_coords.pkl'), 'rb') as fp:
-	fingers_data = pickle.load(fp)
-
-def fingers_length_with_direction(key_points):
-    fingers_len=[]  
-    key_points_base=fingers_key_points[0::2]
-    key_points_tip=fingers_key_points[1::2]
-    # if key_points_base != key_points_tip: #add assertion here to verify that key_points_base=key_points_tip
-    #   assert 
-    for i,j in zip(key_points_base,key_points_tip):
-        finger_len=np.sign(key_points[2*j+1]-key_points[2*i+1])*(np.abs(key_points[2*j]-key_points[2*i])+np.abs(key_points[2*j+1]-key_points[2*i+1]))
-        fingers_len.append(finger_len)
-    return np.round((np.array(fingers_len)/norm_constant),4)
-
-
 with open(os.path.join(pickle_path1,os.path.basename(pickle_path1)+ '_fingers_coords.pkl'), 'rb') as fp:
 	fingers_data = pickle.load(fp)
 
 new_dict={}
 for key in fingers_data:
+	print key
 	gest_list=[]
 	for line in fingers_data[key]:
 		gest_frames=[]

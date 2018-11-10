@@ -3,10 +3,12 @@ from __future__ import print_function
 import numpy as np
 import pickle
 import sys, os
+from copy import deepcopy
 from glob import glob
 from random import shuffle
 from FeatureExtractor import FeatureExtractor
 from helpers import skelfile_cmp
+from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 
@@ -15,10 +17,10 @@ plt.rcdefaults()
 ####################
 ## Skeleton
 skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L6'
-# skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
-num_points=40
+eliminate_subject_id = 'S3'
+
 ## Fingers
-ENABLE_FINGERS = True
+ENABLE_FINGERS = False
 pickle_base_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
 pickle_path1=os.path.join(pickle_base_path1,os.path.basename(skel_folder_path))
 fingers_pkl_fname = os.path.basename(skel_folder_path)+'_fingers_from_hand_base_equate_dim_subsample.pkl'
@@ -35,13 +37,34 @@ print('Generating IO: ', end = '')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
 print('DONE !!!')
 
+skel_file_order = deepcopy(fe.skel_file_order)
+dominant_types_order = deepcopy(fe.dominant_type)
+
+assert len(dominant_types_order) == len(skel_file_order), 'ERROR! MISMATCH'
+
+subject_name_order = np.array([fname.split('_')[2] for fname in skel_file_order])
+
+partial_train_subject_flags = (subject_name_order != eliminate_subject_id)
+
+# print(zip(skel_file_order, partial_train_subject_flags))
+
+all_train_flags = []
+
+for idx, dom_types_list in enumerate(dominant_types_order):
+	all_train_flags += [partial_train_subject_flags[idx]]*len(dom_types_list)
+
+all_train_flags = np.array(all_train_flags)
+
 # full_list = []
 # for sublist in fe.dominant_type:
 # 	full_list += sublist
 
 # print(np.mean(np.array(full_list) == 0))
 
+# print(out['data_output'])
+
 # sys.exit()
+
 if(ENABLE_FINGERS):
 	# # ## Appending finger lengths with dominant_hand first
 	print('Appending finger lengths: ', end = '')
@@ -61,19 +84,26 @@ if(ENABLE_FINGERS):
 				for frame in gesture:
 					gesture_shuffle.append(frame[5:].tolist()+frame[:5].tolist())
 				data_merge.append(np.array(gesture_shuffle).flatten().tolist())
-
-	# 		# data_merge.append(line)
+				
 	out['data_input'] = np.concatenate([out['data_input'], np.array(data_merge)], axis = 1)
 	print('DONE !!!')
 
 # Randomize data input and output
-temp = zip(out['data_input'], out['data_output'])
+data_input, data_output = deepcopy(out['data_input']), deepcopy(out['data_output'])
+
+## TODO: It is assumed that out['data_input'] and out['data_output'] are numpy arrays. It is not the case when equate_dim is False
+train_data_input = data_input[all_train_flags, :]
+train_data_output = data_output[all_train_flags, :]
+
+test_data_input = data_input[np.logical_not(all_train_flags), :]
+test_data_output = data_output[np.logical_not(all_train_flags), :]
+
+temp = zip(train_data_input, train_data_output)
 shuffle(temp)
-out['data_input'], out['data_output'] = zip(*temp)
-out['data_input'], out['data_output'] = list(out['data_input']), list(out['data_output'])
+train_data_input, train_data_output = zip(*temp)
+train_data_input, train_data_output = list(train_data_input), list(train_data_output)
 if(fe.equate_dim):
-	out['data_input'] = np.array(out['data_input'])
-	out['data_output'] = np.array(out['data_output'])
+	train_data_input, train_data_output = np.array(train_data_input), np.array(train_data_output)
 
 # print(fe.label_to_ids)
 # print(fe.label_to_name)
@@ -92,8 +122,20 @@ plt.grid(True)
 #plt.show()
 
 print('Train SVM: ', end = '')
-clf, _, _ = fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60, inst_var_name = 'svm_clf')
+clf, _, _ = fe.run_svm(train_data_input, train_data_output, train_per = 0.60, inst_var_name = 'svm_clf')
 print('DONE !!! Storing variable in svm_clf')
+
+# Test Predict
+pred_test_output = clf.predict(test_data_input)
+test_acc = float(np.sum(pred_test_output == np.argmax(test_data_output, axis = 1))) / pred_test_output.size
+print('New Subject Test Acc: ', test_acc)
+
+conf_mat = confusion_matrix(np.argmax(test_data_output, axis = 1), pred_test_output)
+cname_list = []
+for idx in range(test_data_output.shape[1]):
+	cname_list.append(fe.label_to_name[fe.id_to_labels[idx]])
+
+fe.plot_confusion_matrix(conf_mat, cname_list, normalize = True)
 
 print('Saving in: ', out_pkl_fname)
 with open(out_pkl_fname, 'wb') as fp:

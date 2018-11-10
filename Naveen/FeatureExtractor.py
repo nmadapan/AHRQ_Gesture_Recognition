@@ -270,7 +270,7 @@ class FeatureExtractor():
 				theta_left[:, dim*jnt_idx:dim*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 			## Position
 			if(self.type_flags['left']):
-				features['left'] = left.transpose().flatten() / self.max_r
+				features['left'] = left.transpose().flatten() / self.subject_params[lexicon_id][subject_id]['arm_length']
 			## Velocity
 			if(self.type_flags['d_left']):
 				features['d_left'] = d_left.transpose().flatten() / self.max_dr
@@ -454,8 +454,8 @@ class FeatureExtractor():
 
 		features = {feat_type: None for feat_type in self.available_types}
 
-		left, right = zip(*colproc_skel_data)
-		left, right = np.array(list(left)), np.array(list(right)) # left and right are (_ x 3/6) ndarrays
+		right, left = zip(*colproc_skel_data)  #### IMPORTANT --> Order is opposite. right comes first. Refer to skel_col_reduce() in helpers.py
+		right, left = np.array(list(right)), np.array(list(left)) # left and right are (_ x 3/6) ndarrays
 
 		d_reps = np.ones(right.shape[0]-2).tolist(); d_reps.append(2) # diff() reduced length by one. Using this we can fix it.
 
@@ -491,7 +491,7 @@ class FeatureExtractor():
 			theta_left[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 		## Position
 		if(self.type_flags['left']):
-			features['left'] = left.transpose().flatten() / self.max_r
+			features['left'] = left.transpose().flatten() / self.subject_params[self.rt_lexicon_id][self.rt_subject_id]['arm_length']
 		## Velocity
 		if(self.type_flags['d_left']):
 			features['d_left'] = d_left.transpose().flatten() / self.max_dr
@@ -580,6 +580,8 @@ class FeatureExtractor():
 		sz = int(self.num_available_types / 2) # Assumes that actual types ordered as right followed by left
 		right_order = range(0, sz)
 		left_order = range(sz, 2*sz)
+		# print('Right STD: ', right_std)
+		# print('Left STD: ', left_std)
 		if((right_std - left_std) >= self.dominant_first_thresh): return right_order+left_order
 		elif((left_std - right_std) >= self.dominant_first_thresh): return left_order+right_order
 		else: return right_order+left_order
@@ -627,10 +629,11 @@ class FeatureExtractor():
 		## self.randomize
 		perm = list(range(data_input.shape[0]))
 		shuffle(perm)
-		train_input = data_input[0:int(train_per*num_inst), :]
-		train_output = data_output[0:int(train_per*num_inst), :]
-		test_input = data_input[int(train_per*num_inst):, :]
-		test_output = data_output[int(train_per*num_inst):, :]
+		K = int(train_per*num_inst)
+		train_input = data_input[perm[:K], :]
+		train_output = data_output[perm[:K], :]
+		test_input = data_input[perm[K:], :]
+		test_output = data_output[perm[K:], :]
 
 		# Train
 		clf = svm.SVC(decision_function_shape='ova', kernel = kernel )

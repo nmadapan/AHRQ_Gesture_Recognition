@@ -424,7 +424,7 @@ def flip_skeleton(skel_path, out_path, dim_per_joint=3):
 	fp.flush()
 	fp.close()
 
-def smart_interpn(yp, reps, kind = 'copy'):
+def smart_interpn(yp, reps, kind = 'linear'):
 	'''
 	Description:
 		Smart inpterpolation of the given 2D np.ndarray along the rows.
