@@ -573,6 +573,7 @@ class SynapseAction:
         ##################### LAYOUT #######################
         ####################################################
 
+
         ####################################################
         ################ CONTRAST PRESETS ##################
         ####################################################
@@ -582,14 +583,17 @@ class SynapseAction:
             auto.click()
             auto.click(button='right')
             auto.PAUSE = 0.1
-            (auto.press(e) for e in ["0", "i", "right"])
+            for key in ["0", "i", "right"]:
+                auto.press(key)
+                auto.PAUSE = 0.1
             time.sleep(0.5)
             auto.press("0")
-            for i in range(actionID + 1): auto.press("down")
+            for i in range(actionID + 1):
+                auto.press("down")
+                auto.PAUSE = 0.1
             auto.press("enter")
             auto.PAUSE = 0.25
             time.sleep(1)
-
         return True
 
 
@@ -606,6 +610,7 @@ if __name__ == "__main__":
     command_list = ["4_1", "6_0", "6_3", "6_4", "6_3"]
     command_list = ["4_1","6_1", "6_2", "6_3", "6_4", "6_4", "6_3", "6_2", "6_1"]
     command_list = ["9_0", "9_2", "4_0", "9_2", "3_1", "9_1"]
+    command_list = ["11_1", "11_2", "4_1", "11_1"]
 
     # For now, don't test Window Open/Close (no 8_1 or 8_2)
 
