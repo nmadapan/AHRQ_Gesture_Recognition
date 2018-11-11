@@ -572,6 +572,32 @@ class SynapseAction:
         ####################################################
         ##################### LAYOUT #######################
         ####################################################
+        elif (command == "Layout" and action != "Layout"):
+            # NOTE: DIVIDE BY TWO ONLY IN THE MAC. IT HAS THAT PROBLEM
+            # Move to the top of the screen so the menu appears
+            self.moveToActivePanel()
+            time.sleep(2)
+            auto.click()
+            auto.moveTo(auto.position()[0], 0)
+            time.sleep(2)
+            # Look for the image of the layout
+            layoutPath = os.path.join("SCA_Images", "Layout", "layout.png")
+            # get the center of the image
+            (center_x, center_y) = auto.locateCenterOnScreen(layoutPath)
+            auto.click(center_x/2,center_y/2)
+            # wait for the image to appear
+            time.sleep(4)
+            # Get the image name depending on the action:
+            optionImgName = str(actionID) + ".png"
+            layoutOptionPath = os.path.join("SCA_Images", "Layout", optionImgName)
+            print layoutOptionPath
+            (center_x, center_y) = auto.locateCenterOnScreen(layoutOptionPath)
+            auto.click(center_x/2,center_y/2)
+            time.sleep(2)
+            self.resetPanelMoves()
+            self.moveToActivePanel()
+            auto.click()
+            pass
 
 
         ####################################################
@@ -611,6 +637,7 @@ if __name__ == "__main__":
     command_list = ["4_1","6_1", "6_2", "6_3", "6_4", "6_4", "6_3", "6_2", "6_1"]
     command_list = ["9_0", "9_2", "4_0", "9_2", "3_1", "9_1"]
     command_list = ["11_1", "11_2", "4_1", "11_1"]
+    command_list = ["10_1", "10_2", "10_3", "10_4"]
 
     # For now, don't test Window Open/Close (no 8_1 or 8_2)
 
