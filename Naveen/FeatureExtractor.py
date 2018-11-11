@@ -73,7 +73,8 @@ class FeatureExtractor():
 
 		self.skel_file_order = None # What is the order in which skeleton files are read.
 		self.dominant_type = None # What is the dominant type of each instance in the skeleton files (in the same order).
-		self.svm_clf = None # The trained svm classifier is saved in this variable.
+		self.svm_clf = None
+		self.classifiers = {}
 
 		# num_joints can either be 1 or 2
 		if(not (self.num_joints == 1 or self.num_joints == 2)):
@@ -542,6 +543,11 @@ class FeatureExtractor():
 		return dom_rhand, np.array([inst])
 
 	###### ONLINE Function ########
+	def decision_fusion(self, prediction_list):
+		return prediction_list[0]
+
+
+	###### ONLINE Function ########
 	def pred_output_realtime(self, feature_instance):
 		########################
 		# Input arguments:
@@ -553,13 +559,21 @@ class FeatureExtractor():
 		########################
 
 		## Predict
-		pred_test_output = self.svm_clf.predict(feature_instance)
-		pred_test_output
-		label = self.id_to_labels[pred_test_output[0]]
-		cname = self.label_to_name[label]
-		# print(cname)
+		prediction_list = []
+		for _, clf in self.classifiers.items():
+			pred_output = clf.predict(feature_instance)[0]
+			label = self.id_to_labels[pred_output]
+			cname = self.label_to_name[label]
+			prediction_list.append((pred_output, label, cname))
 
-		return label, cname
+		final_pred_output, final_label, final_cname_list = self.decision_fusion(prediction_list)
+
+		# pred_test_output = self.svm_clf.predict(feature_instance)[0]
+		# label = self.id_to_labels[pred_test_output]
+		# cname = self.label_to_name[label]
+		# # print(cname)
+
+		return final_label, final_cname
 
 	###### Miscellaneous Function ########
 	def find_type_order(self, left, right):
@@ -657,5 +671,6 @@ class FeatureExtractor():
 		self.plot_confusion_matrix(conf_mat, cname_list, normalize = True)
 
 		setattr(self, inst_var_name, deepcopy(clf))
+		self.classifiers[inst_var_name] = deepcopy(clf)
 
 		return clf, train_acc, test_acc
