@@ -12,6 +12,7 @@ from pyds import MassFunction
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from copy import deepcopy
+import time
 
 class DST:
 	"""
@@ -19,7 +20,7 @@ class DST:
 	and Dempster's Rule of Combination (DRC)
 	"""
 
-	def __init__(self, num_models, num_classes, class_names, internal_cnames = None):
+	def __init__(self, num_models, num_classes, class_names = None, internal_cnames = None):
 		'''
 		Description:
 			Note that the internal class names can only be a string of one charecter.
@@ -42,6 +43,7 @@ class DST:
 		self.num_models = num_models
 
 		## Update ACTUAL class names
+		if(class_names is None): class_names = map(str, range(num_classes))
 		assert len(class_names) == num_classes, 'ERROR! No. of classes in class_names \
 												should be equal to num_classes.'
 		self.actual_cnames = deepcopy(class_names)
@@ -191,7 +193,17 @@ if __name__ == '__main__':
 
 	## Method - 2 ==> Conventional
 	print('\n<---- Method 2 ------>')
-
 	dst2 = DST(num_models = num_models, num_classes = num_classes, class_names = class_names)
 	y_pred, actual_cname = dst2.predict(m)
 	print("y_pred: %s <==> %s" % (y_pred, actual_cname))
+
+	## Random Experiment
+	print('\n<---- Random experiment -----> ', end = '')
+	num_models = 4
+	num_classes = 40
+	print('No. of models = {0}, No. of classes = {1}'.format(num_models, num_classes))
+	start = time.time()
+	dst3 = DST(num_models = num_models, num_classes = num_classes)
+	y_pred, actual_cname = dst3.predict(np.random.uniform(0, 1, (num_models, num_classes)))
+	print('Time taken: {:.04f} seconds.'.format(time.time()-start))
+	print("Prediction: class index = %s, class label = %s" % (y_pred, actual_cname))
