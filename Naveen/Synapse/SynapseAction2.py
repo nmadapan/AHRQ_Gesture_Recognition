@@ -279,7 +279,6 @@ class SynapseAction:
         # sys.exit(0)
 
     def calibrate(self):
-
         # if there is a calibration file, use it, if not
         # generate a calibration
         self.resetPanelMoves()
@@ -660,6 +659,3 @@ if __name__ == "__main__":
     #auto.hotkey("command", "enter")
     syn_action.openWindow(syn_action.prompt)
     while True: continue
-
-
-
