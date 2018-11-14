@@ -12,16 +12,19 @@ import math
 import matplotlib.pyplot as plt
 from scipy.signal import medfilt
 import json
+sys.path.append("..")
+from SynapseCommand import SynapseCommand
 
 
 class SynapseAction:
-    def __init__(self, keyboard=True, calibrationPath = None):
+    def __init__(self, lexicon, recordingPath, imageFolder=None, keyboard=True, calibrationPath = None):
         ####################
         ## autogui setup  ##
         auto.FAILSAFE = True
         auto.PAUSE = 0.25
         ####################
 
+        self.imageFolder = "SCA_Images" if imageFolder is None else imageFolder
         # Get window sizes
         (self.width, self.height) = tuple(float(e) for e in auto.size())
         (self.nativeW, self.nativeH) = tuple(float(e) for e in ImageGrab.grab().size)
@@ -36,6 +39,8 @@ class SynapseAction:
         if calibrationPath is None:
             self.calibrationPath = "calibration" + "_".join(list(str(e) for \
                 e in [self.width, self.height, self.scale])).replace(".", "-") + ".txt"
+        # Initialize the command desambiguation tool
+        self.finalCmd = SynapseCommand(lexicon, recordingPath)
 
         # Variables of the synapse window
         # TODO all of this variables should probably go. Check that the code that uses them
@@ -93,8 +98,8 @@ class SynapseAction:
 
     # Remove images generated in the process of running the program
     def removeImages(self):
-        paths = [os.path.join("SCA_Images", "RightClick"), os.path.join("SCA_Images", "Window", "Closes"),
-            os.path.join("SCA_Images", "Window"), os.path.join("SCA_Images", "Layout"), os.path.join("SCA_Images")]
+        paths = [os.path.join(self.imageFolder, "RightClick"), os.path.join(self.imageFolder, "Window", "Closes"),
+            os.path.join(self.imageFolder, "Window"), os.path.join(self.imageFolder, "Layout"), os.path.join(self.imageFolder)]
         for path in paths:
             if (not os.path.exists(path)): continue
             for file in os.listdir(path):
@@ -176,25 +181,25 @@ class SynapseAction:
             time.sleep(3)
             auto.click()
             ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.nativeH)).\
-                save(os.path.join("SCA_Images", "fullscreen.png"))
+                save(os.path.join(self.imageFolder, "fullscreen.png"))
             auto.moveTo(auto.position()[0], 0)
             time.sleep(3)
             ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.nativeH)).\
-                save(os.path.join("SCA_Images", "afterTopBar.png"))
-            topBarBox = self.get_bbox(os.path.join("SCA_Images", "fullscreen.png"), \
-                os.path.join("SCA_Images", "afterTopBar.png"))
+                save(os.path.join(self.imageFolder, "afterTopBar.png"))
+            topBarBox = self.get_bbox(os.path.join(self.imageFolder, "fullscreen.png"), \
+                os.path.join(self.imageFolder, "afterTopBar.png"))
             self.status["topBarHeight"] = topBarBox[3] - topBarBox[1] + 1
-            ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.status["topBarHeight"] + self.macH)).save(os.path.join("SCA_Images", "topBar.png"))
+            ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.status["topBarHeight"] + self.macH)).save(os.path.join(self.imageFolder, "topBar.png"))
 
     # Reset the right click
     def resetRightClick(self):
             self.moveToActivePanel()
             auto.click()
-            beforeRightPath = os.path.join("SCA_Images", "RightClick", "beforeRight.png")
+            beforeRightPath = os.path.join(self.imageFolder, "RightClick", "beforeRight.png")
             ImageGrab.grab(bbox=self.boundBoxNoDash).save(beforeRightPath)
             auto.click(button='right')
             time.sleep(1)
-            afterRightPath = os.path.join("SCA_Images", "RightClick", "afterRight.png")
+            afterRightPath = os.path.join(self.imageFolder, "RightClick", "afterRight.png")
             ImageGrab.grab(bbox=self.boundBoxNoDash).save(afterRightPath)
             rightBox = self.get_bbox(beforeRightPath, afterRightPath)
             print "rightBox: %s" % (rightBox,)
@@ -209,7 +214,7 @@ class SynapseAction:
             (rightx1, righty1) = (rightBox[0] + self.boundBoxNoDash[0], rightBox[1] + self.boundBoxNoDash[1])
             (x1, y1) = (rightx1 + self.rightIcons, righty1 + self.rightOffset)
             (x2, y2) = (rightx1 + self.rightBoxW, righty1 + self.rightBoxH)
-            ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
+            ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(os.path.join(self.imageFolder, "RightClick", "rightClick.png"))
 
             self.moveToActivePanel()
             auto.click()
@@ -219,12 +224,12 @@ class SynapseAction:
             self.moveToActivePanel()
             auto.click()
             auto.click(button='right')
-            located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
+            located = auto.locateOnScreen(os.path.join(self.imageFolder, "RightClick", "rightClick.png"))
             if (located is not None): (rightx1, righty1, w, h) = located
             else:
                 print "Cannot find " + option + " on calibration reset. Attempting reset on rightClick."
                 self.resetRightClick()
-                located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
+                located = auto.locateOnScreen(os.path.join(self.imageFolder, "RightClick", "rightClick.png"))
                 if (located is not None): (rightx1, righty1, w, h) = located
                 else:
                     print "Failed to reset " + option + "."
@@ -235,15 +240,15 @@ class SynapseAction:
             time.sleep(1)
             self.moveToActivePanel()
             auto.press("0")
-            afterRightPath = os.path.join("SCA_Images", "RightClick", "afterRight.png")
-            afterOptionPath = os.path.join("SCA_Images", "RightClick", "after" + option + ".png")
+            afterRightPath = os.path.join(self.imageFolder, "RightClick", "afterRight.png")
+            afterOptionPath = os.path.join(self.imageFolder, "RightClick", "after" + option + ".png")
             ImageGrab.grab(bbox=self.boundBoxNoDash).save(afterOptionPath)
             box = self.get_bbox(afterRightPath, afterOptionPath)
             print option + " box: %s" % (box,)
             (boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
             print option + " box WxH: %s" % ((boxW, boxH),)
             (x1, y1) = (box[0], box[1])
-            optionPath = os.path.join("SCA_Images", "RightClick", option + ".png")
+            optionPath = os.path.join(self.imageFolder, "RightClick", option + ".png")
             ImageGrab.grab(bbox=(x1 + self.rightIcons, y1, x1 + boxW, y1 + boxH)).save(optionPath)
             auto.click()
 
@@ -264,7 +269,7 @@ class SynapseAction:
 
     # Find Synapse's rightClick image
     def findRightClick(self,offset):
-            located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
+            located = auto.locateOnScreen(os.path.join(self.imageFolder, "RightClick", "rightClick.png"))
             if (located is not None):
                 (x1, y1, w, h) = located
                 auto.moveTo((x1 / self.scale) + (w / 2.0) * self.scale, (y1 + (offset / 1000.0) * self.status["rightBoxH"]) / self.scale)
@@ -580,7 +585,7 @@ class SynapseAction:
             auto.moveTo(auto.position()[0], 0)
             time.sleep(2)
             # Look for the image of the layout
-            layoutPath = os.path.join("SCA_Images", "Layout", "layout.png")
+            layoutPath = os.path.join(self.imageFolder, "Layout", "layout.png")
             # get the center of the image
             (center_x, center_y) = auto.locateCenterOnScreen(layoutPath)
             auto.click(center_x/2,center_y/2)
@@ -588,7 +593,7 @@ class SynapseAction:
             time.sleep(4)
             # Get the image name depending on the action:
             optionImgName = str(actionID) + ".png"
-            layoutOptionPath = os.path.join("SCA_Images", "Layout", optionImgName)
+            layoutOptionPath = os.path.join(self.imageFolder, "Layout", optionImgName)
             print layoutOptionPath
             (center_x, center_y) = auto.locateCenterOnScreen(layoutOptionPath)
             auto.click(center_x/2,center_y/2)
