@@ -301,7 +301,8 @@ class SynapseAction:
 
     def gestureCommands(self, sequence):
         (commandID, actionID) = (-1, -1)
-        commandAction = sequence
+        commandAction = self.finalCmd.get_command(sequence)
+        print "AFTER GETTING COMMAND I GOT:", commandAction
 
         ##################################################################
         ############# CHECK THAT THE COMMAND IS VALID ####################
