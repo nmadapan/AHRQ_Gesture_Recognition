@@ -532,7 +532,6 @@ class SynapseAction:
         # General way it should work, but it would have issues.
         # For now, don't test Window Open/Close (no 8_1 or 8_2)
         elif (command == "Window" and action != "Window"):
-<<<<<<< HEAD
             # Coordinates on AHRQ Dell with scale 1.0:
             # (iconW, barW) = (57.0, 15.0)
             # (moveToX, moveToY) = (iconW * 5.5 + barW, (self.status["topBarHeight"] - 9.0) / 2.0)
@@ -544,10 +543,8 @@ class SynapseAction:
             # Therefore, try using:
             # (iconW, barW) = (57.0 * self.status["topBarHeight"] / 169.0, 15.0 * self.status["topBarHeight"] / 169.0)
             # (moveToX, moveToY) = (iconW * 5.5 + barW, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
-=======
             # Ucomment the return to not ignore window
             return True
->>>>>>> ebd6a37596d9dfca8144b7035edbc6281901d57f
             if (action == "Open" and not self.status["window_open"]):
                 self.moveToActivePanel()
                 auto.click()
