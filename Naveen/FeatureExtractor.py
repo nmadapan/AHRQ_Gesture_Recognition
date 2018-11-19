@@ -654,7 +654,7 @@ class FeatureExtractor():
 		for idx in range(num_classes):
 			cname_list.append(self.label_to_name[self.id_to_labels[idx]])
 
-		self.plot_confusion_matrix(conf_mat, cname_list, normalize = True)
+		# self.plot_confusion_matrix(conf_mat, cname_list, normalize = True)
 
 		setattr(self, inst_var_name, deepcopy(clf))
 
