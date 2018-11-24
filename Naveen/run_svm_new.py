@@ -16,11 +16,12 @@ plt.rcdefaults()
 ## Initialization ##
 ####################
 ## Skeleton
-skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L6'
-eliminate_subject_id = 'S3'
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
+eliminate_subject_id = 'S6'
 
 ## Fingers
-ENABLE_FINGERS = False
+ENABLE_FINGERS = True
+
 pickle_base_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
 pickle_path1=os.path.join(pickle_base_path1,os.path.basename(skel_folder_path))
 fingers_pkl_fname = os.path.basename(skel_folder_path)+'_fingers_from_hand_base_equate_dim_subsample.pkl'
@@ -37,6 +38,8 @@ print('Generating IO: ', end = '')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
 print('DONE !!!')
 
+num_points=fe.fixed_num_frames
+num_fingers=fe.num_fingers
 skel_file_order = deepcopy(fe.skel_file_order)
 dominant_types_order = deepcopy(fe.dominant_type)
 
@@ -82,7 +85,7 @@ if(ENABLE_FINGERS):
 				gesture_shuffle=[]
 				gesture=np.array(line).reshape(num_points,int(len(line)/num_points))
 				for frame in gesture:
-					gesture_shuffle.append(frame[5:].tolist()+frame[:5].tolist())
+					gesture_shuffle.append(frame[num_fingers:].tolist()+frame[:num_fingers].tolist())
 				data_merge.append(np.array(gesture_shuffle).flatten().tolist())
 				
 	out['data_input'] = np.concatenate([out['data_input'], np.array(data_merge)], axis = 1)

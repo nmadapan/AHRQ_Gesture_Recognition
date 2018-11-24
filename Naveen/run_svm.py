@@ -14,9 +14,8 @@ plt.rcdefaults()
 ## Initialization ##
 ####################
 ## Skeleton
-skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L6'
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
 # skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
-num_points=40
 ## Fingers
 ENABLE_FINGERS = True
 pickle_base_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
@@ -34,6 +33,9 @@ fe = FeatureExtractor(json_param_path = 'param.json')
 print('Generating IO: ', end = '')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
 print('DONE !!!')
+
+num_points=fe.fixed_num_frames
+num_fingers=fe.num_fingers
 
 # full_list = []
 # for sublist in fe.dominant_type:
@@ -59,7 +61,7 @@ if(ENABLE_FINGERS):
 				gesture_shuffle=[]
 				gesture=np.array(line).reshape(num_points,int(len(line)/num_points))
 				for frame in gesture:
-					gesture_shuffle.append(frame[5:].tolist()+frame[:5].tolist())
+					gesture_shuffle.append(frame[num_fingers:].tolist()+frame[:num_fingers].tolist())
 				data_merge.append(np.array(gesture_shuffle).flatten().tolist())
 
 	# 		# data_merge.append(line)
