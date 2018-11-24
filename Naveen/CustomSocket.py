@@ -24,16 +24,16 @@ class Server():
 
         self.client, self.addr = None, None
         ## Waiting for establishing the connection between server and client
-        # self.wait_for_connection() # In realtime, call wait_for_connection from outside. 
+        # self.wait_for_connection() # In realtime, call wait_for_connection from outside.
 
     def recv_image(self, buf_sz = 200000):
         #####################
-        # When a large image is sent in the form of a string, it will be sent in multiple parts. 
-        # IMPORTANT: The image string is expected to end with '!' 
-        # This function puts the parts together and returns the full image string. 
+        # When a large image is sent in the form of a string, it will be sent in multiple parts.
+        # IMPORTANT: The image string is expected to end with '!'
+        # This function puts the parts together and returns the full image string.
         # Format of image string:
         #   256_256_3_126_68_56...34!
-        #   First three numbers (256, 256, 3) is the shape of RGB image. 
+        #   First three numbers (256, 256, 3) is the shape of RGB image.
         # Return:
         #   A string of the form: 256_256_3_126_68_56...34
         #####################
@@ -53,7 +53,7 @@ class Server():
     def example_run_image(self, only_once = True):
         ########################
         # Receives an image string from a client, converts it into an ndarray, sends True/False to the client
-        # If only_once is True, it will receive only one image. Otherwise, it will receive infinitely. 
+        # If only_once is True, it will receive only one image. Otherwise, it will receive infinitely.
         ########################
         print('--------- Server ---------')
         while True:
@@ -61,20 +61,20 @@ class Server():
             try:
                 data = self.recv_image() # Obtain the image
                 flag = self.process_data(data) # Reformat the image string into a np.ndarray
-                self.client.send(str(flag is not None)) # Return a delivery message. 
+                self.client.send(str(flag is not None)) # Return a delivery message.
                 time.sleep(0.5)
             except Exception as exp:
                 print(exp)
                 print('Connection Closed')
                 self.connect_status = False
                 self.client.close()
-                if(only_once): break 
+                if(only_once): break
 
     def run(self, only_once = True):
         ########################
         # Receives a data string from a client, prints it, sends True/False to the client
-        # If only_once is True, it will receive only one data string. Otherwise, it will receive infinitely. 
-        ########################        
+        # If only_once is True, it will receive only one data string. Otherwise, it will receive infinitely.
+        ########################
         print('--------- Server ---------')
         while True:
             if(not self.connect_status): self.wait_for_connection()
@@ -89,7 +89,7 @@ class Server():
                 print('Connection Closed')
                 self.connect_status = False
                 self.client.close()
-                if(only_once): break 
+                if(only_once): break
 
     def wait_for_connection(self):
         ######################
@@ -113,23 +113,23 @@ class Server():
         # Input:
         #   data is of form: 256_256_3_126_68_56...34
         #   Convert the image string into an RGB image
-        #   Image string is joined with '_'. 
-        #   (256, 256, 3) is the shape of the image. The 
+        #   Image string is joined with '_'.
+        #   (256, 256, 3) is the shape of the image. The
         # Return:
-        #   An ndarray which is an RGB image. 
+        #   An ndarray which is an RGB image.
         ###########################
         if(data is None or len(data) == 0): return None
 
         data = data.split('_')
         print(len(data))
         img_shape = tuple(map(int, data[:3])) # Shape of the image
-        data = data[3:] 
+        data = data[3:]
         B = np.reshape(map(np.uint8, data), img_shape)
         return B
 
     def send_data(self, data):
         ###################
-        # Purpose: sends data to the client. 
+        # Purpose: sends data to the client.
         # If connect_status is True, return True. Else, return None
         ###################
         if self.connect_status:
@@ -140,9 +140,9 @@ class Server():
 
     def recv_data(self):
         ###################
-        # Purpose: receive data from the client. 
-        # It will return timeout exception on timeout. 
-        ###################        
+        # Purpose: receive data from the client.
+        # It will return timeout exception on timeout.
+        ###################
         return self.client.recv(self.buffer_size)
 
 class Client():
@@ -152,7 +152,7 @@ class Client():
         self.TCP_IP = tcp_ip
         self.TCP_PORT = port
         self.buffer_size = buffer_size
-        # self.init_socket(timeout = 10) # In realtime, call wait_for_connection from outside. 
+        # self.init_socket(timeout = 10) # In realtime, call wait_for_connection from outside.
 
     def sock_connect(self, timeout = 30):
         ######################
@@ -162,7 +162,7 @@ class Client():
         #   This functions sends 'Handshake' to the server.
         ######################
         print('Client: Connecting to server .', end= '')
-        if(self.connect_status): 
+        if(self.connect_status):
             print('Connected!')
             return True
 
@@ -174,7 +174,7 @@ class Client():
                 self.connect_status = True
                 self.sock.send(INITIAL_MESSAGE)
                 print('. ', end= '')
-                time.sleep(0.5)                 
+                time.sleep(0.5)
             except Exception as exp:
                 print('. ', end= '')
                 time.sleep(0.5)
@@ -184,7 +184,7 @@ class Client():
 
     def sock_recv(self, timeout = 30, display = True):
         ######################
-        # Description: 
+        # Description:
         #   Infinitely wait for a delivery message after sending 'Handshake' to the server
         #   It releases when server sends 'True' back
         ######################
@@ -215,11 +215,11 @@ class Client():
         self.sock_connect()
         self.sock_recv()
 
-    def send_data(self, data):  
+    def send_data(self, data):
         ###################
-        # Purpose: sends data to the server. 
+        # Purpose: sends data to the server.
         # If connect_status is True, return the delivery message of the server. Else, return None
-        ###################        
+        ###################
         if self.connect_status:
             self.sock.send(data)
             return self.sock.recv(self.buffer_size)
@@ -227,16 +227,16 @@ class Client():
             return None
 
     def close(self):
-        ## Close the connection with the server. 
+        ## Close the connection with the server.
         self.sock.close()
-        
+
 
 if __name__ == '__main__':
     tcp_ip = 'localhost'
-    tcp_port = 5000 
+    tcp_port = 5000
 
     server = Server(tcp_ip, tcp_port, buffer_size = 1000000)
-    server_thread = Thread(name='server_thread', target=server.run)    
+    server_thread = Thread(name='server_thread', target=server.run)
 
     client = Client(tcp_ip, tcp_port, buffer_size = 1000000)
     # client_thread = Thread(name='client_thread', target=client.run)
@@ -255,7 +255,7 @@ if __name__ == '__main__':
 
             ## When you call server.run
             flag = client.send_data('Hello World')
-            print("RECEIVED: ", flag) 
+            print("RECEIVED: ", flag)
         except Exception as exp:
             print('raising exception', exp)
             client.connect_status = False
