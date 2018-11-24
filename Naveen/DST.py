@@ -20,25 +20,17 @@ class DST:
 	and Dempster's Rule of Combination (DRC)
 	"""
 
-	def __init__(self, num_models, num_classes, class_names = None, internal_cnames = None):
+	def __init__(self, num_models, num_classes, class_names = None):
 		'''
 		Description:
-			Note that the internal class names can only be a string of one charecter.
-			So a workaround was made to isolate internal classes from actual class names.
-			* internal class names are present in internal_cnames
-			* actual class names are present in class_names
+			* class names are present in class_names
 		Input arguments:
 			* num_models: no. of models
 			* num_classes: no. of classes
 			* class_names: actual class names
-			* internal_cnames: internal class names (cnames)
 		Return:
 			* self
 		'''
-		## a list of 52 single charecter strings. If no. of classes is more than 52,
-			# internal_cnames can not be none.
-		self.alphabets = np.array([chr(idx) for idx in range(97, 97+26)] + \
-						[chr(idx) for idx in range(65, 65+26)])
 		self.num_classes = num_classes
 		self.num_models = num_models
 
@@ -46,23 +38,8 @@ class DST:
 		if(class_names is None): class_names = map(str, range(num_classes))
 		assert len(class_names) == num_classes, 'ERROR! No. of classes in class_names \
 												should be equal to num_classes.'
-		self.actual_cnames = deepcopy(class_names)
-
-		## Update INTERNAL class names
-		self.cnames = None
-		if(self.num_classes > 52):
-			if(internal_cnames is None):
-				raise Exception('ERROR! If no. of classes are more than 52, internal_cnames can NOT be None. ')
-			else:
-				assert len(internal_cnames) == self.num_classes, \
-							'The size of internal_cnames should be equal to num_classes'
-				self.cnames = deepcopy(self.internal_cnames)
-		else:
-			self.cnames = self.alphabets[:self.num_classes]
-
-		## Create dictionaries that map internal class names to external class names.
-		self.dst_to_actual_cnames = dict(zip(self.cnames, self.actual_cnames))
-		self.actual_to_dst_cnames = dict(zip(self.actual_cnames, self.cnames))
+		if(isinstance(class_names, np.ndarray)): class_names = class_names.tolist()
+		self.class_names = deepcopy(class_names)
 
 		## Update model names
 		self.mnames = ['m'+str(ix) for ix in range(self.num_models)]
@@ -88,9 +65,10 @@ class DST:
 		M = np.copy(M)
 		M = (M.transpose() / np.sum(M, axis = 1)).transpose()
 
+		cnames = [[cname] for cname in self.class_names]
 		## Format w.r.t DST
 		for mname, mprobs in zip(self.mnames, M):
-			self.add_mass({mname: dict(zip(self.cnames, mprobs))})
+			self.add_mass({mname: zip(cnames, mprobs)})
 		m_comb = self.drc_comb(self.mnames)
 
 		## vote is to select the label with the largest mass
@@ -101,10 +79,10 @@ class DST:
 
 		## Pick the first class label
 		y_pred = y_pred[0]
-		y_pred, = np.where(self.cnames == y_pred)
+		y_pred, = np.where(np.array(self.class_names) == y_pred)
 
-		if(self.actual_cnames is not None):
-			return y_pred[0], self.actual_cnames[y_pred[0]]
+		if(self.class_names is not None):
+			return y_pred[0], self.class_names[y_pred[0]]
 		else:
 			return y_pred[0], None
 
@@ -191,7 +169,7 @@ if __name__ == '__main__':
 	y_pred = dst.vote(m_comb)
 	print("Method 1 - y_pred: %s" % y_pred)
 
-	## Method - 2 ==> Conventional
+	## Method - 2 ==> Modified version
 	print('\n<---- Method 2 ------>')
 	dst2 = DST(num_models = num_models, num_classes = num_classes, class_names = class_names)
 	y_pred, actual_cname = dst2.predict(m)
