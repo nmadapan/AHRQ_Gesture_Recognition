@@ -680,12 +680,14 @@ class FeatureExtractor():
 			## Compute top - 3/5 accuracy
 			pred_test_prob = clf.predict_proba(test_input)
 			temp = np.sum(np.argsort(pred_test_prob, axis = 1)[:,-5:] == np.argmax(test_output, axis = 1).reshape(-1, 1), axis = 1) > 0
+			result['test_acc_top5'] = np.mean(temp)
 			print('LOSO - Top-5 Acc - ', np.mean(temp))		
 			temp = np.sum(np.argsort(pred_test_prob, axis = 1)[:,-3:] == np.argmax(test_output, axis = 1).reshape(-1, 1), axis = 1) > 0
+			result['test_acc_top3'] = np.mean(temp)
 			print('LOSO - Top-3 Acc - ', np.mean(temp))
 
 			test_acc = float(np.sum(pred_test_output == np.argmax(test_output, axis = 1))) / pred_test_output.size
-			result['test_acc'] = test_acc
+			result['test_acc_top1'] = test_acc
 			print('LOSO - Top-1 Acc - %.04f'%test_acc)
 			if(display):
 				conf_mat = confusion_matrix(np.argmax(test_output, axis = 1), pred_test_output)

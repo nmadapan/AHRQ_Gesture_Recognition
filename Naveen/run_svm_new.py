@@ -20,6 +20,8 @@ plt.ioff()
 ####################
 ## Fingers
 ENABLE_FINGERS = True
+display = False
+write_flag = False
 
 ## Skeleton
 skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
@@ -59,14 +61,6 @@ skel_file_order = deepcopy(fe.skel_file_order)
 dominant_types_order = deepcopy(fe.dominant_type)
 assert len(dominant_types_order) == len(skel_file_order), 'ERROR! MISMATCH'
 
-## Leave One Subject Out - Create IDs
-subject_name_order = np.array([fname.split('_')[2] for fname in skel_file_order])
-partial_train_subject_flags = (subject_name_order != eliminate_subject_id)
-all_train_flags = []
-for idx, dom_types_list in enumerate(dominant_types_order):
-	all_train_flags += [partial_train_subject_flags[idx]]*len(dom_types_list)
-all_train_flags = np.array(all_train_flags)
-
 if(ENABLE_FINGERS):
 	# # ## Appending finger lengths with dominant_hand first
 	print('Appending finger lengths: ', end = '')
@@ -92,19 +86,26 @@ if(ENABLE_FINGERS):
 	print('DONE !!!')
 
 ## Plotting histogram - No. of instances per class
-objects = tuple(fe.inst_per_class.keys())
-y_pos = np.arange(len(objects))
-performance = fe.inst_per_class.values()
-plt.figure()
-plt.bar(y_pos, performance, align='center', alpha=0.5)
-# plt.xticks(y_pos, objects)
-plt.xlabel('Class IDs')
-plt.ylabel('No. of instances')
-plt.title('No. of instances per class')
-plt.grid(True)
-# plt.show()
+if(display):
+	objects = tuple(fe.inst_per_class.keys())
+	y_pos = np.arange(len(objects))
+	performance = fe.inst_per_class.values()
+	plt.figure()
+	plt.bar(y_pos, performance, align='center', alpha=0.5)
+	# plt.xticks(y_pos, objects)
+	plt.xlabel('Class IDs')
+	plt.ylabel('No. of instances')
+	plt.title('No. of instances per class')
+	plt.grid(True)
+	plt.show()
 
-display = False
+## Leave One Subject Out - Create IDs
+subject_name_order = np.array([fname.split('_')[2] for fname in skel_file_order])
+partial_train_subject_flags = (subject_name_order != eliminate_subject_id)
+all_train_flags = []
+for idx, dom_types_list in enumerate(dominant_types_order):
+	all_train_flags += [partial_train_subject_flags[idx]]*len(dom_types_list)
+all_train_flags = np.array(all_train_flags)
 
 ## Body + Hands
 print('\nBody + Hand ====> SVM')
@@ -165,6 +166,7 @@ pred_output = dst.batch_predict(prob_mat)
 temp = (pred_output == np.argmax(test_data_output, axis = 1))
 print('Top 1 - DST - Combined Acc of three classifiers - %.04f'%np.mean(temp))
 
-print('\nSaving in: ', out_pkl_fname)
-with open(out_pkl_fname, 'wb') as fp:
-	pickle.dump({'fe': fe, 'out': out}, fp)
+if(write_flag):
+	print('\nSaving in: ', out_pkl_fname)
+	with open(out_pkl_fname, 'wb') as fp:
+		pickle.dump({'fe': fe, 'out': out}, fp)
