@@ -9,64 +9,62 @@ from random import shuffle
 from FeatureExtractor import FeatureExtractor
 from helpers import skelfile_cmp
 from sklearn.metrics import confusion_matrix
+from scipy import stats
 import matplotlib.pyplot as plt
 plt.rcdefaults()
+plt.ioff()
 
 ####################
 ## Initialization ##
 ####################
-## Skeleton
-skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
-eliminate_subject_id = 'S6'
-
 ## Fingers
 ENABLE_FINGERS = True
 
+## Skeleton
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
+
+## Variables
+all_subject_ids = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
+eliminate_subject_id = 'S6'
+out_filename_suffix = '_data.pickle'
+
+## CPM
 pickle_base_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
-pickle_path1=os.path.join(pickle_base_path1,os.path.basename(skel_folder_path))
-fingers_pkl_fname = os.path.basename(skel_folder_path)+'_fingers_from_hand_base_equate_dim_subsample.pkl'
+pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
+
+pickle_path1 = os.path.join(pickle_base_path1,os.path.basename(skel_folder_path))
+fingers_pkl_fname = os.path.basename(skel_folder_path) + pickle_file_suffix
 #######################
 
-annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
+## Find out pickle filename
 dirname = os.path.dirname(skel_folder_path)
 fileprefix = os.path.basename(skel_folder_path)
+out_pkl_fname = os.path.join(dirname, fileprefix + out_filename_suffix)
 
-out_pkl_fname = os.path.join(dirname, fileprefix+'_data.pickle')
-
+## Process Skeleton Data - Generate I/O
+annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
 fe = FeatureExtractor(json_param_path = 'param.json')
 print('Generating IO: ', end = '')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
 print('DONE !!!')
+body_data_input = deepcopy(out['data_input'])
+hand_data_input = None
+combined_data_input = None
 
-num_points=fe.fixed_num_frames
-num_fingers=fe.num_fingers
+## Extract some variables from fe object
+num_points = fe.fixed_num_frames
+num_fingers = fe.num_fingers
 skel_file_order = deepcopy(fe.skel_file_order)
 dominant_types_order = deepcopy(fe.dominant_type)
-
 assert len(dominant_types_order) == len(skel_file_order), 'ERROR! MISMATCH'
 
+## Leave One Subject Out - Create IDs
 subject_name_order = np.array([fname.split('_')[2] for fname in skel_file_order])
-
 partial_train_subject_flags = (subject_name_order != eliminate_subject_id)
-
-# print(zip(skel_file_order, partial_train_subject_flags))
-
 all_train_flags = []
-
 for idx, dom_types_list in enumerate(dominant_types_order):
 	all_train_flags += [partial_train_subject_flags[idx]]*len(dom_types_list)
-
 all_train_flags = np.array(all_train_flags)
-
-# full_list = []
-# for sublist in fe.dominant_type:
-# 	full_list += sublist
-
-# print(np.mean(np.array(full_list) == 0))
-
-# print(out['data_output'])
-
-# sys.exit()
 
 if(ENABLE_FINGERS):
 	# # ## Appending finger lengths with dominant_hand first
@@ -88,28 +86,9 @@ if(ENABLE_FINGERS):
 					gesture_shuffle.append(frame[num_fingers:].tolist()+frame[:num_fingers].tolist())
 				data_merge.append(np.array(gesture_shuffle).flatten().tolist())
 				
-	out['data_input'] = np.concatenate([out['data_input'], np.array(data_merge)], axis = 1)
+	hand_data_input = deepcopy(np.array(data_merge))
+	full_data_input = np.concatenate([body_data_input, hand_data_input], axis = 1)
 	print('DONE !!!')
-
-# Randomize data input and output
-data_input, data_output = deepcopy(out['data_input']), deepcopy(out['data_output'])
-
-## TODO: It is assumed that out['data_input'] and out['data_output'] are numpy arrays. It is not the case when equate_dim is False
-train_data_input = data_input[all_train_flags, :]
-train_data_output = data_output[all_train_flags, :]
-
-test_data_input = data_input[np.logical_not(all_train_flags), :]
-test_data_output = data_output[np.logical_not(all_train_flags), :]
-
-temp = zip(train_data_input, train_data_output)
-shuffle(temp)
-train_data_input, train_data_output = zip(*temp)
-train_data_input, train_data_output = list(train_data_input), list(train_data_output)
-if(fe.equate_dim):
-	train_data_input, train_data_output = np.array(train_data_input), np.array(train_data_output)
-
-# print(fe.label_to_ids)
-# print(fe.label_to_name)
 
 ## Plotting histogram - No. of instances per class
 objects = tuple(fe.inst_per_class.keys())
@@ -122,24 +101,56 @@ plt.xlabel('Class IDs')
 plt.ylabel('No. of instances')
 plt.title('No. of instances per class')
 plt.grid(True)
-#plt.show()
+# plt.show()
 
-print('Train SVM: ', end = '')
-clf, _, _ = fe.run_svm(train_data_input, train_data_output, train_per = 0.60, inst_var_name = 'svm_clf')
+display = False
+
+## Body + Hands
+print('\nBody + Hand ====> SVM')
+data_input, data_output = deepcopy(full_data_input), deepcopy(out['data_output'])
+train_data_input = data_input[all_train_flags, :]
+train_data_output = data_output[all_train_flags, :]
+test_data_input = data_input[np.logical_not(all_train_flags), :]
+test_data_output = data_output[np.logical_not(all_train_flags), :]
+fe.run_svm(train_data_input, train_data_output, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf', display = display)
+full_prob = fe.svm_clf.predict_proba(test_data_input)
+full_pred_output = np.argmax(full_prob, axis = 1)
 print('DONE !!! Storing variable in svm_clf')
 
-# Test Predict
-pred_test_output = clf.predict(test_data_input)
-test_acc = float(np.sum(pred_test_output == np.argmax(test_data_output, axis = 1))) / pred_test_output.size
-print('New Subject Test Acc: ', test_acc)
+## Only Body
+print('\nBody ====> SVM')
+data_input, data_output = deepcopy(body_data_input), deepcopy(out['data_output'])
+train_data_input = data_input[all_train_flags, :]
+train_data_output = data_output[all_train_flags, :]
+test_data_input = data_input[np.logical_not(all_train_flags), :]
+test_data_output = data_output[np.logical_not(all_train_flags), :]
+fe.run_svm(train_data_input, train_data_output, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf_body', display = display)
+body_prob = fe.svm_clf_body.predict_proba(test_data_input)
+body_pred_output = np.argmax(body_prob, axis = 1)
+print('DONE !!! Storing variable in svm_clf_body')
 
-conf_mat = confusion_matrix(np.argmax(test_data_output, axis = 1), pred_test_output)
-cname_list = []
-for idx in range(test_data_output.shape[1]):
-	cname_list.append(fe.label_to_name[fe.id_to_labels[idx]])
+## Only Hand
+print('\nHand ====> SVM')
+data_input, data_output = deepcopy(hand_data_input), deepcopy(out['data_output'])
+train_data_input = data_input[all_train_flags, :]
+train_data_output = data_output[all_train_flags, :]
+test_data_input = data_input[np.logical_not(all_train_flags), :]
+test_data_output = data_output[np.logical_not(all_train_flags), :]
+fe.run_svm(train_data_input, train_data_output, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf_hand', display = display)
+hand_prob = fe.svm_clf_hand.predict_proba(test_data_input)
+hand_pred_output = np.argmax(hand_prob, axis = 1)
+print('DONE !!! Storing variable in svm_clf_hand')
 
-fe.plot_confusion_matrix(conf_mat, cname_list, normalize = True)
+joint_predictions = np.concatenate((full_pred_output.reshape(1,-1), body_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
+temp = np.sum(joint_predictions == np.argmax(test_data_output, axis = 1).reshape(-1, 1), axis = 1) > 0
+print('\nTop 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+print('Note. True label is predicted correctly by one of the three classifiers. This is INCORRECT!!')
 
-print('Saving in: ', out_pkl_fname)
+joint_predictions = np.concatenate((full_pred_output.reshape(1,-1), body_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
+temp = (stats.mode(joint_predictions, axis = 1)[0].flatten() == np.argmax(test_data_output, axis = 1))
+print('\nTop 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+print('Note. Arg Mode is the final class lablel. This is CORRECT!!')
+
+print('\nSaving in: ', out_pkl_fname)
 with open(out_pkl_fname, 'wb') as fp:
 	pickle.dump({'fe': fe, 'out': out}, fp)

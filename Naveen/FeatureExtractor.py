@@ -635,7 +635,9 @@ class FeatureExtractor():
 		plt.show()
 
 	###### OFFLINE Function ########
-	def run_svm(self, data_input, data_output, train_per = 0.8, kernel = 'linear', inst_var_name = 'svm_clf'):
+	def run_svm(self, data_input, data_output, test_input = None, test_output = None, train_per = 0.8, kernel = 'linear', inst_var_name = 'clf', display = False):
+		result = {}
+
 		num_inst = data_input.shape[0]
 		feat_dim = data_input.shape[1]
 		num_classes = data_output.shape[1]
@@ -646,31 +648,54 @@ class FeatureExtractor():
 		K = int(train_per*num_inst)
 		train_input = data_input[perm[:K], :]
 		train_output = data_output[perm[:K], :]
-		test_input = data_input[perm[K:], :]
-		test_output = data_output[perm[K:], :]
+		valid_input = data_input[perm[K:], :]
+		valid_output = data_output[perm[K:], :]
 
 		# Train
-		clf = svm.SVC(decision_function_shape='ova', kernel = kernel )
+		clf = svm.SVC(decision_function_shape='ova', kernel = kernel, probability = True)
 		clf.fit(train_input, np.argmax(train_output, axis =1 ))
 
 		# Train Predict
 		pred_train_output = clf.predict(train_input)
 		train_acc = float(np.sum(pred_train_output == np.argmax(train_output, axis = 1))) / pred_train_output.size
-		print('Train Acc: ', train_acc)
+		result['train_acc'] = train_acc
+		print('Train Acc: %.04f'%train_acc)
 
-		# Test Predict
-		pred_test_output = clf.predict(test_input)
-		test_acc = float(np.sum(pred_test_output == np.argmax(test_output, axis = 1))) / pred_test_output.size
-		print('Test Acc: ', test_acc)
+		# Validation Predict
+		pred_valid_output = clf.predict(valid_input)
+		valid_acc = float(np.sum(pred_valid_output == np.argmax(valid_output, axis = 1))) / pred_valid_output.size
+		result['valid_acc'] = valid_acc
+		print('Valid Acc: %.04f'%valid_acc)
+		if(display):
+			conf_mat = confusion_matrix(np.argmax(valid_output, axis = 1), pred_valid_output)
+			cname_list = []
+			for idx in range(num_classes):
+				cname_list.append(self.label_to_name[self.id_to_labels[idx]])
+			self.plot_confusion_matrix(conf_mat, cname_list, normalize = True, title = 'Validation Confusion Matrix')	
 
-		conf_mat = confusion_matrix(np.argmax(test_output, axis = 1), pred_test_output)
-		cname_list = []
-		for idx in range(num_classes):
-			cname_list.append(self.label_to_name[self.id_to_labels[idx]])
+		## Test Predict
+		if(test_input is not None):
+			pred_test_output = clf.predict(test_input)
+			
+			## Compute top - 3/5 accuracy
+			pred_test_prob = clf.predict_proba(test_input)
+			temp = np.sum(np.argsort(pred_test_prob, axis = 1)[:,-5:] == np.argmax(test_output, axis = 1).reshape(-1, 1), axis = 1) > 0
+			print('LOSO - Top-5 Acc - ', np.mean(temp))		
+			temp = np.sum(np.argsort(pred_test_prob, axis = 1)[:,-3:] == np.argmax(test_output, axis = 1).reshape(-1, 1), axis = 1) > 0
+			print('LOSO - Top-3 Acc - ', np.mean(temp))
 
-		# self.plot_confusion_matrix(conf_mat, cname_list, normalize = True)
+			test_acc = float(np.sum(pred_test_output == np.argmax(test_output, axis = 1))) / pred_test_output.size
+			result['test_acc'] = test_acc
+			print('LOSO - Top-1 Acc - %.04f'%test_acc)
+			if(display):
+				conf_mat = confusion_matrix(np.argmax(test_output, axis = 1), pred_test_output)
+				cname_list = []
+				for idx in range(test_output.shape[1]):
+					cname_list.append(self.label_to_name[self.id_to_labels[idx]])
+				self.plot_confusion_matrix(conf_mat, cname_list, normalize = True, title = 'LOSO Confusion Matrix')
 
 		setattr(self, inst_var_name, deepcopy(clf))
 		self.classifiers[inst_var_name] = deepcopy(clf)
+		result['clf'] = deepcopy(clf)
 
-		return clf, train_acc, test_acc
+		return result

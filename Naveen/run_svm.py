@@ -3,6 +3,7 @@ from __future__ import print_function
 import numpy as np
 import pickle
 import sys, os
+from copy import deepcopy
 from glob import glob
 from random import shuffle
 from FeatureExtractor import FeatureExtractor
@@ -34,16 +35,13 @@ print('Generating IO: ', end = '')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
 print('DONE !!!')
 
-num_points=fe.fixed_num_frames
-num_fingers=fe.num_fingers
+body_data_input = deepcopy(out['data_input'])
+hand_data_input = None
+combined_data_input = None
 
-# full_list = []
-# for sublist in fe.dominant_type:
-# 	full_list += sublist
+num_points = fe.fixed_num_frames
+num_fingers = fe.num_fingers
 
-# print(np.mean(np.array(full_list) == 0))
-
-# sys.exit()
 if(ENABLE_FINGERS):
 	# # ## Appending finger lengths with dominant_hand first
 	print('Appending finger lengths: ', end = '')
@@ -65,22 +63,11 @@ if(ENABLE_FINGERS):
 				data_merge.append(np.array(gesture_shuffle).flatten().tolist())
 
 	# 		# data_merge.append(line)
-	out['data_input'] = np.concatenate([out['data_input'], np.array(data_merge)], axis = 1)
+	hand_data_input = deepcopy(np.array(data_merge))
+	combined_data_input = np.concatenate([body_data_input, hand_data_input], axis = 1)
 	print('DONE !!!')
 
-# Randomize data input and output
-temp = zip(out['data_input'], out['data_output'])
-shuffle(temp)
-out['data_input'], out['data_output'] = zip(*temp)
-out['data_input'], out['data_output'] = list(out['data_input']), list(out['data_output'])
-if(fe.equate_dim):
-	out['data_input'] = np.array(out['data_input'])
-	out['data_output'] = np.array(out['data_output'])
-
-# print(fe.label_to_ids)
-# print(fe.label_to_name)
-
-## Plotting histogram - No. of instances per class
+## Plot Histogram - No. of instances per class
 objects = tuple(fe.inst_per_class.keys())
 y_pos = np.arange(len(objects))
 performance = fe.inst_per_class.values()
@@ -93,10 +80,21 @@ plt.title('No. of instances per class')
 plt.grid(True)
 #plt.show()
 
-print('Train SVM: ', end = '')
-clf, _, _ = fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60, inst_var_name = 'svm_clf')
+## combined Data
+print('\nBody + Hand ====> SVM')
+result = fe.run_svm(combined_data_input, out['data_output'], train_per = 0.60, inst_var_name = 'svm_clf')
 print('DONE !!! Storing variable in svm_clf')
 
-print('Saving in: ', out_pkl_fname)
+## Only Body
+print('\nBody ====> SVM')
+result = fe.run_svm(body_data_input, out['data_output'], train_per = 0.60, inst_var_name = 'svm_clf_body')
+print('DONE !!! Storing variable in svm_clf_body')
+
+## Only Hand
+print('\nHand ====> SVM')
+result = fe.run_svm(hand_data_input, out['data_output'], train_per = 0.60, inst_var_name = 'svm_clf_hand')
+print('DONE !!! Storing variable in svm_clf_hand')
+
+print('\nSaving in: ', out_pkl_fname)
 with open(out_pkl_fname, 'wb') as fp:
 	pickle.dump({'fe': fe, 'out': out}, fp)
