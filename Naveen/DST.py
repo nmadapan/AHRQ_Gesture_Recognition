@@ -46,6 +46,26 @@ class DST:
 
 		self.m_dict = {}
 
+	def batch_predict(self, prob_mat_3d):
+		'''
+		Description:
+			Batch predict class labels of multiple instances and multiple models at the same time.
+		Input arguments:
+			* prob_mat_3d: num_instances x num_classes x num_models
+		'''
+		assert isinstance(prob_mat_3d, np.ndarray), 'Error! probability matrix should be np.ndarray'
+		assert prob_mat_3d.ndim == 3, 'Error! probability matrix should be 3D np.ndarray'
+		
+		num_inst, num_cls, num_models = prob_mat_3d.shape
+		prob_mat = np.moveaxis(prob_mat_3d, [0, 1, 2], [2, 1, 0])
+		predictions = []
+		for idx in range(num_inst):
+			M = prob_mat[:, :, idx]
+			pred, _ = self.predict(M)
+			predictions.append(pred)
+		return np.array(predictions)
+
+
 	def predict(self, M):
 		'''
 		Description:

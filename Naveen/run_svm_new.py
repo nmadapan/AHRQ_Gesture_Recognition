@@ -10,6 +10,7 @@ from FeatureExtractor import FeatureExtractor
 from helpers import skelfile_cmp
 from sklearn.metrics import confusion_matrix
 from scipy import stats
+from DST import DST
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 plt.ioff()
@@ -141,15 +142,28 @@ hand_prob = fe.svm_clf_hand.predict_proba(test_data_input)
 hand_pred_output = np.argmax(hand_prob, axis = 1)
 print('DONE !!! Storing variable in svm_clf_hand')
 
-joint_predictions = np.concatenate((full_pred_output.reshape(1,-1), body_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
+print('\nJOINT Prediction ====> Predicted label is one ATLEAST one of the models')
+joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
 temp = np.sum(joint_predictions == np.argmax(test_data_output, axis = 1).reshape(-1, 1), axis = 1) > 0
-print('\nTop 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
 print('Note. True label is predicted correctly by one of the three classifiers. This is INCORRECT!!')
 
-joint_predictions = np.concatenate((full_pred_output.reshape(1,-1), body_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
+print('\nJOINT Prediction ====> ARG MODE is the final predicted label')
+joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
 temp = (stats.mode(joint_predictions, axis = 1)[0].flatten() == np.argmax(test_data_output, axis = 1))
-print('\nTop 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
 print('Note. Arg Mode is the final class lablel. This is CORRECT!!')
+
+#### Using DST for predictions ####
+print('\nDST =========> Prediction')
+dst = DST(num_models = 3, num_classes = test_data_output.shape[1])
+prob_mat = np.zeros((full_prob.shape[0], full_prob.shape[1], 3))
+prob_mat[:,:,0] = full_prob
+prob_mat[:,:,1] = body_prob
+prob_mat[:,:,2] = hand_prob
+pred_output = dst.batch_predict(prob_mat)
+temp = (pred_output == np.argmax(test_data_output, axis = 1))
+print('Top 1 - DST - Combined Acc of three classifiers - %.04f'%np.mean(temp))
 
 print('\nSaving in: ', out_pkl_fname)
 with open(out_pkl_fname, 'wb') as fp:
