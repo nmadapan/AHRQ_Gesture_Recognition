@@ -3,10 +3,11 @@ from __future__ import print_function
 import numpy as np
 import pickle
 import sys, os
+from copy import deepcopy
 from glob import glob
 from random import shuffle
 from FeatureExtractor import FeatureExtractor
-from helpers import skelfile_cmp
+from helpers import skelfile_cmp, augment_data
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 
@@ -14,11 +15,11 @@ plt.rcdefaults()
 ## Initialization ##
 ####################
 ## Skeleton
-skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L6'
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
 # skel_folder_path = r'H:\AHRQ\Study_IV\Data\Data\L6'
-num_points=40
 ## Fingers
 ENABLE_FINGERS = True
+MULTIPLIER = 2
 pickle_base_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
 pickle_path1=os.path.join(pickle_base_path1,os.path.basename(skel_folder_path))
 fingers_pkl_fname = os.path.basename(skel_folder_path)+'_fingers_from_hand_base_equate_dim_subsample.pkl'
@@ -35,13 +36,42 @@ print('Generating IO: ', end = '')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
 print('DONE !!!')
 
-# full_list = []
-# for sublist in fe.dominant_type:
-# 	full_list += sublist
+## Extract some variables from fe object
+num_points = fe.fixed_num_frames
+num_fingers = fe.num_fingers
+skel_file_order = deepcopy(fe.skel_file_order)
+dominant_types_order = deepcopy(fe.dominant_type)
+try:
+	assert len(dominant_types_order) == len(skel_file_order), 'ERROR! MISMATCH'
+except AssertionError as error:
+	print(error)
+	sys.exit()
 
-# print(np.mean(np.array(full_list) == 0))
+############################
+### Ignore some comamnds ###
+############################
+## The command ids to ignore
+ignore_command_ids_list = ['5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2'] ## For Task 2
+# ignore_command_ids_list = ['5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2'] ## For Task 3
+## command_id_order has same order as skel_file_order. It is a list of command ids. ['1_0', '1_1', ...]
+command_id_order = np.array(['_'.join(fname.split('_')[0:2]) for fname in skel_file_order])
+## partial_train_command_flags has the same order as the skel_file_order. [True, True, False, ...]. True ==> include, False ==> ignore
+partial_train_command_flags = np.sum(command_id_order.reshape(-1, 1) == np.array(ignore_command_ids_list).reshape(1, -1), axis = 1) == 0
+## all_train_command_flags: a list of True and False. True ==> include, False ==> ignore. On per instance basis. 
+all_train_command_flags = []
+for idx, dom_types_list in enumerate(dominant_types_order):
+	all_train_command_flags += [partial_train_command_flags[idx]]*len(dom_types_list)
+all_train_command_flags = np.array(all_train_command_flags)
+########################
 
-# sys.exit()
+body_data_input = deepcopy(out['data_input'])
+data_output = deepcopy(out['data_output'])
+hand_data_input = None
+combined_data_input = None
+
+num_points = fe.fixed_num_frames
+num_fingers = fe.num_fingers
+
 if(ENABLE_FINGERS):
 	# # ## Appending finger lengths with dominant_hand first
 	print('Appending finger lengths: ', end = '')
@@ -59,26 +89,17 @@ if(ENABLE_FINGERS):
 				gesture_shuffle=[]
 				gesture=np.array(line).reshape(num_points,int(len(line)/num_points))
 				for frame in gesture:
-					gesture_shuffle.append(frame[5:].tolist()+frame[:5].tolist())
+					gesture_shuffle.append(frame[num_fingers:].tolist()+frame[:num_fingers].tolist())
 				data_merge.append(np.array(gesture_shuffle).flatten().tolist())
 
 	# 		# data_merge.append(line)
-	out['data_input'] = np.concatenate([out['data_input'], np.array(data_merge)], axis = 1)
+	hand_data_input = deepcopy(np.array(data_merge))
+	combined_data_input = np.concatenate([body_data_input, hand_data_input], axis = 1)
 	print('DONE !!!')
+else:
+	combined_data_input = body_data_input
 
-# Randomize data input and output
-temp = zip(out['data_input'], out['data_output'])
-shuffle(temp)
-out['data_input'], out['data_output'] = zip(*temp)
-out['data_input'], out['data_output'] = list(out['data_input']), list(out['data_output'])
-if(fe.equate_dim):
-	out['data_input'] = np.array(out['data_input'])
-	out['data_output'] = np.array(out['data_output'])
-
-# print(fe.label_to_ids)
-# print(fe.label_to_name)
-
-## Plotting histogram - No. of instances per class
+## Plot Histogram - No. of instances per class
 objects = tuple(fe.inst_per_class.keys())
 y_pos = np.arange(len(objects))
 performance = fe.inst_per_class.values()
@@ -91,10 +112,30 @@ plt.title('No. of instances per class')
 plt.grid(True)
 #plt.show()
 
-print('Train SVM: ', end = '')
-clf, _, _ = fe.run_svm(out['data_input'], out['data_output'], train_per = 0.60, inst_var_name = 'svm_clf')
-print('DONE !!! Storing variable in svm_clf')
+## Only Body
+print('\nBody ====> SVM')
+body_data_input = body_data_input[all_train_command_flags, :]
+data_output = data_output[all_train_command_flags, :]
+X, Y = augment_data(body_data_input, data_output, multiplier = MULTIPLIER)
+result = fe.run_svm(X, Y, train_per = 0.60, inst_var_name = 'svm_clf_body')
+print('DONE !!! Storing variable in svm_clf_body')
 
-print('Saving in: ', out_pkl_fname)
+if(ENABLE_FINGERS):
+	## Only Hand
+	print('\nHand ====> SVM')
+	hand_data_input = hand_data_input[all_train_command_flags, :]
+	X, Y = augment_data(hand_data_input, data_output, multiplier = MULTIPLIER)
+	result = fe.run_svm(X, Y, train_per = 0.60, inst_var_name = 'svm_clf_hand')
+	print('DONE !!! Storing variable in svm_clf_hand')
+
+	## combined Data
+	print('\nBody + Hand ====> SVM')
+	combined_data_input = combined_data_input[all_train_command_flags, :]
+	X, Y = augment_data(combined_data_input, data_output, multiplier = MULTIPLIER)
+	result = fe.run_svm(X, Y, train_per = 0.60, inst_var_name = 'svm_clf')
+	print('DONE !!! Storing variable in svm_clf')
+
+
+print('\nSaving in: ', out_pkl_fname)
 with open(out_pkl_fname, 'wb') as fp:
 	pickle.dump({'fe': fe, 'out': out}, fp)
