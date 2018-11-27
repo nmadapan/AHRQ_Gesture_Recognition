@@ -24,7 +24,7 @@ class SynapseAction:
         auto.PAUSE = 0.25
         ####################
 
-        self.imageFolder = "SCA_Images" if imageFolder is None else imageFolder
+        self.imageFolder = os.path.join("Synape","SCA_Images") if imageFolder is None else imageFolder
         # Get window sizes
         (self.width, self.height) = tuple(float(e) for e in auto.size())
         (self.nativeW, self.nativeH) = tuple(float(e) for e in ImageGrab.grab().size)
@@ -712,7 +712,7 @@ class SynapseAction:
 
 
 if __name__ == "__main__":
-    syn_action = SynapseAction()
+    syn_action = SynapseAction('L2','test')
     # set up the signal handler
     # signal.signal(signal.SIGINT, syn_action.signalHandler)
     # Run the program
