@@ -86,18 +86,11 @@ class SynapseAction:
         # Look into "start" command for Windows
         if (platform.system() == "Windows"):
             window_names = auto.getWindows().keys()
-            print auto.getWindows()
+            for window_name in window_names: auto.getWindow(window_name).minimize()
             for window_name in window_names:
-                str_window = window_name.encode('utf8')
-                xef_window = auto.getWindow(str_window)
-                if toOpen in str_window:# and "Patient Information" not in window_name):
-                    print window_name, toOpen, "entered the if"
-                    xef_window.maximize()
+                if toOpen in window_name:# and "Patient Information" not in window_name:
+                    auto.getWindow(window_name).maximize()
                     break
-                else:
-                    xef_window.minimize()
-                time.sleep(1)
-
         else: os.system("open -a " + toOpen.replace(" ", "\\ "))
 
     # Remove images generated in the process of running the program
@@ -522,7 +515,7 @@ class SynapseAction:
         # General way it should work, but it would have issues.
         # For now, don't test Window Open/Close (no 8_1 or 8_2)
         elif (command == "Ruler" and action != "Ruler"):
-            # Ucomment the return to not ignore window
+            # Uncomment the return to not ignore Ruler
             return True
 
         ####################################################
@@ -543,19 +536,45 @@ class SynapseAction:
             # Therefore, try using:
             # (iconW, barW) = (57.0 * self.status["topBarHeight"] / 169.0, 15.0 * self.status["topBarHeight"] / 169.0)
             # (moveToX, moveToY) = (iconW * 5.5 + barW, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
-            # Ucomment the return to not ignore window
-            return True
+            # Uncomment the return to not ignore window
+            #return True
             if (action == "Open" and not self.status["window_open"]):
                 self.moveToActivePanel()
                 auto.click()
                 if (platform.system() == "Windows"): auto.hotkey("win", "alt", "e")
                 else: auto.hotkey("command", "altleft", "e")
+                self.status["window_open"] = True
                 time.sleep(5)
             elif (action == "Close" and self.status["window_open"]):
+                # Windows hasn't been tested but it should work
+                # Mac sometimes closes Citrix instead of Patient Info
                 if (platform.system() == "Windows"):
-                    self.openWindow(self.viewer, True)
-                    auto.hotkey("fn", "alt", "f4")
+                    # Have not tested the code below, but hopefully will work
+                    # Should do the following:
+                    # Minimize all windows except for ones inside Synapse
+                    toOpen = " - \\\\Remote"
+                    window_names = auto.getWindows().keys()
+                    for window_name in window_names:
+                        if not (window_name.endswith(toOpen)):
+                            auto.getWindow(window_name).minimize()
+                    window_names = auto.getWindows().keys()
+                    # Maximize only the "Patient Information" window that's in Synapse
+                    for window_name in window_names:
+                        try:
+                            xef_window = auto.getWindow(window_name)
+                            if window_name.endswith(toOpen) and window_name.startswith("Patient Information for "):
+                                # Resize the window to be half screen-width x half screen-height
+                                # Click on the close button
+                                xef_window.maximize()
+                                xef_window.resize(width / 2.0, height / 2.0)
+                                (closeX, closeY) = (10 + (width * 90.0 / 1920.0), 2 + (width * 40.0 / 1920.0))
+                                xef_window.clickRel(x=(width / 2.0 - closeX), y=closeY, clicks=1, button='left')
+                                break
+                        except Exception as e:
+                            continue
+                    #auto.hotkey("fn", "alt", "f4")
                 else: auto.hotkey("command", "altleft", "f4")
+                self.status["window_open"] = False
 
         ####################################################
         ################ MANUAL CONTRAST ###################
@@ -707,7 +726,7 @@ if __name__ == "__main__":
     command_list = ["4_1","6_1", "6_2", "6_3", "6_4", "6_4", "6_3", "6_2", "6_1"]
     command_list = ["9_0", "9_2", "4_0", "9_2", "3_1", "9_1"]
     command_list = ["11_1", "11_2", "4_1", "11_1"]
-    command_list = ["10_1", "10_2", "10_3", "10_4"]
+    command_list = ["8_1", "8_2", "10_1", "10_2", "10_3", "10_4"]
 
     # For now, don't test Window Open/Close (no 8_1 or 8_2)
 
