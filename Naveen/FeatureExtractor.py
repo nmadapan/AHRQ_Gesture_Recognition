@@ -242,6 +242,16 @@ class FeatureExtractor():
 			d_right = np.repeat(np.diff(right, axis = 0), d_reps, axis = 0)
 			theta_right = np.zeros(right.shape)
 			for jnt_idx in range(self.num_joints):
+				# '''
+				# Convert each difference into a unit vector
+				# For instance: [dx, dy, dz] ==> [dx/L, dy/L, dz/L] where L = \sqrt{dx^2 + dy^2, dz^2}
+				# '''
+				# t_d_right = d_right[:, dim*jnt_idx:dim*(jnt_idx+1)] ## Get the first three (dim) columns
+				# d_right_norm = np.linalg.norm(t_d_right, axis = 1) ## Compute the norm of rows
+				# d_right_norm[d_right_norm < 1e-6] = 1e6 ## Suppress the elements that are less than 1e-6
+				# t_d_right = t_d_right.T / d_right_norm # Divide each column by its norm
+				# d_right[:, dim*jnt_idx:dim*(jnt_idx+1)] = t_d_right.T # Save it back in d_right
+
 				temp = d_right[:, dim*jnt_idx:dim*(jnt_idx+1)]
 				theta_right[:, dim*jnt_idx:dim*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 
@@ -267,6 +277,16 @@ class FeatureExtractor():
 			d_left = np.repeat(np.diff(left, axis = 0), d_reps, axis = 0)
 			theta_left = np.zeros(left.shape)
 			for jnt_idx in range(self.num_joints):
+				# '''
+				# Convert each difference into a unit vector
+				# For instance: [dx, dy, dz] ==> [dx/L, dy/L, dz/L] where L = \sqrt{dx^2 + dy^2, dz^2}
+				# '''
+				# t_d_left = d_left[:, dim*jnt_idx:dim*(jnt_idx+1)] ## Get the first three (dim) columns
+				# d_left_norm = np.linalg.norm(t_d_left, axis = 1) ## Compute the norm of rows
+				# d_left_norm[d_left_norm < 1e-6] = 1e6 ## Suppress the elements that are less than 1e-6
+				# t_d_left = t_d_left.T / d_left_norm # Divide each column by its norm
+				# d_left[:, dim*jnt_idx:dim*(jnt_idx+1)] = t_d_left.T # Save it back in d_left
+
 				temp = d_left[:, dim*jnt_idx:dim*(jnt_idx+1)]
 				theta_left[:, dim*jnt_idx:dim*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 			## Position
@@ -465,6 +485,7 @@ class FeatureExtractor():
 		d_right = np.repeat(np.diff(right, axis = 0), d_reps, axis = 0)
 		theta_right = np.zeros(right.shape)
 		for jnt_idx in range(self.num_joints):
+			## TODO: Normalize d_right so that norm of each row of a joint is one. 
 			temp = d_right[:, 3*jnt_idx:3*(jnt_idx+1)]
 			theta_right[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 

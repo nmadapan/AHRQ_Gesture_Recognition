@@ -7,7 +7,7 @@ from copy import deepcopy
 from glob import glob
 from random import shuffle
 from FeatureExtractor import FeatureExtractor
-from helpers import skelfile_cmp
+from helpers import skelfile_cmp, augment_data
 from sklearn.metrics import confusion_matrix
 from scipy import stats
 from DST import DST
@@ -20,6 +20,7 @@ plt.ioff()
 ####################
 ## Fingers
 ENABLE_FINGERS = True
+MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1. 
 display = False
 write_flag = False
 
@@ -59,7 +60,28 @@ num_points = fe.fixed_num_frames
 num_fingers = fe.num_fingers
 skel_file_order = deepcopy(fe.skel_file_order)
 dominant_types_order = deepcopy(fe.dominant_type)
-assert len(dominant_types_order) == len(skel_file_order), 'ERROR! MISMATCH'
+try:
+	assert len(dominant_types_order) == len(skel_file_order), 'ERROR! MISMATCH'
+except AssertionError as error:
+	print(error)
+	sys.exit()
+
+############################
+### Ignore some comamnds ###
+############################
+## The command ids to ignore
+ignore_command_ids_list = ['5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2'] ## For Task 2
+# ignore_command_ids_list = ['5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2'] ## For Task 3
+## command_id_order has same order as skel_file_order. It is a list of command ids. ['1_0', '1_1', ...]
+command_id_order = np.array(['_'.join(fname.split('_')[0:2]) for fname in skel_file_order])
+## partial_train_command_flags has the same order as the skel_file_order. [True, True, False, ...]. True ==> include, False ==> ignore
+partial_train_command_flags = np.sum(command_id_order.reshape(-1, 1) == np.array(ignore_command_ids_list).reshape(1, -1), axis = 1) == 0
+## all_train_command_flags: a list of True and False. True ==> include, False ==> ignore. On per instance basis. 
+all_train_command_flags = []
+for idx, dom_types_list in enumerate(dominant_types_order):
+	all_train_command_flags += [partial_train_command_flags[idx]]*len(dom_types_list)
+all_train_command_flags = np.array(all_train_command_flags)
+########################
 
 if(ENABLE_FINGERS):
 	# # ## Appending finger lengths with dominant_hand first
@@ -84,6 +106,8 @@ if(ENABLE_FINGERS):
 	hand_data_input = deepcopy(np.array(data_merge))
 	full_data_input = np.concatenate([body_data_input, hand_data_input], axis = 1)
 	print('DONE !!!')
+else:
+	full_data_input = body_data_input
 
 ## Plotting histogram - No. of instances per class
 if(display):
@@ -107,64 +131,85 @@ for idx, dom_types_list in enumerate(dominant_types_order):
 	all_train_flags += [partial_train_subject_flags[idx]]*len(dom_types_list)
 all_train_flags = np.array(all_train_flags)
 
-## Body + Hands
-print('\nBody + Hand ====> SVM')
-data_input, data_output = deepcopy(full_data_input), deepcopy(out['data_output'])
-train_data_input = data_input[all_train_flags, :]
-train_data_output = data_output[all_train_flags, :]
-test_data_input = data_input[np.logical_not(all_train_flags), :]
-test_data_output = data_output[np.logical_not(all_train_flags), :]
-fe.run_svm(train_data_input, train_data_output, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf', display = display)
-full_prob = fe.svm_clf.predict_proba(test_data_input)
-full_pred_output = np.argmax(full_prob, axis = 1)
-print('DONE !!! Storing variable in svm_clf')
-
 ## Only Body
 print('\nBody ====> SVM')
 data_input, data_output = deepcopy(body_data_input), deepcopy(out['data_output'])
+## Remove ignroed comamnds
+data_input = data_input[all_train_command_flags, :]
+##################### ERRRRRRRRRRRRRROR ##################
+## It requries reranking the classes in a new format. 
+sys.exit('There is a ERRROR in the data_output. though the classes are reduced, the one hot vectors are still in original dimension. ')
+data_output = data_output[all_train_command_flags, :]
+all_train_flags = all_train_flags[all_train_command_flags]
+## Leave one subject out
 train_data_input = data_input[all_train_flags, :]
 train_data_output = data_output[all_train_flags, :]
+## Left out subject is the testing data
 test_data_input = data_input[np.logical_not(all_train_flags), :]
 test_data_output = data_output[np.logical_not(all_train_flags), :]
-fe.run_svm(train_data_input, train_data_output, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf_body', display = display)
+X, Y = augment_data(train_data_input, train_data_output, multiplier = MULTIPLIER)
+fe.run_svm(X, Y, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf_body', display = display)
 body_prob = fe.svm_clf_body.predict_proba(test_data_input)
 body_pred_output = np.argmax(body_prob, axis = 1)
 print('DONE !!! Storing variable in svm_clf_body')
 
-## Only Hand
-print('\nHand ====> SVM')
-data_input, data_output = deepcopy(hand_data_input), deepcopy(out['data_output'])
-train_data_input = data_input[all_train_flags, :]
-train_data_output = data_output[all_train_flags, :]
-test_data_input = data_input[np.logical_not(all_train_flags), :]
-test_data_output = data_output[np.logical_not(all_train_flags), :]
-fe.run_svm(train_data_input, train_data_output, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf_hand', display = display)
-hand_prob = fe.svm_clf_hand.predict_proba(test_data_input)
-hand_pred_output = np.argmax(hand_prob, axis = 1)
-print('DONE !!! Storing variable in svm_clf_hand')
+if(ENABLE_FINGERS):
+	## Only Hand
+	print('\nHand ====> SVM')
+	data_input, data_output = deepcopy(hand_data_input), deepcopy(out['data_output'])
+	## Remove ignroed comamnds
+	data_input = data_input[all_train_command_flags, :]
+	data_output = data_output[all_train_command_flags, :]
 
-print('\nJOINT Prediction ====> Predicted label is one ATLEAST one of the models')
-joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
-temp = np.sum(joint_predictions == np.argmax(test_data_output, axis = 1).reshape(-1, 1), axis = 1) > 0
-print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
-print('Note. True label is predicted correctly by one of the three classifiers. This is INCORRECT!!')
+	train_data_input = data_input[all_train_flags, :]
+	train_data_output = data_output[all_train_flags, :]
+	test_data_input = data_input[np.logical_not(all_train_flags), :]
+	test_data_output = data_output[np.logical_not(all_train_flags), :]
+	X, Y = augment_data(train_data_input, train_data_output, multiplier = MULTIPLIER)
+	fe.run_svm(X, Y, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf_hand', display = display)
+	hand_prob = fe.svm_clf_hand.predict_proba(test_data_input)
+	hand_pred_output = np.argmax(hand_prob, axis = 1)
+	print('DONE !!! Storing variable in svm_clf_hand')
 
-print('\nJOINT Prediction ====> ARG MODE is the final predicted label')
-joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
-temp = (stats.mode(joint_predictions, axis = 1)[0].flatten() == np.argmax(test_data_output, axis = 1))
-print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
-print('Note. Arg Mode is the final class lablel. This is CORRECT!!')
+	## Body + Hands
+	print('\nBody + Hand ====> SVM')
+	data_input, data_output = deepcopy(full_data_input), deepcopy(out['data_output'])
+	## Remove ignroed comamnds
+	data_input = data_input[all_train_command_flags, :]
+	data_output = data_output[all_train_command_flags, :]
 
-#### Using DST for predictions ####
-print('\nDST =========> Prediction')
-dst = DST(num_models = 3, num_classes = test_data_output.shape[1])
-prob_mat = np.zeros((full_prob.shape[0], full_prob.shape[1], 3))
-prob_mat[:,:,0] = full_prob
-prob_mat[:,:,1] = body_prob
-prob_mat[:,:,2] = hand_prob
-pred_output = dst.batch_predict(prob_mat)
-temp = (pred_output == np.argmax(test_data_output, axis = 1))
-print('Top 1 - DST - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+	train_data_input = data_input[all_train_flags, :]
+	train_data_output = data_output[all_train_flags, :]
+	test_data_input = data_input[np.logical_not(all_train_flags), :]
+	test_data_output = data_output[np.logical_not(all_train_flags), :]
+	X, Y = augment_data(train_data_input, train_data_output, multiplier = MULTIPLIER)
+	fe.run_svm(X, Y, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf', display = display)
+	full_prob = fe.svm_clf.predict_proba(test_data_input)
+	full_pred_output = np.argmax(full_prob, axis = 1)
+	print('DONE !!! Storing variable in svm_clf')
+
+	print('\nJOINT Prediction ====> Predicted label is one ATLEAST one of the models')
+	joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
+	temp = np.sum(joint_predictions == np.argmax(test_data_output, axis = 1).reshape(-1, 1), axis = 1) > 0
+	print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+	print('Note. True label is predicted correctly by one of the three classifiers. This is INCORRECT!!')
+
+	print('\nJOINT Prediction ====> ARG MODE is the final predicted label')
+	joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
+	temp = (stats.mode(joint_predictions, axis = 1)[0].flatten() == np.argmax(test_data_output, axis = 1))
+	print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+	print('Note. Arg Mode is the final class lablel. This is CORRECT!!')
+
+	#### Using DST for predictions ####
+	print('\nDST =========> Prediction')
+	dst = DST(num_models = 3, num_classes = test_data_output.shape[1])
+	prob_mat = np.zeros((full_prob.shape[0], full_prob.shape[1], 3))
+	prob_mat[:,:,0] = full_prob
+	prob_mat[:,:,1] = body_prob
+	prob_mat[:,:,2] = hand_prob
+	pred_output = dst.batch_predict(prob_mat)
+	temp = (pred_output == np.argmax(test_data_output, axis = 1))
+	print('Top 1 - DST - Combined Acc of three classifiers - %.04f'%np.mean(temp))
 
 if(write_flag):
 	print('\nSaving in: ', out_pkl_fname)

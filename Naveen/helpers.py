@@ -609,3 +609,18 @@ def custom_bar(array, xticks = [], legends = [], title = '', width = 0.15, write
 	plt.grid('on')
 	if(display): plt.show()
 	if(write_path is not None): plt.savefig(write_path)
+
+def augment_data(X, Y, multiplier = 2):
+	'''
+	Input arguments:
+		X: 2D np.ndarray
+		Y: 2D np.ndarray
+	'''
+	if(multiplier == 1): return X, Y
+	X_new = X
+	Y_new = Y
+	for idx in range(multiplier-1):
+		N = 0.02 * np.random.randn(*X.shape)
+		X_new = np.append(X_new, X+N, axis = 0)
+		Y_new = np.append(Y_new, Y, axis = 0)
+	return np.array(X_new), np.array(Y_new)
