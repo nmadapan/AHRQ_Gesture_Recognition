@@ -7,63 +7,81 @@ from copy import deepcopy
 from glob import glob
 from random import shuffle
 from FeatureExtractor import FeatureExtractor
-from helpers import skelfile_cmp
+from helpers import skelfile_cmp, augment_data
 from sklearn.metrics import confusion_matrix
+from scipy import stats
+from DST import DST
 import matplotlib.pyplot as plt
 plt.rcdefaults()
+plt.ioff()
 
 ####################
 ## Initialization ##
 ####################
-## Skeleton
-skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L6'
-eliminate_subject_id = 'S3'
-
 ## Fingers
-ENABLE_FINGERS = False
+ENABLE_FINGERS = True
+MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1. 
+display = False
+write_flag = False
+
+## Skeleton
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
+
+## Variables
+all_subject_ids = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
+eliminate_subject_id = 'S6'
+out_filename_suffix = '_data.pickle'
+
+## CPM
 pickle_base_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
-pickle_path1=os.path.join(pickle_base_path1,os.path.basename(skel_folder_path))
-fingers_pkl_fname = os.path.basename(skel_folder_path)+'_fingers_from_hand_base_equate_dim_subsample.pkl'
+pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
+
+pickle_path1 = os.path.join(pickle_base_path1,os.path.basename(skel_folder_path))
+fingers_pkl_fname = os.path.basename(skel_folder_path) + pickle_file_suffix
 #######################
 
-annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
+## Find out pickle filename
 dirname = os.path.dirname(skel_folder_path)
 fileprefix = os.path.basename(skel_folder_path)
+out_pkl_fname = os.path.join(dirname, fileprefix + out_filename_suffix)
 
-out_pkl_fname = os.path.join(dirname, fileprefix+'_data.pickle')
-
+## Process Skeleton Data - Generate I/O
+annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
 fe = FeatureExtractor(json_param_path = 'param.json')
 print('Generating IO: ', end = '')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
 print('DONE !!!')
+body_data_input = deepcopy(out['data_input'])
+hand_data_input = None
+combined_data_input = None
 
+## Extract some variables from fe object
+num_points = fe.fixed_num_frames
+num_fingers = fe.num_fingers
 skel_file_order = deepcopy(fe.skel_file_order)
 dominant_types_order = deepcopy(fe.dominant_type)
+try:
+	assert len(dominant_types_order) == len(skel_file_order), 'ERROR! MISMATCH'
+except AssertionError as error:
+	print(error)
+	sys.exit()
 
-assert len(dominant_types_order) == len(skel_file_order), 'ERROR! MISMATCH'
-
-subject_name_order = np.array([fname.split('_')[2] for fname in skel_file_order])
-
-partial_train_subject_flags = (subject_name_order != eliminate_subject_id)
-
-# print(zip(skel_file_order, partial_train_subject_flags))
-
-all_train_flags = []
-
+############################
+### Ignore some comamnds ###
+############################
+## The command ids to ignore
+ignore_command_ids_list = ['5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2'] ## For Task 2
+# ignore_command_ids_list = ['5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2'] ## For Task 3
+## command_id_order has same order as skel_file_order. It is a list of command ids. ['1_0', '1_1', ...]
+command_id_order = np.array(['_'.join(fname.split('_')[0:2]) for fname in skel_file_order])
+## partial_train_command_flags has the same order as the skel_file_order. [True, True, False, ...]. True ==> include, False ==> ignore
+partial_train_command_flags = np.sum(command_id_order.reshape(-1, 1) == np.array(ignore_command_ids_list).reshape(1, -1), axis = 1) == 0
+## all_train_command_flags: a list of True and False. True ==> include, False ==> ignore. On per instance basis. 
+all_train_command_flags = []
 for idx, dom_types_list in enumerate(dominant_types_order):
-	all_train_flags += [partial_train_subject_flags[idx]]*len(dom_types_list)
-
-all_train_flags = np.array(all_train_flags)
-
-# full_list = []
-# for sublist in fe.dominant_type:
-# 	full_list += sublist
-
-# print(np.mean(np.array(full_list) == 0))
-
-# print(out['data_output'])
-
-# sys.exit()
+	all_train_command_flags += [partial_train_command_flags[idx]]*len(dom_types_list)
+all_train_command_flags = np.array(all_train_command_flags)
+########################
 
 if(ENABLE_FINGERS):
 	# # ## Appending finger lengths with dominant_hand first
@@ -82,61 +100,118 @@ if(ENABLE_FINGERS):
 				gesture_shuffle=[]
 				gesture=np.array(line).reshape(num_points,int(len(line)/num_points))
 				for frame in gesture:
-					gesture_shuffle.append(frame[5:].tolist()+frame[:5].tolist())
+					gesture_shuffle.append(frame[num_fingers:].tolist()+frame[:num_fingers].tolist())
 				data_merge.append(np.array(gesture_shuffle).flatten().tolist())
 				
-	out['data_input'] = np.concatenate([out['data_input'], np.array(data_merge)], axis = 1)
+	hand_data_input = deepcopy(np.array(data_merge))
+	full_data_input = np.concatenate([body_data_input, hand_data_input], axis = 1)
 	print('DONE !!!')
-
-# Randomize data input and output
-data_input, data_output = deepcopy(out['data_input']), deepcopy(out['data_output'])
-
-## TODO: It is assumed that out['data_input'] and out['data_output'] are numpy arrays. It is not the case when equate_dim is False
-train_data_input = data_input[all_train_flags, :]
-train_data_output = data_output[all_train_flags, :]
-
-test_data_input = data_input[np.logical_not(all_train_flags), :]
-test_data_output = data_output[np.logical_not(all_train_flags), :]
-
-temp = zip(train_data_input, train_data_output)
-shuffle(temp)
-train_data_input, train_data_output = zip(*temp)
-train_data_input, train_data_output = list(train_data_input), list(train_data_output)
-if(fe.equate_dim):
-	train_data_input, train_data_output = np.array(train_data_input), np.array(train_data_output)
-
-# print(fe.label_to_ids)
-# print(fe.label_to_name)
+else:
+	full_data_input = body_data_input
 
 ## Plotting histogram - No. of instances per class
-objects = tuple(fe.inst_per_class.keys())
-y_pos = np.arange(len(objects))
-performance = fe.inst_per_class.values()
-plt.figure()
-plt.bar(y_pos, performance, align='center', alpha=0.5)
-# plt.xticks(y_pos, objects)
-plt.xlabel('Class IDs')
-plt.ylabel('No. of instances')
-plt.title('No. of instances per class')
-plt.grid(True)
-#plt.show()
+if(display):
+	objects = tuple(fe.inst_per_class.keys())
+	y_pos = np.arange(len(objects))
+	performance = fe.inst_per_class.values()
+	plt.figure()
+	plt.bar(y_pos, performance, align='center', alpha=0.5)
+	# plt.xticks(y_pos, objects)
+	plt.xlabel('Class IDs')
+	plt.ylabel('No. of instances')
+	plt.title('No. of instances per class')
+	plt.grid(True)
+	plt.show()
 
-print('Train SVM: ', end = '')
-clf, _, _ = fe.run_svm(train_data_input, train_data_output, train_per = 0.60, inst_var_name = 'svm_clf')
-print('DONE !!! Storing variable in svm_clf')
+## Leave One Subject Out - Create IDs
+subject_name_order = np.array([fname.split('_')[2] for fname in skel_file_order])
+partial_train_subject_flags = (subject_name_order != eliminate_subject_id)
+all_train_flags = []
+for idx, dom_types_list in enumerate(dominant_types_order):
+	all_train_flags += [partial_train_subject_flags[idx]]*len(dom_types_list)
+all_train_flags = np.array(all_train_flags)
 
-# Test Predict
-pred_test_output = clf.predict(test_data_input)
-test_acc = float(np.sum(pred_test_output == np.argmax(test_data_output, axis = 1))) / pred_test_output.size
-print('New Subject Test Acc: ', test_acc)
+## Only Body
+print('\nBody ====> SVM')
+data_input, data_output = deepcopy(body_data_input), deepcopy(out['data_output'])
+## Remove ignroed comamnds
+data_input = data_input[all_train_command_flags, :]
+##################### ERRRRRRRRRRRRRROR ##################
+## It requries reranking the classes in a new format. 
+sys.exit('There is a ERRROR in the data_output. though the classes are reduced, the one hot vectors are still in original dimension. ')
+data_output = data_output[all_train_command_flags, :]
+all_train_flags = all_train_flags[all_train_command_flags]
+## Leave one subject out
+train_data_input = data_input[all_train_flags, :]
+train_data_output = data_output[all_train_flags, :]
+## Left out subject is the testing data
+test_data_input = data_input[np.logical_not(all_train_flags), :]
+test_data_output = data_output[np.logical_not(all_train_flags), :]
+X, Y = augment_data(train_data_input, train_data_output, multiplier = MULTIPLIER)
+fe.run_svm(X, Y, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf_body', display = display)
+body_prob = fe.svm_clf_body.predict_proba(test_data_input)
+body_pred_output = np.argmax(body_prob, axis = 1)
+print('DONE !!! Storing variable in svm_clf_body')
 
-conf_mat = confusion_matrix(np.argmax(test_data_output, axis = 1), pred_test_output)
-cname_list = []
-for idx in range(test_data_output.shape[1]):
-	cname_list.append(fe.label_to_name[fe.id_to_labels[idx]])
+if(ENABLE_FINGERS):
+	## Only Hand
+	print('\nHand ====> SVM')
+	data_input, data_output = deepcopy(hand_data_input), deepcopy(out['data_output'])
+	## Remove ignroed comamnds
+	data_input = data_input[all_train_command_flags, :]
+	data_output = data_output[all_train_command_flags, :]
 
-fe.plot_confusion_matrix(conf_mat, cname_list, normalize = True)
+	train_data_input = data_input[all_train_flags, :]
+	train_data_output = data_output[all_train_flags, :]
+	test_data_input = data_input[np.logical_not(all_train_flags), :]
+	test_data_output = data_output[np.logical_not(all_train_flags), :]
+	X, Y = augment_data(train_data_input, train_data_output, multiplier = MULTIPLIER)
+	fe.run_svm(X, Y, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf_hand', display = display)
+	hand_prob = fe.svm_clf_hand.predict_proba(test_data_input)
+	hand_pred_output = np.argmax(hand_prob, axis = 1)
+	print('DONE !!! Storing variable in svm_clf_hand')
 
-print('Saving in: ', out_pkl_fname)
-with open(out_pkl_fname, 'wb') as fp:
-	pickle.dump({'fe': fe, 'out': out}, fp)
+	## Body + Hands
+	print('\nBody + Hand ====> SVM')
+	data_input, data_output = deepcopy(full_data_input), deepcopy(out['data_output'])
+	## Remove ignroed comamnds
+	data_input = data_input[all_train_command_flags, :]
+	data_output = data_output[all_train_command_flags, :]
+
+	train_data_input = data_input[all_train_flags, :]
+	train_data_output = data_output[all_train_flags, :]
+	test_data_input = data_input[np.logical_not(all_train_flags), :]
+	test_data_output = data_output[np.logical_not(all_train_flags), :]
+	X, Y = augment_data(train_data_input, train_data_output, multiplier = MULTIPLIER)
+	fe.run_svm(X, Y, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf', display = display)
+	full_prob = fe.svm_clf.predict_proba(test_data_input)
+	full_pred_output = np.argmax(full_prob, axis = 1)
+	print('DONE !!! Storing variable in svm_clf')
+
+	print('\nJOINT Prediction ====> Predicted label is one ATLEAST one of the models')
+	joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
+	temp = np.sum(joint_predictions == np.argmax(test_data_output, axis = 1).reshape(-1, 1), axis = 1) > 0
+	print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+	print('Note. True label is predicted correctly by one of the three classifiers. This is INCORRECT!!')
+
+	print('\nJOINT Prediction ====> ARG MODE is the final predicted label')
+	joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
+	temp = (stats.mode(joint_predictions, axis = 1)[0].flatten() == np.argmax(test_data_output, axis = 1))
+	print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+	print('Note. Arg Mode is the final class lablel. This is CORRECT!!')
+
+	#### Using DST for predictions ####
+	print('\nDST =========> Prediction')
+	dst = DST(num_models = 3, num_classes = test_data_output.shape[1])
+	prob_mat = np.zeros((full_prob.shape[0], full_prob.shape[1], 3))
+	prob_mat[:,:,0] = full_prob
+	prob_mat[:,:,1] = body_prob
+	prob_mat[:,:,2] = hand_prob
+	pred_output = dst.batch_predict(prob_mat)
+	temp = (pred_output == np.argmax(test_data_output, axis = 1))
+	print('Top 1 - DST - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+
+if(write_flag):
+	print('\nSaving in: ', out_pkl_fname)
+	with open(out_pkl_fname, 'wb') as fp:
+		pickle.dump({'fe': fe, 'out': out}, fp)

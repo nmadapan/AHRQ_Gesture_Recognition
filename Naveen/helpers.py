@@ -7,6 +7,7 @@ import json
 from scipy.interpolate import interp1d
 import cv2
 import re
+from matplotlib import pyplot as plt
 
 ###########
 ## PATHS ##
@@ -564,3 +565,62 @@ def file_to_list(filepath):
         else:
             return []
 
+def print_dict(dict_inst, idx = 1):
+	for key, value in dict_inst.items():
+		if(isinstance(value, dict)): 
+			print('\t'*(idx-1), key, ': ')	
+			print_dict(value, idx = idx+1)
+		else:
+			print('\t'*idx, key, ': ', end = '')
+			if(isinstance(value, np.ndarray)):
+				print(value.shape)
+			else: print(value)
+
+def custom_bar(array, xticks = [], legends = [], title = '', width = 0.15, write_path = None, ylim = None, display = False):
+	'''
+	Description:
+		Plot customized bar plot. 
+	Input arguments:
+		array: list of sublist. Each sublist will be drawan as a bar plot. No. sublists is equal to no. of bars at every xtick.
+		xticks: list of labels of the x-axis ticks
+		legends: list of strings which act as strings. Size of this is list is equal to no. of sublists in array.
+		title: string which is the title of the plot.
+		width: width of the bar plot
+		write_path: plot will be written to disk to the specified path.
+		ylim: [0, 1]. Minimum is 0 and max is 1.
+		display: If True, plot is shown. 
+	'''
+	plt.clf()
+	fig, ax = plt.subplots()
+	ind = np.arange(len(array[0]))    # the x locations for the groups
+	## width = 0.15 # the width of the bars
+	bar_p_list = []
+	offset = 0.0
+	for lst in array:
+		p = ax.bar(ind+offset, lst, width)
+		offset += width
+		bar_p_list.append(p[0])
+	if(ylim is not None): ax.set_ylim(ylim)
+	ax.set_title(title)
+	ax.set_xticks(ind + width / 2)
+	ax.set_xticklabels(tuple(xticks))
+	ax.legend(tuple(bar_p_list), tuple(legends))
+	ax.autoscale_view()
+	plt.grid('on')
+	if(display): plt.show()
+	if(write_path is not None): plt.savefig(write_path)
+
+def augment_data(X, Y, multiplier = 2):
+	'''
+	Input arguments:
+		X: 2D np.ndarray
+		Y: 2D np.ndarray
+	'''
+	if(multiplier == 1): return X, Y
+	X_new = X
+	Y_new = Y
+	for idx in range(multiplier-1):
+		N = 0.02 * np.random.randn(*X.shape)
+		X_new = np.append(X_new, X+N, axis = 0)
+		Y_new = np.append(Y_new, Y, axis = 0)
+	return np.array(X_new), np.array(Y_new)

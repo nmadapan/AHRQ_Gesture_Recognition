@@ -82,17 +82,14 @@ class SynapseAction:
 
 # Closes/Minimizes every window and leaves active the windows
     # with the name "toOpen"
-    def openWindow(self, toOpen, windowOpen=False):
+    def openWindow(self, toOpen):
         # Look into "start" command for Windows
         if (platform.system() == "Windows"):
             window_names = auto.getWindows().keys()
+            for window_name in window_names: auto.getWindow(window_name).minimize()
             for window_name in window_names:
-                auto.getWindow(window_name).minimize()
-                if (toOpen in window_name and (windowOpen or "Patient Information" not in window_name)):
-                    xef_window = auto.getWindow(window_name)
-                    xef_window.maximize()
-                    xef_window.minimize()
-                    xef_window.maximize()
+                if toOpen in window_name:# and "Patient Information" not in window_name:
+                    auto.getWindow(window_name).maximize()
                     break
         else: os.system("open -a " + toOpen.replace(" ", "\\ "))
 
@@ -518,7 +515,7 @@ class SynapseAction:
         # General way it should work, but it would have issues.
         # For now, don't test Window Open/Close (no 8_1 or 8_2)
         elif (command == "Ruler" and action != "Ruler"):
-            # Ucomment the return to not ignore window
+            # Uncomment the return to not ignore Ruler
             return True
 
         ####################################################
@@ -528,17 +525,56 @@ class SynapseAction:
         # General way it should work, but it would have issues.
         # For now, don't test Window Open/Close (no 8_1 or 8_2)
         elif (command == "Window" and action != "Window"):
-            # Ucomment the return to not ignore window
-            return True
+            # Coordinates on AHRQ Dell with scale 1.0:
+            # (iconW, barW) = (57.0, 15.0)
+            # (moveToX, moveToY) = (iconW * 5.5 + barW, (self.status["topBarHeight"] - 9.0) / 2.0)
+            #
+            # Coordinates on Mac with scale 2.0:
+            # (iconW, barW) = (74.0, 19.0)
+            # (moveToX, moveToY) = (iconW * 5.5 + barW, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
+            #
+            # Therefore, try using:
+            # (iconW, barW) = (57.0 * self.status["topBarHeight"] / 169.0, 15.0 * self.status["topBarHeight"] / 169.0)
+            # (moveToX, moveToY) = (iconW * 5.5 + barW, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
+            # Uncomment the return to not ignore window
+            #return True
             if (action == "Open" and not self.status["window_open"]):
+                self.moveToActivePanel()
+                auto.click()
                 if (platform.system() == "Windows"): auto.hotkey("win", "alt", "e")
-                else: auto.hotkey("command", "altright", "e")
+                else: auto.hotkey("command", "altleft", "e")
+                self.status["window_open"] = True
                 time.sleep(5)
             elif (action == "Close" and self.status["window_open"]):
+                # Windows hasn't been tested but it should work
+                # Mac sometimes closes Citrix instead of Patient Info
                 if (platform.system() == "Windows"):
-                    self.openWindow(self.viewer, True)
-                    auto.hotkey("fn", "alt", "f4")
-                else: auto.hotkey("command", "altright", "f4")
+                    # Have not tested the code below, but hopefully will work
+                    # Should do the following:
+                    # Minimize all windows except for ones inside Synapse
+                    toOpen = " - \\\\Remote"
+                    window_names = auto.getWindows().keys()
+                    for window_name in window_names:
+                        if not (window_name.endswith(toOpen)):
+                            auto.getWindow(window_name).minimize()
+                    window_names = auto.getWindows().keys()
+                    # Maximize only the "Patient Information" window that's in Synapse
+                    for window_name in window_names:
+                        try:
+                            xef_window = auto.getWindow(window_name)
+                            if window_name.endswith(toOpen) and window_name.startswith("Patient Information for "):
+                                # Resize the window to be half screen-width x half screen-height
+                                # Click on the close button
+                                xef_window.maximize()
+                                xef_window.resize(width / 2.0, height / 2.0)
+                                (closeX, closeY) = (10 + (width * 90.0 / 1920.0), 2 + (width * 40.0 / 1920.0))
+                                xef_window.clickRel(x=(width / 2.0 - closeX), y=closeY, clicks=1, button='left')
+                                break
+                        except Exception as e:
+                            continue
+                    #auto.hotkey("fn", "alt", "f4")
+                else: auto.hotkey("command", "altleft", "f4")
+                self.status["window_open"] = False
 
         ####################################################
         ################ MANUAL CONTRAST ###################
@@ -605,6 +641,53 @@ class SynapseAction:
             pass
 
 
+        elif (command == "Layout" and action != "Layout"):
+            # Coordinates on AHRQ Dell with scale 1.0:
+            # (iconW, barW) = (57.0, 15.0)
+            # (moveToX, moveToY) = (iconW * 10.5 + barW * 3.0, (self.status["topBarHeight"] - 9.0) / 2.0)
+            #
+            # Coordinates on Mac with scale 2.0:
+            # (iconW, barW) = (74.0, 19.0)
+            # (moveToX, moveToY) = (iconW * 10.5 + barW * 3.0, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
+            #
+            # Therefore, try using:
+            # (iconW, barW) = (57.0 * self.status["topBarHeight"] / 169.0, 15.0 * self.status["topBarHeight"] / 169.0)
+            # (moveToX, moveToY) = (iconW * 10.5 + barW * 3.0, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
+            (oldLocationX, oldLocationY) = auto.position()
+            auto.moveTo(oldLocationX, 0)
+            time.sleep(1)
+            box = (1.0 * scale, status["topBarHeight"], -1.0 * scale, -1.0 * scale)
+            box = tuple(boundBoxNoDash[i] + box[i] for i in range(4))
+            afterHoverPath = os.path.join("SCA_Images", "Layout", "afterHover.png")
+            ImageGrab.grab(bbox=box).save(afterHoverPath)
+            # 429,54 on mac from topBar, without scale
+            # if (platform.system() == "Windows"): auto.moveTo(642.0 * width / 1920.0, 80.0 * height / 1080.0)
+            # else: auto.moveTo(857.0 / 2.0, (109.0 + 44.0) / 2.0)
+            (iconW, barW) = (57.0 * self.status["topBarHeight"] / 169.0, 15.0 * self.status["topBarHeight"] / 169.0)
+            (moveToX, moveToY) = (iconW * 10.5 + barW * 3.0, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
+            auto.click()
+            time.sleep(5)
+            windowPath = os.path.join("SCA_Images", "Layout", "window.png")
+            ImageGrab.grab(bbox=box).save(windowPath)
+            diffLayoutPath = os.path.join("SCA_Images", "Layout", "diffLayout.png")
+            diffBox = get_bbox(afterHoverPath, windowPath)
+            (x1, y1, x2, y2) = (diffBox[i] + box[(i % 2)] for i in range(4))
+            ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffLayoutPath)
+            auto.moveTo(x1, y1)
+            time.sleep(2)
+            auto.moveTo(x1 / scale, y1 / scale)
+            time.sleep(2)
+            (x1, y1) = ((x1 + 91.0) / 2.0, (y1 + 127.0) / 2.0)
+            jumpX = (122.0 / 2.0)
+            (status["panel_dim"][0], status["panel_dim"][1]) = (1, actionID)
+            #(x1, y1) = (472.0 + (actionID - 1) * 62.0, 217.0)
+            x1 += (status["panel_dim"][1] - 1) * jumpX
+            auto.moveTo(x1, y1)
+            auto.click()
+            resetPanelMoves()
+            moveToActivePanel()
+            auto.click()
+
         ####################################################
         ################ CONTRAST PRESETS ##################
         ####################################################
@@ -638,11 +721,12 @@ if __name__ == "__main__":
     command_list = ["4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0"]
     command_list = ["4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0", "6_0", "6_1", "6_1", "6_2", "6_2", "6_0", "6_0", "6_1", "6_2"]
     command_list = ["4_1", "6_0", "6_3", "6_3", "6_3"]
+    command_list = ["6_0", "6_1", "6_1", "6_1", "6_1", "6_1", "6_1", "6_1", "6_1"]
     command_list = ["4_1", "6_0", "6_3", "6_4", "6_3"]
     command_list = ["4_1","6_1", "6_2", "6_3", "6_4", "6_4", "6_3", "6_2", "6_1"]
     command_list = ["9_0", "9_2", "4_0", "9_2", "3_1", "9_1"]
     command_list = ["11_1", "11_2", "4_1", "11_1"]
-    command_list = ["10_1", "10_2", "10_3", "10_4"]
+    command_list = ["8_1", "8_2", "10_1", "10_2", "10_3", "10_4"]
 
     # For now, don't test Window Open/Close (no 8_1 or 8_2)
 
@@ -663,5 +747,5 @@ if __name__ == "__main__":
     # time.sleep(1)
 
     #auto.hotkey("command", "enter")
-    syn_action.openWindow(syn_action.prompt)
+    # syn_action.openWindow(syn_action.prompt)
     while True: continue

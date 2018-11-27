@@ -11,6 +11,7 @@ import os,sys,glob,re,cv2,json
 import numpy as np
 import xml.etree.ElementTree as ET
 from scipy.interpolate import interp1d 
+import math
 
 
 #open pose path
@@ -21,7 +22,7 @@ sys.path.insert(0,json_file_path)
 
 hands_key_points=[2,4,5,8,9,12,13,16,17,20]
 hand_base_key_points= [0,4,8,12,16,20]
-norm_constant=300
+# fingers_norm_constant=300
 num_fingers=5
 
 def create_writefolder_dir(create_dir):
@@ -77,21 +78,26 @@ def interpn(yp, num_points=40, kind = 'linear'):
         y[:, dim] = f(x)
     return y
 
-def fingers_length_from_base(key_points):
+def fingers_length_from_base(key_points,norm_constant=300):
     fingers_len=[]
+    fingers_tips=[]
     for x in hand_base_key_points[1:]:
         finger_len=(np.sqrt((key_points[2*x]-key_points[0])**2+(key_points[2*x+1]-key_points[1])**2))
         fingers_len.append(finger_len)
     return np.round((np.array(fingers_len)/norm_constant),4)
 
-def fingers_length_from_base_with_direction(key_points):
+def fingers_length_from_base_with_direction(key_points,norm_constant=300,norm='L2'):
     fingers_len=[]
+    fingers_tips=[]
     for x in hand_base_key_points[1:]:
-        finger_len=np.sign(key_points[2*x+1]-key_points[1])*(np.abs(key_points[2*x]-key_points[0])+np.abs(key_points[2*x+1]-key_points[1]))
+        if norm=='L1':
+            finger_len=np.sign(key_points[2*x+1]-key_points[1])*(np.abs(key_points[2*x]-key_points[0])+np.abs(key_points[2*x+1]-key_points[1]))
+        else:
+            finger_len=np.sign(key_points[2*x+1]-key_points[1])*(np.sqrt((key_points[2*x]-key_points[0])**2+(key_points[2*x+1]-key_points[1])**2))
         fingers_len.append(finger_len)
     return np.round((np.array(fingers_len)/norm_constant),4)
 
-def fingers_length_with_direction(key_points):
+def fingers_length_with_direction(key_points,norm_constant=300):
     fingers_len=[]  
     key_points_base=fingers_key_points[0::2]
     key_points_tip=fingers_key_points[1::2]
@@ -102,7 +108,7 @@ def fingers_length_with_direction(key_points):
         fingers_len.append(finger_len)
     return np.round((np.array(fingers_len)/norm_constant),4)
 
-def fingers_length(key_points):
+def fingers_length(key_points,norm_constant=300):
     '''
     Description:
         Given all the hand keypoints(of a frame) extracted from CPM, returns finger lengths
@@ -121,6 +127,21 @@ def fingers_length(key_points):
         fingers_len.append(finger_len)
     return np.round((np.array(fingers_len)/norm_constant),4)
 
+
+def hand_direction(key_points):
+    '''
+    mean of the angles of fingers tips 
+    '''
+    angle=[]
+    for x in hand_base_key_points[1:]:
+        angle.append(math.atan2(key_points[2*x+1],key_points[2*x]))
+    return np.round(np.mean(angle)/math.pi,4)
+
+def thumb_pinky_dist(key_points,norm_constant=300):
+    fingers_key_points= [4,20]
+    i,j = fingers_key_points
+    finger_dist=np.sqrt((key_points[2*j]-key_points[2*i])**2+(key_points[2*j+1]-key_points[2*i+1])**2)
+    return np.round((finger_dist/norm_constant),4)
 
 def match_ts(rgb_ts,skel_ts):
     '''

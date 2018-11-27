@@ -242,6 +242,16 @@ class FeatureExtractor():
 			d_right = np.repeat(np.diff(right, axis = 0), d_reps, axis = 0)
 			theta_right = np.zeros(right.shape)
 			for jnt_idx in range(self.num_joints):
+				# '''
+				# Convert each difference into a unit vector
+				# For instance: [dx, dy, dz] ==> [dx/L, dy/L, dz/L] where L = \sqrt{dx^2 + dy^2, dz^2}
+				# '''
+				# t_d_right = d_right[:, dim*jnt_idx:dim*(jnt_idx+1)] ## Get the first three (dim) columns
+				# d_right_norm = np.linalg.norm(t_d_right, axis = 1) ## Compute the norm of rows
+				# d_right_norm[d_right_norm < 1e-6] = 1e6 ## Suppress the elements that are less than 1e-6
+				# t_d_right = t_d_right.T / d_right_norm # Divide each column by its norm
+				# d_right[:, dim*jnt_idx:dim*(jnt_idx+1)] = t_d_right.T # Save it back in d_right
+
 				temp = d_right[:, dim*jnt_idx:dim*(jnt_idx+1)]
 				theta_right[:, dim*jnt_idx:dim*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 
@@ -267,6 +277,16 @@ class FeatureExtractor():
 			d_left = np.repeat(np.diff(left, axis = 0), d_reps, axis = 0)
 			theta_left = np.zeros(left.shape)
 			for jnt_idx in range(self.num_joints):
+				# '''
+				# Convert each difference into a unit vector
+				# For instance: [dx, dy, dz] ==> [dx/L, dy/L, dz/L] where L = \sqrt{dx^2 + dy^2, dz^2}
+				# '''
+				# t_d_left = d_left[:, dim*jnt_idx:dim*(jnt_idx+1)] ## Get the first three (dim) columns
+				# d_left_norm = np.linalg.norm(t_d_left, axis = 1) ## Compute the norm of rows
+				# d_left_norm[d_left_norm < 1e-6] = 1e6 ## Suppress the elements that are less than 1e-6
+				# t_d_left = t_d_left.T / d_left_norm # Divide each column by its norm
+				# d_left[:, dim*jnt_idx:dim*(jnt_idx+1)] = t_d_left.T # Save it back in d_left
+
 				temp = d_left[:, dim*jnt_idx:dim*(jnt_idx+1)]
 				theta_left[:, dim*jnt_idx:dim*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 			## Position
@@ -465,6 +485,7 @@ class FeatureExtractor():
 		d_right = np.repeat(np.diff(right, axis = 0), d_reps, axis = 0)
 		theta_right = np.zeros(right.shape)
 		for jnt_idx in range(self.num_joints):
+			## TODO: Normalize d_right so that norm of each row of a joint is one. 
 			temp = d_right[:, 3*jnt_idx:3*(jnt_idx+1)]
 			theta_right[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 
@@ -635,7 +656,9 @@ class FeatureExtractor():
 		plt.show()
 
 	###### OFFLINE Function ########
-	def run_svm(self, data_input, data_output, train_per = 0.8, kernel = 'linear', inst_var_name = 'svm_clf'):
+	def run_svm(self, data_input, data_output, test_input = None, test_output = None, train_per = 0.8, kernel = 'linear', inst_var_name = 'clf', display = False):
+		result = {}
+
 		num_inst = data_input.shape[0]
 		feat_dim = data_input.shape[1]
 		num_classes = data_output.shape[1]
@@ -646,31 +669,56 @@ class FeatureExtractor():
 		K = int(train_per*num_inst)
 		train_input = data_input[perm[:K], :]
 		train_output = data_output[perm[:K], :]
-		test_input = data_input[perm[K:], :]
-		test_output = data_output[perm[K:], :]
+		valid_input = data_input[perm[K:], :]
+		valid_output = data_output[perm[K:], :]
 
 		# Train
-		clf = svm.SVC(decision_function_shape='ova', kernel = kernel )
+		clf = svm.SVC(decision_function_shape='ova', kernel = kernel, probability = True)
 		clf.fit(train_input, np.argmax(train_output, axis =1 ))
 
 		# Train Predict
 		pred_train_output = clf.predict(train_input)
 		train_acc = float(np.sum(pred_train_output == np.argmax(train_output, axis = 1))) / pred_train_output.size
-		print('Train Acc: ', train_acc)
+		result['train_acc'] = train_acc
+		print('Train Acc: %.04f'%train_acc)
 
-		# Test Predict
-		pred_test_output = clf.predict(test_input)
-		test_acc = float(np.sum(pred_test_output == np.argmax(test_output, axis = 1))) / pred_test_output.size
-		print('Test Acc: ', test_acc)
+		# Validation Predict
+		pred_valid_output = clf.predict(valid_input)
+		valid_acc = float(np.sum(pred_valid_output == np.argmax(valid_output, axis = 1))) / pred_valid_output.size
+		result['valid_acc'] = valid_acc
+		print('Valid Acc: %.04f'%valid_acc)
+		if(display):
+			conf_mat = confusion_matrix(np.argmax(valid_output, axis = 1), pred_valid_output)
+			cname_list = []
+			for idx in range(num_classes):
+				cname_list.append(self.label_to_name[self.id_to_labels[idx]])
+			self.plot_confusion_matrix(conf_mat, cname_list, normalize = True, title = 'Validation Confusion Matrix')	
 
-		conf_mat = confusion_matrix(np.argmax(test_output, axis = 1), pred_test_output)
-		cname_list = []
-		for idx in range(num_classes):
-			cname_list.append(self.label_to_name[self.id_to_labels[idx]])
+		## Test Predict
+		if(test_input is not None):
+			pred_test_output = clf.predict(test_input)
+			
+			## Compute top - 3/5 accuracy
+			pred_test_prob = clf.predict_proba(test_input)
+			temp = np.sum(np.argsort(pred_test_prob, axis = 1)[:,-5:] == np.argmax(test_output, axis = 1).reshape(-1, 1), axis = 1) > 0
+			result['test_acc_top5'] = np.mean(temp)
+			print('LOSO - Top-5 Acc - ', np.mean(temp))		
+			temp = np.sum(np.argsort(pred_test_prob, axis = 1)[:,-3:] == np.argmax(test_output, axis = 1).reshape(-1, 1), axis = 1) > 0
+			result['test_acc_top3'] = np.mean(temp)
+			print('LOSO - Top-3 Acc - ', np.mean(temp))
 
-		self.plot_confusion_matrix(conf_mat, cname_list, normalize = True)
+			test_acc = float(np.sum(pred_test_output == np.argmax(test_output, axis = 1))) / pred_test_output.size
+			result['test_acc_top1'] = test_acc
+			print('LOSO - Top-1 Acc - %.04f'%test_acc)
+			if(display):
+				conf_mat = confusion_matrix(np.argmax(test_output, axis = 1), pred_test_output)
+				cname_list = []
+				for idx in range(test_output.shape[1]):
+					cname_list.append(self.label_to_name[self.id_to_labels[idx]])
+				self.plot_confusion_matrix(conf_mat, cname_list, normalize = True, title = 'LOSO Confusion Matrix')
 
 		setattr(self, inst_var_name, deepcopy(clf))
 		self.classifiers[inst_var_name] = deepcopy(clf)
+		result['clf'] = deepcopy(clf)
 
-		return clf, train_acc, test_acc
+		return result
