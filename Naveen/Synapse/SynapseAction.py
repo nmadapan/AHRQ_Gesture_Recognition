@@ -4,6 +4,7 @@ import os
 import platform
 import time
 import pyautogui as auto
+from PIL import Image
 from PIL import ImageGrab
 from PIL import ImageChops
 import signal
@@ -30,6 +31,11 @@ class SynapseAction:
         (self.macH, self.viewer, self.prompt) = ((0, "\\\\Remote", "Command Prompt") if platform.system() == "Windows"
             else (44.0 * self.nativeW / 2880.0, "Citrix Viewer", "Terminal"))
         # Border around the window
+        # IMPORTANT
+        # For Mac, just found out that doing "alt+tab" goes through the windows
+        # Which shows and doesn't show the dash
+        # Use that with a proper image difference to get the boundBoxNoDash
+        #
         self.border = (20.0 * self.nativeW / 2880.0) + (4.0 * self.scale)
         self.boundBoxNoDash = (self.border, self.macH + self.border, self.nativeW - self.border, self.nativeH - self.border)
         # Get the path for the calibration file
@@ -536,10 +542,62 @@ class SynapseAction:
             if (action == "Open" and not self.status["window_open"]):
                 self.moveToActivePanel()
                 auto.click()
-                if (platform.system() == "Windows"): auto.hotkey("win", "alt", "e")
-                else: auto.hotkey("command", "altleft", "e")
+                if (platform.system() == "Windows"):
+                    auto.hotkey("win", "alt", "e")
+                    time.sleep(5)
+                else:
+                    # original Page with a dash
+                    regularPath = os.path.join("SCA_Images", "Window", "regular.png")
+                    regular = ImageGrab.grab(0, self.macH, self.nativeW, self.nativeH)
+                    regular.save(regularPath)
+                    # new page without the dash, "ICA Seamless Host Agent"
+                    auto.hotkey("alt", "tab")
+                    icaSHAPath = os.path.join("SCA_Images", "Window", "icaSHA.png")
+                    icaSHA = ImageGrab.grab(0, self.macH, self.nativeW, self.nativeH)
+                    icaSHA.save(icaSHAPath)
+                    # everything including and inside the dash
+                    diff = ImageChops.difference(regular, icaSHA)
+                    self.status["window_bbnd"] = diff.size
+                    auto.hotkey("alt", "tab")
+                    auto.hotkey("command", "altleft", "e")
+                    time.sleep(5)
+                    # patient info window without a dash
+                    patInfoPath = os.path.join("SCA_Images", "Window", "patInfo.png")
+                    patInfo = ImageGrab.grab(0, self.macH, self.nativeW, self.nativeH)
+                    patInfo.save(patInfoPath)
+                    # patient info window gray without a dash
+                    auto.keyDown("alt")
+                    auto.press("tab")
+                    auto.press("tab")
+                    auto.keyUp("alt")
+                    patInfoGrayPath = os.path.join("SCA_Images", "Window", "patInfoGray.png")
+                    patInfoGray = ImageGrab.grab(0, self.macH, self.nativeW, self.nativeH)
+                    patInfoGray.save(patInfoGrayPath)
+                    # GET THE WINDOW, SAVE ITS CLOSE IMAGES
+                    diff2 = ImageChops.difference(patInfo, patInfoGray)
+                    auto.hotkey("alt", "tab")
+                    # seriesClose.png == difference between icaSHA and patInfo
+                    # seriesClose_Gray.png == difference between icaSHA and patInfoGray
+                    # seriesClose_Red.png == difference between icaSHA and (new image for hovering over close)
+                    #
+                    """
+                    (x1, y1, x2, y2) = (diffBox[i] + box[(i % 2)] for i in range(4))
+                    ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffSeriesPath)
+                    (tempX, tempY) = (x2, y1)
+                    auto.moveTo(tempX, tempY)
+                    (x1, y1) = (tempX + ((-14.0 - 90.0) * scale / 2.0), tempY + (3.0) * scale / 2.0)
+                    (x2, y2) = (tempX + (-14.0) * scale / 2.0, tempY + (43.0) * scale / 2.0)
+                    seriesClosePath = os.path.join("SCA_Images", "Window", "Closes", "seriesClose.png")
+                    seriesClose_RedPath = os.path.join("SCA_Images", "Window", "Closes", "seriesClose_Red.png")
+                    seriesClose_GrayPath = os.path.join("SCA_Images", "Window", "Closes", "seriesClose_Gray.png")
+                    ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(seriesClosePath)
+                    auto.moveTo((x1 + x2) / (scale * 2.0), (y1 + y2) / (scale * 2.0))
+                    ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(seriesClose_RedPath)
+                    auto.moveTo(0, (y1 + y2) / (scale * 2.0))
+                    auto.click()
+                    ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(seriesClose_GrayPath)
+                    """
                 self.status["window_open"] = True
-                time.sleep(5)
             elif (action == "Close" and self.status["window_open"]):
                 # Windows hasn't been tested but it should work
                 # Mac sometimes closes Citrix instead of Patient Info
@@ -567,7 +625,7 @@ class SynapseAction:
                         except Exception as e:
                             continue
                     #auto.hotkey("fn", "alt", "f4")
-                else: auto.hotkey("command", "altleft", "f4")
+                else: auto.hotkey("command", "fn", "f4")
                 self.status["window_open"] = False
 
         ####################################################
@@ -625,7 +683,7 @@ class SynapseAction:
             auto.moveTo(oldLocationX, 0)
             time.sleep(1)
             (iconW, barW) = (57.0 * self.status["topBarHeight"] / 169.0, 15.0 * self.status["topBarHeight"] / 169.0)
-            (moveToX, moveToY) = (iconW * 10.5 + barW * 3.0, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
+            (moveToX, moveToY) = (iconW * 10.5 + barW * 3.0, (self.macH + (self.status["topBarHeight"] - 9.0) / 2.0) / self.scale)
             auto.moveTo(moveToX, moveToY)
             auto.click()
             time.sleep(5)
@@ -637,8 +695,8 @@ class SynapseAction:
                             (winX, winY) = auto.getWindow(window_name).position()
                             (x1, y1) = (winX + 67.0 * width / 1920.0, winY + 95.0 * width / 1920.0)
                             (jumpX, jumpY) = (93.0 * width / 1920.0, 97.0 * width / 1920.0)
-                            (status["panel_dim"][0], status["panel_dim"][1]) = (1, actionID)
-                            x1 += (status["panel_dim"][1] - 1) * jumpX
+                            (self.status["panel_dim"][0], self.status["panel_dim"][1]) = (1, actionID)
+                            x1 += (self.status["panel_dim"][1] - 1) * jumpX
                             auto.moveTo(x1, y1)
                             auto.click()
                             resetPanelMoves()
