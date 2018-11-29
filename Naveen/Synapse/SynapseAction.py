@@ -520,15 +520,55 @@ class SynapseAction:
         # General way it should work, but it would have issues.
         # For now, don't test Window Open/Close (no 8_1 or 8_2)
         elif (command == "Window" and action != "Window"):
+            # Coordinates on AHRQ Dell with scale 1.0:
+            # (iconW, barW) = (57.0, 15.0)
+            # (moveToX, moveToY) = (iconW * 5.5 + barW, (self.status["topBarHeight"] - 9.0) / 2.0)
+            #
+            # Coordinates on Mac with scale 2.0:
+            # (iconW, barW) = (74.0, 19.0)
+            # (moveToX, moveToY) = (iconW * 5.5 + barW, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
+            #
+            # Therefore, try using:
+            # (iconW, barW) = (57.0 * self.status["topBarHeight"] / 169.0, 15.0 * self.status["topBarHeight"] / 169.0)
+            # (moveToX, moveToY) = (iconW * 5.5 + barW, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
+            # Uncomment the return to not ignore window
+            #return True
             if (action == "Open" and not self.status["window_open"]):
+                self.moveToActivePanel()
+                auto.click()
                 if (platform.system() == "Windows"): auto.hotkey("win", "alt", "e")
-                else: auto.hotkey("command", "altright", "e")
+                else: auto.hotkey("command", "altleft", "e")
+                self.status["window_open"] = True
                 time.sleep(5)
             elif (action == "Close" and self.status["window_open"]):
+                # Windows hasn't been tested but it should work
+                # Mac sometimes closes Citrix instead of Patient Info
                 if (platform.system() == "Windows"):
-                    self.openWindow(self.viewer, True)
-                    auto.hotkey("fn", "alt", "f4")
-                else: auto.hotkey("command", "altright", "f4")
+                    # Have not tested the code below, but hopefully will work
+                    # Should do the following:
+                    # Minimize all windows except for ones inside Synapse
+                    window_names = auto.getWindows().keys()
+                    for window_name in window_names:
+                        if not (window_name.endswith(" - \\\\Remote")):
+                            auto.getWindow(window_name).minimize()
+                    window_names = auto.getWindows().keys()
+                    # Maximize only the "Patient Information" window that's in Synapse
+                    for window_name in window_names:
+                        try:
+                            if window_name.endswith(" - \\\\Remote") and window_name.startswith("Patient Information for "):
+                                xef_window = auto.getWindow(window_name)
+                                # Resize the window to be half screen-width x half screen-height
+                                # Click on the close button
+                                xef_window.maximize()
+                                xef_window.resize(width / 2.0, height / 2.0)
+                                (closeX, closeY) = (10 + (width * 90.0 / 1920.0), 2 + (width * 40.0 / 1920.0))
+                                xef_window.clickRel(x=(width / 2.0 - closeX), y=closeY, clicks=1, button='left')
+                                break
+                        except Exception as e:
+                            continue
+                    #auto.hotkey("fn", "alt", "f4")
+                else: auto.hotkey("command", "altleft", "f4")
+                self.status["window_open"] = False
 
         ####################################################
         ################ MANUAL CONTRAST ###################
