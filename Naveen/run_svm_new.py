@@ -20,13 +20,13 @@ plt.ioff()
 ####################
 
 ## Fingers variables/paths
-ENABLE_FINGERS = True
+ENABLE_FINGERS = False
 MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1.
-display = False
+display = True
 write_flag = False
 
 ## Skeleton variables/paths
-skel_folder_path = r'F:\AHRQ\Study_IV\NewData\L2'
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
 
 ## Variables
 all_subject_ids = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
@@ -34,7 +34,7 @@ eliminate_subject_id = 'S6'
 out_filename_suffix = '_data.pickle'
 
 ## CPM
-pickle_base_path = r'F:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
+pickle_base_path = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
 pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
 
 pickle_path = os.path.join(pickle_base_path,os.path.basename(skel_folder_path))

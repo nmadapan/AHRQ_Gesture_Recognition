@@ -17,10 +17,10 @@ plt.rcdefaults()
 ####################
 
 ## Skeleton variables/paths
-skel_folder_path = r'F:\AHRQ\Study_IV\NewData\L2'
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
 
 ## Fingers variables/paths
-ENABLE_FINGERS = True
+ENABLE_FINGERS = False
 MULTIPLIER = 1
 pickle_base_path = r'F:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
 pickle_path = os.path.join(pickle_base_path, os.path.basename(skel_folder_path))
