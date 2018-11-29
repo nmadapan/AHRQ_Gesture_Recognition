@@ -8,6 +8,7 @@ from scipy.interpolate import interp1d
 import cv2
 import re
 from matplotlib import pyplot as plt
+from copy import deepcopy
 
 ###########
 ## PATHS ##
@@ -567,8 +568,8 @@ def file_to_list(filepath):
 
 def print_dict(dict_inst, idx = 1):
 	for key, value in dict_inst.items():
-		if(isinstance(value, dict)): 
-			print('\t'*(idx-1), key, ': ')	
+		if(isinstance(value, dict)):
+			print('\t'*(idx-1), key, ': ')
 			print_dict(value, idx = idx+1)
 		else:
 			print('\t'*idx, key, ': ', end = '')
@@ -579,7 +580,7 @@ def print_dict(dict_inst, idx = 1):
 def custom_bar(array, xticks = [], legends = [], title = '', width = 0.15, write_path = None, ylim = None, display = False):
 	'''
 	Description:
-		Plot customized bar plot. 
+		Plot customized bar plot.
 	Input arguments:
 		array: list of sublist. Each sublist will be drawan as a bar plot. No. sublists is equal to no. of bars at every xtick.
 		xticks: list of labels of the x-axis ticks
@@ -588,7 +589,7 @@ def custom_bar(array, xticks = [], legends = [], title = '', width = 0.15, write
 		width: width of the bar plot
 		write_path: plot will be written to disk to the specified path.
 		ylim: [0, 1]. Minimum is 0 and max is 1.
-		display: If True, plot is shown. 
+		display: If True, plot is shown.
 	'''
 	plt.clf()
 	fig, ax = plt.subplots()
@@ -624,3 +625,69 @@ def augment_data(X, Y, multiplier = 2):
 		X_new = np.append(X_new, X+N, axis = 0)
 		Y_new = np.append(Y_new, Y, axis = 0)
 	return np.array(X_new), np.array(Y_new)
+
+def remove_some_classes(data_output, id_to_labels, elim_label_list):
+	## Clone data_input and data_output
+	data_output = deepcopy(data_output)
+
+	## Compute label to ids dict
+	label_to_ids = {value: key for key, value in id_to_labels.items()}
+
+	## Find class indices of data_output
+	data_output = np.argmax(data_output, axis = 1) # np.ndarray. For ex: [0, 1, 9, ...]
+
+	## Find list of tuples [(id, label), (id, label), ...]
+	old_id_label = [(key, value) for key, value in id_to_labels.items()]
+	## Sort based on id for convenience
+	old_id_label.sort(key = lambda x: x[0])
+	## Unzip to get old ids and old labels
+	old_ids, old_labels = zip(*old_id_label)
+
+	## Remove those labels in elim_label_list that are absent in old_labels
+	elim_label_list = [label for label in elim_label_list if label in old_labels]
+
+	## Identify list of new labels and sort them
+	new_labels = [label for label in old_labels if label not in elim_label_list]
+	new_labels = sorted(new_labels, cmp = class_str_cmp)
+
+	## new id to label dictionary
+	newid_to_labels = dict(zip(range(len(new_labels)), new_labels))
+
+	## old id to new id dictionary
+	oldid_to_newid = {old_labels.index(label): new_labels.index(label) for label in new_labels}
+
+	## Find out ids of labels in elim_label_list
+	elim_id_arr = np.array([label_to_ids[label] for label in elim_label_list])
+	## flags list of True/False. True ==> consider, False ==> ignore
+	flags = np.sum(data_output.reshape(-1, 1) == elim_id_arr.reshape(1, -1), axis = 1) == 0
+
+	return oldid_to_newid, flags
+
+def modify_output_indices(data_output, oldid_to_newid, flags):
+	data_output = data_output[flags, :]
+	data_output = np.argmax(data_output, axis = 1)
+	data_output = [oldid_to_newid[value] for value in data_output]
+	return np.eye(np.max(data_output)+1)[data_output, :]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
