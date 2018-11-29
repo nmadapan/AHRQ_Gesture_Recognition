@@ -28,20 +28,21 @@ def json_to_dict(json_filepath):
 ## Refer to kinect_joint_names.json for all joint IDs
 
 kinect_joint_names_dict = json_to_dict(kinect_joint_names_path)
+kj = kinect_joint_names_dict
 
 ## Left hand
-left_hand_id = kinect_joint_names_dict['JointType_HandLeft'] # 7
-left_elbow_id = kinect_joint_names_dict['JointType_ElbowLeft'] # 5
-left_shoulder_id = kinect_joint_names_dict['JointType_ShoulderLeft'] # 4
+left_hand_id = kj['JointType_HandLeft'] # 7
+left_elbow_id = kj['JointType_ElbowLeft'] # 5
+left_shoulder_id = kj['JointType_ShoulderLeft'] # 4
 
 ## Right hand
-right_hand_id = kinect_joint_names_dict['JointType_HandRight'] # 11
-right_elbow_id = kinect_joint_names_dict['JointType_ElbowRight'] # 9
-right_shoulder_id = kinect_joint_names_dict['JointType_ShoulderRight'] # 8
+right_hand_id = kj['JointType_HandRight'] # 11
+right_elbow_id = kj['JointType_ElbowRight'] # 9
+right_shoulder_id = kj['JointType_ShoulderRight'] # 8
 
 ## Torso
-torso_id = kinect_joint_names_dict['JointType_SpineBase'] # 0
-neck_id = kinect_joint_names_dict['JointType_Neck'] # 2
+torso_id = kj['JointType_SpineBase'] # 0
+neck_id = kj['JointType_Neck'] # 2
 
 def wait_for_kinect(kr, timeout = 30):
 	'''
@@ -669,6 +670,109 @@ def modify_output_indices(data_output, oldid_to_newid, flags):
 	data_output = [oldid_to_newid[value] for value in data_output]
 	return np.eye(np.max(data_output)+1)[data_output, :]
 
+def draw_body(img = None, img_skel_pts = None, only_upper_body = True, line_color = (255,255,255), thickness = 15, draw_gest_thresh = True, thresh_level = 0.2):
+	'''
+	Description:
+		Draw the skeleton on the image (RGB/Depth), given the pixel coordinates of the skeleton.
+	Input arguments:
+		* img: np.ndarray. Either RGB (H x W x 3) or Depth (H x W)
+		* img_skel_pts: A list of 50 elements. [x0, y0, x1, y1, x2, y2, ...]. (xi,yi) is the pixel coordinate of the ith kinect joint.
+		* only_upper_body: If True, only upper body is drawn
+		* line_color: The color of the line. It is a tuple of three elements. (B, G, R). B, G and R are the intensity values of blue, green and red channels.
+		* thickness: thickness of the line in terms of no. of pixels.
+		* thresh_level: What is the threshold level at which gesture will start. 0.2 indicates 20% of the (distance between torso and the neck) above the torso level.
+		* draw_gest_thresh: If True, gesture threshold is drawn on the image.
+	Return:
+		* img: np.ndarray of same size as input image. The image with the skeleton drawn on a copy of the input image.
+	'''
+
+	# Return None, if the img or the skeleton points are None
+	if(img is None or img_skel_pts is None): return None
+
+	def display_joint(j_start, j_end):
+		'''
+		Description:
+			Draw a line between the given two kinect joints.
+		Input arguments:
+			j_start: starting kinect joint index
+			j_end: ending kinect joint index
+		Return:
+			True, on sucess. False, on failure.
+		'''
+		try:
+			start = (int(img_skel_pts[2*j_start]), int(img_skel_pts[2*j_start+1]))
+			end = (int(img_skel_pts[2*j_end]), int(img_skel_pts[2*j_end+1]))
+			cv2.line(img, start, end, line_color, thickness)
+			return True
+		except Exception as exp:
+			return False
+
+	# Head/Neck/Torso
+	display_joint(kj['JointType_Head'], kj['JointType_Neck'])
+	display_joint(kj['JointType_Neck'], kj['JointType_SpineShoulder'])
+	display_joint(kj['JointType_SpineShoulder'], kj['JointType_SpineMid'])
+	display_joint(kj['JointType_SpineMid'], kj['JointType_SpineBase'])
+	display_joint(kj['JointType_SpineShoulder'], kj['JointType_ShoulderRight'])
+	display_joint(kj['JointType_SpineShoulder'], kj['JointType_ShoulderLeft'])
+	display_joint(kj['JointType_SpineBase'], kj['JointType_HipRight'])
+	display_joint(kj['JointType_SpineBase'], kj['JointType_HipLeft'])
+
+	# Upper left limb
+	display_joint(kj['JointType_ShoulderLeft'], kj['JointType_ElbowLeft'])
+	display_joint(kj['JointType_ElbowLeft'], kj['JointType_WristLeft'])
+	display_joint(kj['JointType_WristLeft'], kj['JointType_HandLeft'])
+	# display_joint(kj['JointType_HandLeft'], kj['JointType_HandTipLeft'])
+	# display_joint(kj['JointType_WristLeft'], kj['JointType_ThumbLeft'])
+
+	# Upper Right limb
+	display_joint(kj['JointType_ShoulderRight'], kj['JointType_ElbowRight'])
+	display_joint(kj['JointType_ElbowRight'], kj['JointType_WristRight'])
+	display_joint(kj['JointType_WristRight'], kj['JointType_HandRight'])
+	# display_joint(kj['JointType_HandRight'], kj['JointType_HandTipRight'])
+	# display_joint(kj['JointType_WristRight'], kj['JointType_ThumbRight'])
+
+	# If draw_gest_thresh is True, Draw the gesture threshold.
+	if(draw_gest_thresh):
+		neck = img_skel_pts[2*kj['JointType_Neck']:2*kj['JointType_Neck']+2]
+		base = img_skel_pts[2*kj['JointType_SpineBase']:2*kj['JointType_SpineBase']+2]
+
+		# If neck or base are not detected, don't draw anything
+		if(np.isinf(np.sum(neck)) or np.isnan(np.sum(neck))): return None
+		if(np.isinf(np.sum(base)) or np.isnan(np.sum(base))): return None
+
+		thresh_x = int(base[0])
+		thresh_y = int(thresh_level * (neck[1] - base[1]) + base[1])
+
+		thresh_disp_len = int(thresh_level * (neck[1] - base[1]))
+
+		## Boundary conditions for starting point
+		start_x = thresh_x - thresh_disp_len
+		if(start_x < 0): start_x = 0
+		elif(start_x >= img.shape[1]): start_x = img.shape[1] - 1
+		## Boundary conditions for ending point
+		end_x = thresh_x + thresh_disp_len
+		if(end_x < 0): end_x = 0
+		elif(end_x >= img.shape[1]): end_x = img.shape[1] - 1
+
+		start = (start_x, thresh_y)
+		end = (end_x, thresh_y)
+
+		cv2.circle(img,(int(thresh_x),int(thresh_y)), 10, (0,0,255), -1)
+		cv2.line(img, start, end, (50, 0, 255), thickness)
+
+	## If only_upper_body is True, draw only the upper body. Else, draw the entire body.
+	if(not only_upper_body):
+		# Lower left limb
+		display_joint(kj['JointType_HipLeft'], kj['JointType_KneeLeft'])
+		display_joint(kj['JointType_KneeLeft'], kj['JointType_AnkleLeft'])
+		display_joint(kj['JointType_AnkleLeft'], kj['JointType_FootLeft'])
+
+		# Lower right limb
+		display_joint(kj['JointType_HipRight'], kj['JointType_KneeRight'])
+		display_joint(kj['JointType_KneeRight'],kj['JointType_AnkleRight'])
+		display_joint(kj['JointType_AnkleRight'], kj['JointType_FootRight'])
+
+	return img
 
 
 

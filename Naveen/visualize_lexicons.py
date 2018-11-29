@@ -4,7 +4,6 @@ from glob import glob
 from os.path import join
 from helpers import *
 from copy import deepcopy
-
 ###
 # Use 'n' for next video
 # Use 'p' for previous video
@@ -12,7 +11,7 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lex_folder = r'H:\AHRQ\Study_IV\NewData\L2'# Where to write the files
+lex_folder = r'G:\AHRQ\Study_IV\NewData\L3'# Where to write the files
 fps = 120
 default_width, default_height = 1920, 1080
 
@@ -63,14 +62,21 @@ while(True):
 	if(close_flag): break
 
 	vids = glob(join(lex_folder, cmd+'*_rgb.avi'))
+	color_skel_files = glob(join(lex_folder, cmd+'*_color.txt'))
+
 	vcaps = [(os.path.basename(vid).split('_')[2], cv2.VideoCapture(vid)) for vid in vids]
+	color_skel_lst = [open(skel, 'r') for skel in color_skel_files]
 	while(True and (not close_flag)):
 		for idx, vcap_info in enumerate(vcaps):
 			name, vcap = vcap_info
 			j = idx/M
 			i = idx - M * j
 			ret, frame = vcap.read()
+
+			skel_obj = color_skel_lst[idx]
+			skel_pts = map(float, skel_obj.readline().split(' '))
 			if ret:
+				frame = draw_body(frame, skel_pts)
 				frame = cv2.resize(frame, dsize=(des_w, des_h))
 				cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA)
 			else: frame = 255*np.ones((des_h, des_w, 3))
