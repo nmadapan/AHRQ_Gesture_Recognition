@@ -559,8 +559,10 @@ class SynapseAction:
                     diff = ImageChops.difference(regular, icaSHA)
                     self.status["window_bbnd"] = diff.size
                     auto.hotkey("alt", "tab")
+                    # patient info window pop-up
                     auto.hotkey("command", "altleft", "e")
                     time.sleep(5)
+                    auto.moveTo(0, height / 2.0)
                     # patient info window without a dash
                     patInfoPath = os.path.join("SCA_Images", "Window", "patInfo.png")
                     patInfo = ImageGrab.grab(0, self.macH, self.nativeW, self.nativeH)
@@ -573,9 +575,29 @@ class SynapseAction:
                     patInfoGrayPath = os.path.join("SCA_Images", "Window", "patInfoGray.png")
                     patInfoGray = ImageGrab.grab(0, self.macH, self.nativeW, self.nativeH)
                     patInfoGray.save(patInfoGrayPath)
-                    # GET THE WINDOW, SAVE ITS CLOSE IMAGES
-                    diff2 = ImageChops.difference(patInfo, patInfoGray)
+                    # Get the window box
+                    patInfoBoxPath = os.path.join("SCA_Images", "Window", "patInfoBox.png")
+                    patInfoBox = ImageChops.difference(patInfo, patInfoGray)
+                    patInfoBox.save(patInfoBoxPath)
                     auto.hotkey("alt", "tab")
+                    # Save Close
+                    seriesClosePath = os.path.join("SCA_Images", "Window", "Closes", "seriesClose.png")
+                    seriesClose = ImageChops.difference(icaSHA, patInfo)
+                    seriesClose.save(seriesClosePath)
+                    # Save Close_Gray
+                    seriesClose_GrayPath = os.path.join("SCA_Images", "Window", "Closes", "seriesClose_Gray.png")
+                    seriesClose_Gray = ImageChops.difference(icaSHA, patInfoGray)
+                    seriesClose_Gray.save(seriesClose_GrayPath)
+                    # Hover over close box, save Close_Red
+                    # TODO: FINISH REST OF HOVERING OVER CLOSE BUTTON.
+                    (x1, y1, x2, y2) = auto.locateOnScreen(patInfoBoxPath)
+                    (tempX, tempY) = (x2, y1)
+                    auto.moveTo(tempX, tempY)
+                    (x1, y1) = (tempX + ((-14.0 - 90.0) * scale / 2.0), tempY + (3.0) * scale / 2.0)
+                    (x2, y2) = (tempX + (-14.0) * scale / 2.0, tempY + (43.0) * scale / 2.0)
+                    seriesClose_RedPath = os.path.join("SCA_Images", "Window", "Closes", "seriesClose_Red.png")
+                    seriesClose_Red = ImageChops.difference(icaSHA, patInfoRed)
+                    seriesClose_Red.save(seriesClose_RedPath)
                     # seriesClose.png == difference between icaSHA and patInfo
                     # seriesClose_Gray.png == difference between icaSHA and patInfoGray
                     # seriesClose_Red.png == difference between icaSHA and (new image for hovering over close)
