@@ -7,7 +7,7 @@ from copy import deepcopy
 from glob import glob
 from random import shuffle
 from FeatureExtractor import FeatureExtractor
-from helpers import skelfile_cmp, augment_data
+from helpers import *
 from sklearn.metrics import confusion_matrix
 from scipy import stats
 from DST import DST
@@ -18,13 +18,14 @@ plt.ioff()
 ####################
 ## Initialization ##
 ####################
-## Fingers
-ENABLE_FINGERS = True
-MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1. 
-display = False
+
+## Fingers variables/paths
+ENABLE_FINGERS = False
+MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1.
+display = True
 write_flag = False
 
-## Skeleton
+## Skeleton variables/paths
 skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
 
 ## Variables
@@ -33,10 +34,10 @@ eliminate_subject_id = 'S6'
 out_filename_suffix = '_data.pickle'
 
 ## CPM
-pickle_base_path1 = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
+pickle_base_path = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
 pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
 
-pickle_path1 = os.path.join(pickle_base_path1,os.path.basename(skel_folder_path))
+pickle_path = os.path.join(pickle_base_path,os.path.basename(skel_folder_path))
 fingers_pkl_fname = os.path.basename(skel_folder_path) + pickle_file_suffix
 #######################
 
@@ -51,13 +52,11 @@ fe = FeatureExtractor(json_param_path = 'param.json')
 print('Generating IO: ', end = '')
 out = fe.generate_io(skel_folder_path, annot_folder_path)
 print('DONE !!!')
-body_data_input = deepcopy(out['data_input'])
-hand_data_input = None
-combined_data_input = None
 
 ## Extract some variables from fe object
 num_points = fe.fixed_num_frames
 num_fingers = fe.num_fingers
+id_to_labels = fe.id_to_labels
 skel_file_order = deepcopy(fe.skel_file_order)
 dominant_types_order = deepcopy(fe.dominant_type)
 try:
@@ -66,27 +65,26 @@ except AssertionError as error:
 	print(error)
 	sys.exit()
 
+## Extract from out object
+body_data_input = deepcopy(out['data_input'])
+data_output = deepcopy(out['data_output'])
+hand_data_input = None
+combined_data_input = None
+
 ############################
 ### Ignore some comamnds ###
 ############################
 ## The command ids to ignore
-ignore_command_ids_list = ['5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2'] ## For Task 2
-# ignore_command_ids_list = ['5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2'] ## For Task 3
-## command_id_order has same order as skel_file_order. It is a list of command ids. ['1_0', '1_1', ...]
-command_id_order = np.array(['_'.join(fname.split('_')[0:2]) for fname in skel_file_order])
-## partial_train_command_flags has the same order as the skel_file_order. [True, True, False, ...]. True ==> include, False ==> ignore
-partial_train_command_flags = np.sum(command_id_order.reshape(-1, 1) == np.array(ignore_command_ids_list).reshape(1, -1), axis = 1) == 0
-## all_train_command_flags: a list of True and False. True ==> include, False ==> ignore. On per instance basis. 
-all_train_command_flags = []
-for idx, dom_types_list in enumerate(dominant_types_order):
-	all_train_command_flags += [partial_train_command_flags[idx]]*len(dom_types_list)
-all_train_command_flags = np.array(all_train_command_flags)
+## For task 2: 2, 5_3, 5_4, 7, 8, 9
+# ignore_command_ids_list = ['2_0', '2_1', '2_2', '5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2', '9_0', '9_1', '9_2']
+## For Task 3: 3, 5_3, 5_4, 7, 8, 11
+ignore_command_ids_list = ['3_0', '3_1', '3_2', '5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2', '11_0', '11_1', '11_2']
 ########################
 
 if(ENABLE_FINGERS):
 	# # ## Appending finger lengths with dominant_hand first
 	print('Appending finger lengths: ', end = '')
-	with open(os.path.join(pickle_path1, fingers_pkl_fname), 'rb') as fp:
+	with open(os.path.join(pickle_path, fingers_pkl_fname), 'rb') as fp:
 		fingers_data = pickle.load(fp)
 	data_merge=[]
 	for idx,txt_file in enumerate(fe.skel_file_order):
@@ -102,12 +100,12 @@ if(ENABLE_FINGERS):
 				for frame in gesture:
 					gesture_shuffle.append(frame[num_fingers:].tolist()+frame[:num_fingers].tolist())
 				data_merge.append(np.array(gesture_shuffle).flatten().tolist())
-				
+
 	hand_data_input = deepcopy(np.array(data_merge))
-	full_data_input = np.concatenate([body_data_input, hand_data_input], axis = 1)
+	combined_data_input = np.concatenate([body_data_input, hand_data_input], axis = 1)
 	print('DONE !!!')
 else:
-	full_data_input = body_data_input
+	combined_data_input = body_data_input
 
 ## Plotting histogram - No. of instances per class
 if(display):
@@ -126,66 +124,71 @@ if(display):
 ## Leave One Subject Out - Create IDs
 subject_name_order = np.array([fname.split('_')[2] for fname in skel_file_order])
 partial_train_subject_flags = (subject_name_order != eliminate_subject_id)
-all_train_flags = []
+subject_flags = []
 for idx, dom_types_list in enumerate(dominant_types_order):
-	all_train_flags += [partial_train_subject_flags[idx]]*len(dom_types_list)
-all_train_flags = np.array(all_train_flags)
+	subject_flags += [partial_train_subject_flags[idx]]*len(dom_types_list)
+subject_flags = np.array(subject_flags)
 
 ## Only Body
 print('\nBody ====> SVM')
-data_input, data_output = deepcopy(body_data_input), deepcopy(out['data_output'])
-## Remove ignroed comamnds
-data_input = data_input[all_train_command_flags, :]
-##################### ERRRRRRRRRRRRRROR ##################
-## It requries reranking the classes in a new format. 
-sys.exit('There is a ERRROR in the data_output. though the classes are reduced, the one hot vectors are still in original dimension. ')
-data_output = data_output[all_train_command_flags, :]
-all_train_flags = all_train_flags[all_train_command_flags]
+st = time.time()
+t_data_in, t_data_out = deepcopy(body_data_input), deepcopy(data_output)
+old_to_new, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
+train_flags = np.logical_and(cmd_flags, subject_flags)
+test_flags = np.logical_and(cmd_flags, np.logical_not(subject_flags))
 ## Leave one subject out
-train_data_input = data_input[all_train_flags, :]
-train_data_output = data_output[all_train_flags, :]
+train_data_input = t_data_in[train_flags, :]
+train_data_output = modify_output_indices(t_data_out, old_to_new, train_flags)
+print('New no. of classes: ', train_data_output.shape[1])
 ## Left out subject is the testing data
-test_data_input = data_input[np.logical_not(all_train_flags), :]
-test_data_output = data_output[np.logical_not(all_train_flags), :]
+test_data_input = t_data_in[test_flags, :]
+test_data_output = modify_output_indices(t_data_out, old_to_new, test_flags)
 X, Y = augment_data(train_data_input, train_data_output, multiplier = MULTIPLIER)
 fe.run_svm(X, Y, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf_body', display = display)
 body_prob = fe.svm_clf_body.predict_proba(test_data_input)
 body_pred_output = np.argmax(body_prob, axis = 1)
+print('Time taken: %.04f seconds'%(time.time()-st))
 print('DONE !!! Storing variable in svm_clf_body')
 
 if(ENABLE_FINGERS):
 	## Only Hand
 	print('\nHand ====> SVM')
-	data_input, data_output = deepcopy(hand_data_input), deepcopy(out['data_output'])
-	## Remove ignroed comamnds
-	data_input = data_input[all_train_command_flags, :]
-	data_output = data_output[all_train_command_flags, :]
-
-	train_data_input = data_input[all_train_flags, :]
-	train_data_output = data_output[all_train_flags, :]
-	test_data_input = data_input[np.logical_not(all_train_flags), :]
-	test_data_output = data_output[np.logical_not(all_train_flags), :]
+	st = time.time()
+	t_data_in, t_data_out = deepcopy(hand_data_input), deepcopy(data_output)
+	old_to_new, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
+	train_flags = np.logical_and(cmd_flags, subject_flags)
+	test_flags = np.logical_and(cmd_flags, np.logical_not(subject_flags))
+	## Leave one subject out
+	train_data_input = t_data_in[train_flags, :]
+	train_data_output = modify_output_indices(t_data_out, old_to_new, train_flags)
+	## Left out subject is the testing data
+	test_data_input = t_data_in[test_flags, :]
+	test_data_output = modify_output_indices(t_data_out, old_to_new, test_flags)
 	X, Y = augment_data(train_data_input, train_data_output, multiplier = MULTIPLIER)
 	fe.run_svm(X, Y, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf_hand', display = display)
 	hand_prob = fe.svm_clf_hand.predict_proba(test_data_input)
 	hand_pred_output = np.argmax(hand_prob, axis = 1)
+	print('Time taken: %.04f seconds'%(time.time()-st))
 	print('DONE !!! Storing variable in svm_clf_hand')
 
 	## Body + Hands
 	print('\nBody + Hand ====> SVM')
-	data_input, data_output = deepcopy(full_data_input), deepcopy(out['data_output'])
-	## Remove ignroed comamnds
-	data_input = data_input[all_train_command_flags, :]
-	data_output = data_output[all_train_command_flags, :]
-
-	train_data_input = data_input[all_train_flags, :]
-	train_data_output = data_output[all_train_flags, :]
-	test_data_input = data_input[np.logical_not(all_train_flags), :]
-	test_data_output = data_output[np.logical_not(all_train_flags), :]
+	st = time.time()
+	t_data_in, t_data_out = deepcopy(combined_data_input), deepcopy(data_output)
+	old_to_new, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
+	train_flags = np.logical_and(cmd_flags, subject_flags)
+	test_flags = np.logical_and(cmd_flags, np.logical_not(subject_flags))
+	## Leave one subject out
+	train_data_input = t_data_in[train_flags, :]
+	train_data_output = modify_output_indices(t_data_out, old_to_new, train_flags)
+	## Left out subject is the testing data
+	test_data_input = t_data_in[test_flags, :]
+	test_data_output = modify_output_indices(t_data_out, old_to_new, test_flags)
 	X, Y = augment_data(train_data_input, train_data_output, multiplier = MULTIPLIER)
 	fe.run_svm(X, Y, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf', display = display)
 	full_prob = fe.svm_clf.predict_proba(test_data_input)
 	full_pred_output = np.argmax(full_prob, axis = 1)
+	print('Time taken: %.04f seconds'%(time.time()-st))
 	print('DONE !!! Storing variable in svm_clf')
 
 	print('\nJOINT Prediction ====> Predicted label is one ATLEAST one of the models')

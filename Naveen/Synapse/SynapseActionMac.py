@@ -82,7 +82,7 @@ class SynapseAction:
         self.menuSleep = 0.75
 
 
-# Closes/Minimizes every window and leaves active the windows
+    # Closes/Minimizes every window and leaves active the windows
     # with the name "toOpen"
     def openWindow(self, toOpen, windowOpen=False):
         # Look into "start" command for Windows

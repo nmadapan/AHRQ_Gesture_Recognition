@@ -4,7 +4,7 @@ import numpy as np
 from glob import glob
 import os, sys
 from scipy import stats
-from helpers import print_dict, custom_bar
+from helpers import *
 import pickle
 from matplotlib import pyplot as plt
 import cv2
@@ -13,7 +13,7 @@ import cv2
 ## Initialization ##
 ####################
 out_base_dir = 'Backup\\test'
-out_res_pkl_fname = 'H:\AHRQ\Study_IV\NewData\L8_result.pickle'
+out_res_pkl_fname = 'Backup\\test\\T3\\L8_result.pickle'
 
 ######################
 ## Global Variables ##
@@ -21,7 +21,7 @@ out_res_pkl_fname = 'H:\AHRQ\Study_IV\NewData\L8_result.pickle'
 subject_keys = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
 clf_keys = ['body', 'hand', 'body_plus_hand']
 overall_acc_keys = ['arg_mode', 'atleast_one', 'dst']
-clf_dict_keys = ['train_acc', 'test_acc_top4', 'test_acc_top3', 'test_acc_top1', 'valid_acc']
+clf_dict_keys = ['train_acc', 'test_acc_top5', 'test_acc_top3', 'test_acc_top1', 'valid_acc']
 
 ## Find lexicon ID from pickle name
 lexicon_id = os.path.splitext(os.path.basename(out_res_pkl_fname))[0].split('_')[0]
