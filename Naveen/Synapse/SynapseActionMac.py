@@ -9,6 +9,8 @@ from PIL import ImageChops
 import signal
 import sys
 import math
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from scipy.signal import medfilt
 import json
@@ -303,10 +305,15 @@ class SynapseAction:
         (commandID, actionID) = (-1, -1)
         commandAction = self.finalCmd.get_command(sequence)
         print "AFTER GETTING COMMAND I GOT:", commandAction
+        auto.alert(text="THIS IS A TEXT THAT WILL ALWAYS APPEAR", timeout=1000)
+        os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
+        time.sleep(1.5)
 
         ##################################################################
         ############# CHECK THAT THE COMMAND IS VALID ####################
         ##################################################################
+        if commandAction is None:
+            return False
         if (sequence.find(" ") != -1):
             commandAction = sequence[:sequence.find(" ")]
             self.status["params"] = sequence[sequence.find(" ") + 1:]

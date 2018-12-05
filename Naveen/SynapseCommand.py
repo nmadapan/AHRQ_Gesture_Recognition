@@ -6,6 +6,8 @@
 import json
 from helpers import file_to_list, json_to_dict
 import os
+import pymsgbox as msg
+import time
 
 class SynapseCommand():
     def __init__(self, lexicon, filepath):
@@ -50,11 +52,11 @@ class SynapseCommand():
         repeated_modifiers = [filter(filter_non_modifiers,sub_list) for sub_list in repeated_with_modifier]
         return repeated_modifiers
 
-        def context_action_err(self):
-            print("Inconsistent context + action")
-            self.inconsistent_context_action_err =+ 1
-            self.command = None
-            self.context = None
+    def context_action_err(self):
+        print("Inconsistent context + action")
+        self.inconsistent_context_action_err =+ 1
+        self.command = None
+        self.context = None
 
     def get_command(self, rcv_command):
         #####################
