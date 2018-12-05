@@ -305,9 +305,12 @@ class SynapseAction:
         (commandID, actionID) = (-1, -1)
         commandAction = self.finalCmd.get_command(sequence)
         print "AFTER GETTING COMMAND I GOT:", commandAction
-        auto.alert(text="THIS IS A TEXT THAT WILL ALWAYS APPEAR", timeout=1000)
         os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
-        time.sleep(1.5)
+        time.sleep(0.5)
+        auto.alert(text="THIS IS A TEXT THAT WILL ALWAYS APPEAR", timeout=3000)
+        time.sleep(0.5)
+        # time.sleep(1.5)
+        print "%%%%%%%%%%% after the window CLOSED %%%%%%%%%%%%%%"
 
         ##################################################################
         ############# CHECK THAT THE COMMAND IS VALID ####################
