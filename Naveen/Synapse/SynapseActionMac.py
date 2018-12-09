@@ -300,8 +300,11 @@ class SynapseAction:
             f = open(self.calibrationPath, "w")
             f.write(json.dumps(self.status, indent=4, separators=(',', ': ')))
             f.close()
+    def acklowledment(self, sequence_list):
+        return sequence_list[0]
 
-    def gestureCommands(self, sequence):
+    def gestureCommands(self, sequence_list):
+        sequence = self.acklowledment(sequence_list)
         (commandID, actionID) = (-1, -1)
         commandAction = self.finalCmd.get_command(sequence)
         print "AFTER GETTING COMMAND I GOT:", commandAction
