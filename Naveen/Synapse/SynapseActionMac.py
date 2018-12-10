@@ -16,6 +16,8 @@ from scipy.signal import medfilt
 import json
 sys.path.append("..")
 from SynapseCommand import SynapseCommand
+from Tkinter import *
+import keyboard
 
 
 class SynapseAction:
@@ -80,6 +82,11 @@ class SynapseAction:
 
         # Synapse behavior parameters
         self.menuSleep = 0.75
+
+        # Acknowledgment variables
+        self.root_window = Tk()
+        root_w = 400
+        root_h = 200
 
 
     # Closes/Minimizes every window and leaves active the windows
@@ -301,13 +308,7 @@ class SynapseAction:
             f.write(json.dumps(self.status, indent=4, separators=(',', ': ')))
             f.close()
     def acklowledment(self, sequence_list):
-        return sequence_list[0]
-
-    def gestureCommands(self, sequence_list):
-        sequence = self.acklowledment(sequence_list)
-        (commandID, actionID) = (-1, -1)
-        commandAction = self.finalCmd.get_command(sequence)
-        print "AFTER GETTING COMMAND I GOT:", commandAction
+        # bring the python window to the  front
         os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
         auto.PAUSE = 0.5
         auto.alert(text="THIS IS A TEXT THAT WILL ALWAYS APPEAR", timeout=1000)
@@ -315,6 +316,12 @@ class SynapseAction:
         self.openWindow(self.viewer)
         # time.sleep(1.5)
         print "%%%%%%%%%%% after the window CLOSED %%%%%%%%%%%%%%"
+        return sequence_list[0]
+
+    def gestureCommands(self, sequence_list):
+        sequence = self.acklowledment(sequence_list)
+        (commandID, actionID) = (-1, -1)
+        commandAction = self.finalCmd.get_command(sequence)
 
         ##################################################################
         ############# CHECK THAT THE COMMAND IS VALID ####################
