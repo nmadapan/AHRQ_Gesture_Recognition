@@ -147,7 +147,7 @@ class Server():
 
 class Client():
     def __init__(self, tcp_ip, port = 6000, buffer_size = 1024):
-        socket.setdefaulttimeout(10.0) # this time has to set based on the time taken by synapse. If less time is set exception is raised
+        # socket.setdefaulttimeout(10.0) # this time has to set based on the time taken by synapse. If less time is set exception is raised
         self.connect_status = False
         self.TCP_IP = tcp_ip
         self.TCP_PORT = port

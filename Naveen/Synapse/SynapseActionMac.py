@@ -9,11 +9,17 @@ from PIL import ImageChops
 import signal
 import sys
 import math
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from scipy.signal import medfilt
 import json
 sys.path.append("..")
 from SynapseCommand import SynapseCommand
+from Tkinter import *
+import tkFont
+import keyboard
+from helpers import file_to_list, json_to_dict
 
 
 class SynapseAction:
@@ -41,6 +47,7 @@ class SynapseAction:
                 e in [self.width, self.height, self.scale])).replace(".", "-") + ".txt"
         # Initialize the command desambiguation tool
         self.finalCmd = SynapseCommand(lexicon, recordingPath)
+        self.cmd_dict = json_to_dict('commands.json')
 
         # Variables of the synapse window
         # TODO all of this variables should probably go. Check that the code that uses them
@@ -79,8 +86,38 @@ class SynapseAction:
         # Synapse behavior parameters
         self.menuSleep = 0.75
 
+        # Acknowledgment variables
+        self.root_window = Tk()
+        self.big_font = tkFont.Font(family='Helvetica', size=36, weight='bold')
+        # window size
+        root_w = 400
+        root_h = 300
+        # get screen width and height
+        ws = self.root_window.winfo_screenwidth() # width of the screen
+        hs = self.root_window.winfo_screenheight() # height of the screen
+        # calculate x and y coordinates for the Tk root window
+        x = (ws/2) - (root_w/2)
+        y = (hs/2) - (root_h/2)
+        # set the dimensions of the screen
+        # and where it is placed
+        self.root_window.geometry('%dx%d+%d+%d' % (root_w, root_h, x, y))
+        self.btn_list = []
+        self.bg_colors = ['#C0C0C0', '#002dd3']
+        self.fg_colors = ['#000000', '#FFFFFF']
 
-# Closes/Minimizes every window and leaves active the windows
+        # create the menu
+        def separator():
+            Label(master=self.root_window,background=self.fg_colors[1],
+                text='separator',fg=self.fg_colors[1]).pack(fill=X)
+        separator()
+        for i in range(3):
+            self.btn_list.append(Label(master=self.root_window, font=self.big_font,
+                text='Option '+str(i), background = self.bg_colors[0]))
+            self.btn_list[-1].pack(fill=X)
+            separator()
+
+
+    # Closes/Minimizes every window and leaves active the windows
     # with the name "toOpen"
     def openWindow(self, toOpen, windowOpen=False):
         # Look into "start" command for Windows
@@ -299,14 +336,71 @@ class SynapseAction:
             f.write(json.dumps(self.status, indent=4, separators=(',', ': ')))
             f.close()
 
-    def gestureCommands(self, sequence):
+    def acklowledment(self, sequence_list):
+        # bring the python window to the  front
+        os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
+        auto.PAUSE = 0.5
+        pressed = [False, False, False]
+        # Init colors
+        first_row = True
+        for btn_index in range(len(self.btn_list)):
+            if sequence_list[btn_index] in self.cmd_dict:
+                btn_tex = self.cmd_dict[sequence_list[btn_index]]
+            else:
+                return None
+            if first_row:
+                self.btn_list[btn_index]['fg'] = self.fg_colors[1]
+                self.btn_list[btn_index]['bg'] = self.bg_colors[1]
+                first_row = False
+            else:
+                self.btn_list[btn_index]['fg'] = self.fg_colors[0]
+                self.btn_list[btn_index]['bg'] = self.bg_colors[0]
+            self.btn_list[btn_index]['text'] = btn_tex
+        self.root_window.update_idletasks()
+        self.root_window.update()
+
+        option = 0
+        while True:#making a loop
+            # try: #usedtry so that if user pressed other than the given key error will not be shown
+            if keyboard.is_pressed('j') and not pressed[0]:
+                pressed[0] = True
+                highlight_index = option % 3
+                self.btn_list[highlight_index]['fg'] = self.fg_colors[0]
+                self.btn_list[highlight_index]['bg'] = self.bg_colors[0]
+                option += 1
+                highlight_index = option % 3
+                self.btn_list[highlight_index]['fg'] = self.fg_colors[1]
+                self.btn_list[highlight_index]['bg'] = self.bg_colors[1]
+
+            elif keyboard.is_pressed('y') and not pressed[0]:
+                text_index = option % 3
+                self.openWindow(self.viewer)
+                auto.PAUSE = 1
+                return sequence_list[text_index]
+
+            elif keyboard.is_pressed('x') and not pressed[0]:
+                self.openWindow(self.viewer)
+                auto.PAUSE = 1
+                return None
+
+            if not keyboard.is_pressed('j'):
+                pressed[0] = False
+            # except:
+                # break #if user pressed other than the given key the loop will break   while 1:
+            self.root_window.update_idletasks()
+            self.root_window.update()
+        # time.sleep(1.5)
+
+    def gestureCommands(self, sequence_list):
+        sequence = self.acklowledment(sequence_list)
         (commandID, actionID) = (-1, -1)
         commandAction = self.finalCmd.get_command(sequence)
-        print "AFTER GETTING COMMAND I GOT:", commandAction
 
         ##################################################################
         ############# CHECK THAT THE COMMAND IS VALID ####################
         ##################################################################
+        if commandAction is None:
+            return False
         if (sequence.find(" ") != -1):
             commandAction = sequence[:sequence.find(" ")]
             self.status["params"] = sequence[sequence.find(" ") + 1:]
