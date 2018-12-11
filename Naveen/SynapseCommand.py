@@ -59,6 +59,8 @@ class SynapseCommand():
         self.context = None
 
     def get_command(self, rcv_command):
+        # Handling the case of an empty command
+        if rcv_command is None: return None
         #####################
         # Get the current synapse command based on the
         # context and the modifier.

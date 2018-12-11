@@ -7,6 +7,8 @@ import json
 from scipy.interpolate import interp1d
 import cv2
 import re
+import matplotlib
+matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
 from copy import deepcopy
 
