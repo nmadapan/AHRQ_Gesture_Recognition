@@ -21,17 +21,16 @@ class SynapseServer(Server):
             synapse_flag = False
             # try:
             data = self.client.recv(self.buffer_size)
-            print("command received: ", data)
-            # synapse_flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
-            print("command lenght", len(data))
             if len(str(data))>2:
-                print("sending data:", data)
-                synapse_flag = syn_action.gestureCommands([data,'4_1','4_2'])
+                data = str(data).split()
+                print("command received: ", data)
+                # synapse_flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
+                synapse_flag = syn_action.gestureCommands(data)
                 print("SENT COMMAND", data)
                 # synapse_flag = True #it should return TRUE if command is executed properly
-            # except Exception, e:
-                # print(str(e))
-                # print("Unhandled error in synapse")
+                # except Exception, e:
+                    # print(str(e))
+                    # print("Unhandled error in synapse")
             try:
                 self.client.send(str(synapse_flag))
             except Exception as exp:
