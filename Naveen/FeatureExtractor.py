@@ -485,7 +485,7 @@ class FeatureExtractor():
 		d_right = np.repeat(np.diff(right, axis = 0), d_reps, axis = 0)
 		theta_right = np.zeros(right.shape)
 		for jnt_idx in range(self.num_joints):
-			## TODO: Normalize d_right so that norm of each row of a joint is one. 
+			## TODO: Normalize d_right so that norm of each row of a joint is one.
 			temp = d_right[:, 3*jnt_idx:3*(jnt_idx+1)]
 			theta_right[:, 3*jnt_idx:3*(jnt_idx+1)] = np.arctan2(np.roll(temp, 1, axis = 1), temp)
 
@@ -565,11 +565,12 @@ class FeatureExtractor():
 
 	###### ONLINE Function ########
 	def decision_fusion(self, prediction_list):
+		## DST Code should go here.
 		return prediction_list[0]
 
 
 	###### ONLINE Function ########
-	def pred_output_realtime(self, feature_instance):
+	def pred_output_realtime(self, feature_instance, K = 3):
 		########################
 		# Input arguments:
 		#	'feature_instance': numpy.ndarray (1 x feature_size)
@@ -583,6 +584,11 @@ class FeatureExtractor():
 		prediction_list = []
 		for _, clf in self.classifiers.items():
 			pred_output = clf.predict(feature_instance)[0]
+			class_probabilities = clf.predict_proba(feature_instance)[0]
+			top_three_class_ids = np.argsort(class_probabilities)[:K]
+			top_three_class_labels = self.id_to_labels[top_three_class_ids]
+			top_three_class_labels_str = ','.join(top_three_class_labels.tolist())
+
 			label = self.id_to_labels[pred_output]
 			cname = self.label_to_name[label]
 			prediction_list.append((pred_output, label, cname))
@@ -594,7 +600,7 @@ class FeatureExtractor():
 		# cname = self.label_to_name[label]
 		# # print(cname)
 
-		return final_label, final_cname
+		return final_label, final_cname, top_three_class_labels_str
 
 	###### Miscellaneous Function ########
 	def find_type_order(self, left, right):
@@ -692,17 +698,17 @@ class FeatureExtractor():
 			cname_list = []
 			for idx in range(num_classes):
 				cname_list.append(self.label_to_name[self.id_to_labels[idx]])
-			self.plot_confusion_matrix(conf_mat, cname_list, normalize = True, title = 'Validation Confusion Matrix')	
+			self.plot_confusion_matrix(conf_mat, cname_list, normalize = True, title = 'Validation Confusion Matrix')
 
 		## Test Predict
 		if(test_input is not None):
 			pred_test_output = clf.predict(test_input)
-			
+
 			## Compute top - 3/5 accuracy
 			pred_test_prob = clf.predict_proba(test_input)
 			temp = np.sum(np.argsort(pred_test_prob, axis = 1)[:,-5:] == np.argmax(test_output, axis = 1).reshape(-1, 1), axis = 1) > 0
 			result['test_acc_top5'] = np.mean(temp)
-			print('LOSO - Top-5 Acc - ', np.mean(temp))		
+			print('LOSO - Top-5 Acc - ', np.mean(temp))
 			temp = np.sum(np.argsort(pred_test_prob, axis = 1)[:,-3:] == np.argmax(test_output, axis = 1).reshape(-1, 1), axis = 1) > 0
 			result['test_acc_top3'] = np.mean(temp)
 			print('LOSO - Top-3 Acc - ', np.mean(temp))
