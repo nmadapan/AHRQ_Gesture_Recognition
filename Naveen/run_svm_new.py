@@ -22,11 +22,12 @@ plt.ioff()
 ## Fingers variables/paths
 ENABLE_FINGERS = False
 MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1.
-display = True
+display = False
 write_flag = False
+TASK_ID = 2
 
 ## Skeleton variables/paths
-skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
+skel_folder_path = r'G:\AHRQ\Study_IV\NewData\L8'
 
 ## Variables
 all_subject_ids = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
@@ -34,7 +35,7 @@ eliminate_subject_id = 'S6'
 out_filename_suffix = '_data.pickle'
 
 ## CPM
-pickle_base_path = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
+pickle_base_path = r'G:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
 pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
 
 pickle_path = os.path.join(pickle_base_path,os.path.basename(skel_folder_path))
@@ -75,10 +76,14 @@ combined_data_input = None
 ### Ignore some comamnds ###
 ############################
 ## The command ids to ignore
-## For task 2: 2, 5_3, 5_4, 7, 8, 9
-# ignore_command_ids_list = ['2_0', '2_1', '2_2', '5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2', '9_0', '9_1', '9_2']
-## For Task 3: 3, 5_3, 5_4, 7, 8, 11
-ignore_command_ids_list = ['3_0', '3_1', '3_2', '5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2', '11_0', '11_1', '11_2']
+if(TASK_ID == 1):
+	## For task 2: 2, 5_3, 5_4, 7, 8, 9
+	ignore_command_ids_list = ['2_0', '2_1', '2_2', '5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2', '9_0', '9_1', '9_2']
+elif(TASK_ID == 2):
+	## For Task 3: 3, 5_3, 5_4, 7, 8, 11
+	ignore_command_ids_list = ['3_0', '3_1', '3_2', '5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2', '11_0', '11_1', '11_2']
+else:
+	sys.exit('Error! Incorrect Value in TASK_ID')
 ########################
 
 if(ENABLE_FINGERS):
