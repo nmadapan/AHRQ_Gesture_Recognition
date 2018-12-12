@@ -32,11 +32,12 @@ client = Client(tcp_ip, tcp_port, buffer_size = 1000000)
 
 print("CLIENT GOT HERE")
 # iterate over the list and send the message to the synapse server
+extra_msg=',4_1,4_2'
 for elem in dataList:
     try:
         if(not client.connect_status): client.init_socket()
         print("sending command:", elem)
-        flag = client.send_data(elem)
+        flag = client.send_data(elem+extra_msg)
         print("Command Executed: ", flag)
     except Exception as exp:
         print('raising exception', exp)
