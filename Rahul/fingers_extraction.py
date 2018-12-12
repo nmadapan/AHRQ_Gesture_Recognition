@@ -8,7 +8,7 @@ pickle_path1= r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L2'
 pkl_suffix=r'_fingers_coords_no_intrpn.pkl'
 
 #FEATURES FOR HANDS
-subject_wise_normalization=True
+subject_wise_normalization=False
 direction=False #set this flag if finger lengths from the base with direction are required
 num_hand_all_coords = 21
 normalization_constant=300

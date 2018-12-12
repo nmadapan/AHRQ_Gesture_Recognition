@@ -11,7 +11,7 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lex_folder = r'G:\AHRQ\Study_IV\NewData\L3'# Where to write the files
+lex_folder = r'H:\AHRQ\Study_IV\NewData\L6'# Where to write the files
 fps = 120
 default_width, default_height = 1920, 1080
 
@@ -21,15 +21,14 @@ all_cmds = sorted(cmd_dict.keys(), cmp=class_str_cmp)
 cmds = deepcopy(all_cmds)
 class_dict = {}
 bframe = []
-
+ 
 for cmd in all_cmds:
 	vids = glob(join(lex_folder, cmd+'*_rgb.avi'))
 	if(len(vids)==0) : cmds.remove(cmd); continue
 	class_dict[cmd] = len(vids)
 
 expect_num_inst = max(class_dict.values())
-print 'Max no. of instances : ' + str(expect_num_inst)
-print 'Min no. of instances : ' + str(min(class_dict.values()))
+
 
 if(expect_num_inst <= 6): M = 2
 else: M = 3

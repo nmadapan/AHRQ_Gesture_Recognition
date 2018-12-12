@@ -12,8 +12,8 @@ import cv2
 ####################
 ## Initialization ##
 ####################
-out_base_dir = 'Backup\\test'
-out_res_pkl_fname = 'Backup\\test\\T3\\L8_result.pickle'
+out_base_dir = 'Backup\\test\\all_commands'
+out_res_pkl_fname = 'Backup\\test\\all_commands\\L2_result.pickle'
 
 ######################
 ## Global Variables ##
