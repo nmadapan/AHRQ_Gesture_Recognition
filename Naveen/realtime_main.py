@@ -535,7 +535,7 @@ class Realtime:
 					# cpm_inst = cpm_inst[sync_cpm_ts, :]
 					# # Interpolate CPM features to fixed_num_frames
 					# final_cpm_inst = interpn(cpm_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
-					##### %%%%%%%%%%%%%%%%% 
+					##### %%%%%%%%%%%%%%%%%
 					## Directly interpolate finger lengths independent of the skeleton frames.
 					final_cpm_inst = interpn(cpm_inst, self.feat_ext.fixed_num_frames).reshape(1, -1)
 					##### %%%%%%%%%%%%%%%%%
@@ -547,8 +547,9 @@ class Realtime:
 				else: # Only skeleton
 					final_overall_inst = final_skel_inst
 
-				label, cname = self.feat_ext.pred_output_realtime(final_overall_inst)
-				self.command_to_execute = label
+				label, cname, top_three_labels_str = self.feat_ext.pred_output_realtime(final_overall_inst, K = 3)
+				# self.command_to_execute = label ## For only one label
+				self.command_to_execute = top_three_labels_str ## For three labels
 
 				print('Predicted: ', label, cname, '\n\n')
 

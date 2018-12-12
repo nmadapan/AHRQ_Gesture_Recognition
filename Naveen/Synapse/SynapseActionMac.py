@@ -115,6 +115,9 @@ class SynapseAction:
                 text='Option '+str(i), background = self.bg_colors[0]))
             self.btn_list[-1].pack(fill=X)
             separator()
+        self.btn_list.append(Label(master=self.root_window, font=self.big_font,
+            text='More Commands', background = self.bg_colors[0]))
+        self.btn_list[-1].pack(fill=X)
 
 
     # Closes/Minimizes every window and leaves active the windows
@@ -340,10 +343,10 @@ class SynapseAction:
         # bring the python window to the  front
         os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
         auto.PAUSE = 0.5
-        pressed = [False, False, False]
+        pressed = False
         # Init colors
         first_row = True
-        for btn_index in range(len(self.btn_list)):
+        for btn_index in range(len(self.btn_list)-1):
             if sequence_list[btn_index] in self.cmd_dict:
                 btn_tex = self.cmd_dict[sequence_list[btn_index]]
             else:
@@ -356,35 +359,42 @@ class SynapseAction:
                 self.btn_list[btn_index]['fg'] = self.fg_colors[0]
                 self.btn_list[btn_index]['bg'] = self.bg_colors[0]
             self.btn_list[btn_index]['text'] = btn_tex
+        self.btn_list[-1]['fg'] = self.fg_colors[0]
+        self.btn_list[-1]['bg'] = self.bg_colors[0]
         self.root_window.update_idletasks()
         self.root_window.update()
 
         option = 0
+        option_number = len(sequence_list)+1
         while True:#making a loop
             # try: #usedtry so that if user pressed other than the given key error will not be shown
-            if keyboard.is_pressed('j') and not pressed[0]:
-                pressed[0] = True
-                highlight_index = option % 3
+            if keyboard.is_pressed('j') and not pressed:
+                pressed= True
+                highlight_index = option % option_number
                 self.btn_list[highlight_index]['fg'] = self.fg_colors[0]
                 self.btn_list[highlight_index]['bg'] = self.bg_colors[0]
                 option += 1
-                highlight_index = option % 3
+                highlight_index = option % option_number
                 self.btn_list[highlight_index]['fg'] = self.fg_colors[1]
                 self.btn_list[highlight_index]['bg'] = self.bg_colors[1]
 
-            elif keyboard.is_pressed('y') and not pressed[0]:
-                text_index = option % 3
+            elif keyboard.is_pressed('y') and not pressed:
+                text_index = option % option_number
                 self.openWindow(self.viewer)
                 auto.PAUSE = 1
-                return sequence_list[text_index]
+                if text_index == option_number -1:
+                    pass
+                    # create the windows with all the commands
+                else:
+                    return sequence_list[text_index]
 
-            elif keyboard.is_pressed('x') and not pressed[0]:
+            elif keyboard.is_pressed('x') and not pressed:
                 self.openWindow(self.viewer)
                 auto.PAUSE = 1
                 return None
 
             if not keyboard.is_pressed('j'):
-                pressed[0] = False
+                pressed = False
             # except:
                 # break #if user pressed other than the given key the loop will break   while 1:
             self.root_window.update_idletasks()
