@@ -7,6 +7,8 @@ import json
 from scipy.interpolate import interp1d
 import cv2
 import re
+import matplotlib
+matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
 from copy import deepcopy
 
@@ -656,13 +658,14 @@ def remove_some_classes(data_output, id_to_labels, elim_label_list):
 
 	## old id to new id dictionary
 	oldid_to_newid = {old_labels.index(label): new_labels.index(label) for label in new_labels}
+	newid_to_oldid = {new_labels.index(label):old_labels.index(label) for label in new_labels}
 
 	## Find out ids of labels in elim_label_list
 	elim_id_arr = np.array([label_to_ids[label] for label in elim_label_list])
 	## flags list of True/False. True ==> consider, False ==> ignore
 	flags = np.sum(data_output.reshape(-1, 1) == elim_id_arr.reshape(1, -1), axis = 1) == 0
 
-	return oldid_to_newid, flags
+	return oldid_to_newid, newid_to_oldid, flags
 
 def modify_output_indices(data_output, oldid_to_newid, flags):
 	data_output = data_output[flags, :]

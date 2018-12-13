@@ -20,13 +20,14 @@ plt.ioff()
 ####################
 
 ## Fingers variables/paths
-ENABLE_FINGERS = False
+ENABLE_FINGERS = True
 MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1.
 display = True
-write_flag = False
+write_flag = True
+TASK_ID = 2
 
 ## Skeleton variables/paths
-skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L8'
 
 ## Variables
 all_subject_ids = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
@@ -75,11 +76,18 @@ combined_data_input = None
 ### Ignore some comamnds ###
 ############################
 ## The command ids to ignore
-## For task 2: 2, 5_3, 5_4, 7, 8, 9
-# ignore_command_ids_list = ['2_0', '2_1', '2_2', '5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2', '9_0', '9_1', '9_2']
-## For Task 3: 3, 5_3, 5_4, 7, 8, 11
-ignore_command_ids_list = ['3_0', '3_1', '3_2', '5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2', '11_0', '11_1', '11_2']
+if(TASK_ID == 1):
+	## For task 2: 2, 5_3, 5_4, 7, 8, 9
+	ignore_command_ids_list = ['2_0', '2_1', '2_2', '5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2', '9_0', '9_1', '9_2']
+elif(TASK_ID == 2):
+	## For Task 3: 3, 5_3, 5_4, 7, 8, 11
+	ignore_command_ids_list = ['3_0', '3_1', '3_2', '5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2', '11_0', '11_1', '11_2']
+else:
+	sys.exit('Error! Incorrect Value in TASK_ID')
 ########################
+
+old_to_new, new_to_old, cmd_flags = remove_some_classes(deepcopy(data_output), id_to_labels, ignore_command_ids_list)
+fe.new_to_old = new_to_old
 
 if(ENABLE_FINGERS):
 	# # ## Appending finger lengths with dominant_hand first
@@ -102,6 +110,7 @@ if(ENABLE_FINGERS):
 				data_merge.append(np.array(gesture_shuffle).flatten().tolist())
 
 	hand_data_input = deepcopy(np.array(data_merge))
+	print('Hand Data: ', hand_data_input.shape, end = '')
 	combined_data_input = np.concatenate([body_data_input, hand_data_input], axis = 1)
 	print('DONE !!!')
 else:
@@ -133,7 +142,6 @@ subject_flags = np.array(subject_flags)
 print('\nBody ====> SVM')
 st = time.time()
 t_data_in, t_data_out = deepcopy(body_data_input), deepcopy(data_output)
-old_to_new, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
 train_flags = np.logical_and(cmd_flags, subject_flags)
 test_flags = np.logical_and(cmd_flags, np.logical_not(subject_flags))
 ## Leave one subject out
@@ -155,7 +163,6 @@ if(ENABLE_FINGERS):
 	print('\nHand ====> SVM')
 	st = time.time()
 	t_data_in, t_data_out = deepcopy(hand_data_input), deepcopy(data_output)
-	old_to_new, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
 	train_flags = np.logical_and(cmd_flags, subject_flags)
 	test_flags = np.logical_and(cmd_flags, np.logical_not(subject_flags))
 	## Leave one subject out
@@ -175,7 +182,6 @@ if(ENABLE_FINGERS):
 	print('\nBody + Hand ====> SVM')
 	st = time.time()
 	t_data_in, t_data_out = deepcopy(combined_data_input), deepcopy(data_output)
-	old_to_new, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
 	train_flags = np.logical_and(cmd_flags, subject_flags)
 	test_flags = np.logical_and(cmd_flags, np.logical_not(subject_flags))
 	## Leave one subject out

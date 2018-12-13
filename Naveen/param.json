@@ -23,7 +23,7 @@
 
 	"equate_dim": true,
 
-	"fixed_num_frames": 20,
+	"fixed_num_frames": 40,
 
 	"cpm_downsample_rate": 8,
 	"num_fingers": 7

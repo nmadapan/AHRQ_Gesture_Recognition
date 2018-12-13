@@ -1,7 +1,7 @@
 import os, sys, time, inspect, socket, signal
 from threading import Thread
 import cv2 as cv
-from  Synapse import  SynapseAction2 as sa
+from  Synapse import  SynapseActionMac as sa
 import argparse
 from CustomSocket import Server
 DEFAULT_PATH  = os.path.join("Synapse","SCA_Images")
@@ -21,17 +21,16 @@ class SynapseServer(Server):
             synapse_flag = False
             # try:
             data = self.client.recv(self.buffer_size)
-            print("command received: ", data)
-            # synapse_flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
-            print("command lenght", len(data))
             if len(str(data))>2:
-                print("sending data:", data)
+                data = str(data).split()
+                print("command received: ", data)
+                # synapse_flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
                 synapse_flag = syn_action.gestureCommands(data)
                 print("SENT COMMAND", data)
                 # synapse_flag = True #it should return TRUE if command is executed properly
-            # except Exception, e:
-                # print(str(e))
-                # print("Unhandled error in synapse")
+                # except Exception, e:
+                    # print(str(e))
+                    # print("Unhandled error in synapse")
             try:
                 self.client.send(str(synapse_flag))
             except Exception as exp:
@@ -53,6 +52,8 @@ if __name__ == '__main__':
     parser.add_argument('-s', action="store", dest="syn_path",
             help="Path to the SCA synapse folder",
             default=DEFAULT_PATH)
+    # parser.add_argument('-t',action="store", dest="use_thread",
+            # type=bool, default=True)
     args = parser.parse_args()
 
     #### Variables #######
@@ -61,11 +62,15 @@ if __name__ == '__main__':
     tcp_ip = 'localhost'
     # print(tcp_ip)
     tcp_port = 10000
-
-
-    # Initialize the server Thread
     server = SynapseServer(tcp_ip, tcp_port, buffer_size = 1000000)
-    server_thread = Thread(name='server_thread', target=server.run,
-            kwargs=dict(lexicon=args.lexicon,filename=args.filepath,
-                syn_path=args.syn_path))
-    server_thread.start()
+    # print args.use_thread
+    # if args.use_thread:
+        # print "THERE"
+        # # Initialize the server Thread
+        # server_thread = Thread(name='server_thread', target=server.run,
+                # kwargs=dict(lexicon=args.lexicon,filename=args.filepath,
+                    # syn_path=args.syn_path))
+        # server_thread.start()
+    # else:
+        # print "HERE"
+    server.run(lexicon=args.lexicon,filename=args.filepath, syn_path=args.syn_path)
