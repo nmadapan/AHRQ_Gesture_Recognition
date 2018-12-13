@@ -5,12 +5,12 @@ from KinectReader import kinect_reader
 #####################
 #
 # Description:
-# 	This file parses kinect stream (either in the form of real Kinect V2 or Kinect Studio - .XEF) 
+# 	This file parses kinect stream (either in the form of real Kinect V2 or Kinect Studio - .XEF)
 #		file into RGB video, depth video, and skeletal data.
-# 	This code expects to have a kinect stream in the background. 
+# 	This code expects to have a kinect stream in the background.
 #	You need to manually connect the Kinect or open .xef file and then, call this code
-# 	Note: This file does not batch process more than one xef file at once. 
-# 	Note: Run another script that loops over this class for batch processing. 
+# 	Note: This file does not batch process more than one xef file at once.
+# 	Note: Run another script that loops over this class for batch processing.
 #
 # How to use:
 #
@@ -19,8 +19,8 @@ from KinectReader import kinect_reader
 #		# filename can be with or without extension. It works both with filenames and absolute paths.
 #		# filename format: GroupID_ModifierID_SubjectID_LexiconID_GroupName_ModifierName.xef
 #	 	# True if you want to compress the videos, False otherwise.
-#		# thresh_empty_cycles: No. of empty cycles to wait for the arrival of first RGB frame, quit otherwise 
-#		# in_format_flag: True if the filename is in the right format, False otherwise. 
+#		# thresh_empty_cycles: No. of empty cycles to wait for the arrival of first RGB frame, quit otherwise
+#		# in_format_flag: True if the filename is in the right format, False otherwise.
 #	parser.parse()
 #		# It creates path_to_folder_to_write\\SubjectID_LexiconID folder and creates five files if in_format_flag is True
 #		# It creates path_to_folder_to_write folder and creates five files if in_format_flag is False
@@ -39,13 +39,14 @@ from KinectReader import kinect_reader
 
 class Parser(object):
 	def __init__(self, xef_file_name, base_write_folder = '..\\Data', compress_flag = False, \
-				thresh_empty_cycles = 200, dynamic_thresh_fac = 2, in_format_flag = True):
+				thresh_empty_cycles = 200, dynamic_thresh_fac = 2, in_format_flag = True,  display = False):
 
 		self.xef_file_name = os.path.basename(xef_file_name)
 		self.base_write_folder = base_write_folder
 		self.compress_flag = compress_flag # Compresses the rgb and depth videos if True
 		self.thresh_empty_cycles = thresh_empty_cycles # No. of empty cycles to wait for the arrival of first RGB frame, quit otherwise
 		self.dynamic_thresh_fac = dynamic_thresh_fac
+		self.display = display
 
 		# Remove the file extension if existed
 		if(self.xef_file_name[-4:] == '.xef'): self.xef_file_name = self.xef_file_name[:-4]
@@ -84,7 +85,7 @@ class Parser(object):
 		first_rgb, first_depth, first_body = False, False, False
 
 		init_start_time = time.time()
-		print 'Connecting to Kinect . ', 
+		print 'Connecting to Kinect . ',
 
 		# cv2.namedWindow('RGB_Video')
 		# Wait for all modules (rgb, depth, skeleton) to connect
@@ -103,30 +104,32 @@ class Parser(object):
 				if (first_rgb and first_depth and first_body): break
 
 				time.sleep(0.5)
-				print '. ', 		
+				print '. ',
 			except Exception as exp:
 				time.sleep(0.5)
-				print '. ', 
-			if(time.time()-init_start_time > self.thresh_empty_cycles/2): 
+				print '. ',
+			if(time.time()-init_start_time > self.thresh_empty_cycles/2):
 				print('Waited for more than '+str(self.thresh_empty_cycles/2)+' seconds. Exiting')
 				return (-1, -1, -1)
-		
+
 		print '\nAll modules connected !!'
-		print 'Parsing XEF ', 
+		print 'Parsing XEF ',
 
 		# Initialize flags to stop accordingly
 		quit_count = 0 # Count no. of empty cycles (iterations with no RGB frame) between two RGB frames
 		max_quit_count = 0 # Stores maximum no. of empty cycles between subsequent RGB frames
 		dynamic_thresh = self.thresh_empty_cycles # No. of empty cycles to wait before qutting
 		# dynamic_thresh_fac = 4 # dynamic_thresh changes with time based on this number
-		
+
 		video_time = 0.0
 		empty_iter = 0
 		loop_delay = 0.001
+		overall_counter = 0
 
 		try:
 			start_time = time.time()
 			while spin:
+				overall_counter += 1
 				# Refreshing Frames
 				rgb_flag = self.kr.update_rgb()
 				depth_flag = self.kr.update_depth()
@@ -134,11 +137,12 @@ class Parser(object):
 				if rgb_flag:
 					max_quit_count = max(max_quit_count, quit_count)
 					# Update dynamic threshold if you witness larger delays in RGB frame arrivals
-					dynamic_thresh = max(dynamic_thresh, self.dynamic_thresh_fac * max_quit_count) 
+					dynamic_thresh = max(dynamic_thresh, self.dynamic_thresh_fac * max_quit_count)
 					quit_count = 0
-					# cv2.imshow('RGB_Video', cv2.resize(self.kr.color_image, None, fx=0.5, fy=0.5))
+					if(self.display):
+						cv2.imshow('RGB_Video', cv2.resize(self.kr.color_image, None, fx=0.5, fy=0.5))
 					self.image_counter += 1
-					if self.image_counter%25 == 0: print '. ', 
+					if self.image_counter%25 == 0: print '. ',
 				else: quit_count += 1
 
 				if quit_count > dynamic_thresh: spin = False
@@ -159,13 +163,23 @@ class Parser(object):
 					self.color_pts_file_id.write(' '.join(map(str,self.kr.color_skel_pts.tolist()))+'\n')
 					self.depth_pts_file_id.write(' '.join(map(str,self.kr.depth_skel_pts.tolist()))+'\n')
 
+				if(overall_counter%1000 == 0):
+					self.skel_pts_file_id.flush()
+					self.color_pts_file_id.flush()
+					self.depth_pts_file_id.flush()
+					self.rgb_timestamp_file_id.flush()
+					self.skel_timestamp_file_id.flush()
+					
 				# Breaking condition
-				# if cv2.waitKey(1) == ord('q') : spin = False
+				if(self.display):
+					if cv2.waitKey(1) == ord('q'): 
+						spin = False
+						cv2.destroyAllWindows()
 				time.sleep(loop_delay)
 
 		except Exception as exp:
 			print exp
-		
+
 		print '\n', 'Total No. of frames: ', self.image_counter
 		print 'Video time: ', video_time, 'seconds'
 		fps = int(self.image_counter / video_time)
@@ -180,7 +194,7 @@ class Parser(object):
 		self.depth_pts_file_id.flush()
 		self.depth_pts_file_id.close()
 		self.rgb_vr.release()
-		self.depth_vr.release()	
+		self.depth_vr.release()
 		self.rgb_timestamp_file_id.flush()
 		self.rgb_timestamp_file_id.close()
 		self.skel_timestamp_file_id.flush()
