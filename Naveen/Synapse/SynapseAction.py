@@ -466,7 +466,7 @@ class SynapseAction:
             ind = int(actionID / 3)
             self.status["active_panel"][ind] += (-1 if action == "Left" or action == "Up" else 1)
             self.status["active_panel"][ind] = max(1, self.status["active_panel"][ind])
-            self.status["active_panel"][ind] = min(self.status["active_panel"][ind], self.status["panel_dim"])
+            self.status["active_panel"][ind] = min(self.status["active_panel"][ind], self.status["panel_dim"][ind])
             self.moveToActivePanel()
             auto.click()
 
