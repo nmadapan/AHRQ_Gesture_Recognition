@@ -368,7 +368,7 @@ class SynapseAction:
         option_number = len(sequence_list)+1
         while True:#making a loop
             # try: #usedtry so that if user pressed other than the given key error will not be shown
-            if keyboard.is_pressed('j') and not pressed:
+            if keyboard.is_pressed('down') and not pressed:
                 pressed= True
                 highlight_index = option % option_number
                 self.btn_list[highlight_index]['fg'] = self.fg_colors[0]
@@ -383,8 +383,20 @@ class SynapseAction:
                 self.openWindow(self.viewer)
                 auto.PAUSE = 1
                 if text_index == option_number -1:
-                    pass
+                    sub_win_w = 1395
+                    sub_win_h = 730
+                    window = Toplevel(self.root_window,width=sub_win_w,height=sub_win_h)
+                    window.geometry('%dx%d+%d+%d' % (sub_win_w, sub_win_h, 20, 50))
+                    cmd_keys = self.cmd_dict.keys()
                     # create the windows with all the commands
+                    for i in range(3):
+                        max_j = 10 if i < 2 else 8
+                        for j in range(max_j):
+                            Label(window,font=self.big_font,
+                                text=self.cmd_dict[cmd_keys[i*10+j]],
+                                background = self.bg_colors[0],
+                                borderwidth=2, relief="groove", width=22
+                                ).grid(row=j, column=i, padx=10, pady=10)
                 else:
                     return sequence_list[text_index]
 
@@ -393,7 +405,7 @@ class SynapseAction:
                 auto.PAUSE = 1
                 return None
 
-            if not keyboard.is_pressed('j'):
+            if not keyboard.is_pressed('down'):
                 pressed = False
             # except:
                 # break #if user pressed other than the given key the loop will break   while 1:

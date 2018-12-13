@@ -22,7 +22,7 @@ class SynapseServer(Server):
             # try:
             data = self.client.recv(self.buffer_size)
             if len(str(data))>2:
-                data = str(data).split()
+                data = str(data).split(',')
                 print("command received: ", data)
                 # synapse_flag = sca.gestureCommands(data) #it should return TRUE if command is executed properly
                 synapse_flag = syn_action.gestureCommands(data)

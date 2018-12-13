@@ -395,8 +395,7 @@ while (True):
 		auto.moveTo(194.0 / scale, 105.0 / scale)
 		auto.click()
 		auto.PAUSE = 0
-		for i in range(12):
-			auto.press("up")
+		for i in range(12): auto.press("up")
 		status["panel_dim"][0] = 1
 		numDowns = 0
 		if (action == "One-Panel"):
@@ -411,8 +410,7 @@ while (True):
 			status["panel_dim"][1] = 4
 			numDowns = 9
 		#auto.moveTo(225.0 / scale, (20.0 + 126.0 * (status["panel_dim"][1] - 0.5)) / scale)
-		for i in range(numDowns):
-			auto.press("down")
+		for i in range(numDowns): auto.press("down")
 		#auto.click()
 		auto.PAUSE = 0.75
 		auto.press("space")

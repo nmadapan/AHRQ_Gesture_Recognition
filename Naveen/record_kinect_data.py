@@ -1,14 +1,39 @@
+from __future__ import print_function
 import numpy as np
 from helpers import *
 import cv2
 import os, sys, time, copy
-from os.path import basename, dirname, splitext, isfile
+from os.path import basename, dirname, splitext, isfile, join, isdir
 from KinectReader import kinect_reader
 from XefParser import Parser
+from glob import glob
 
-xef_file_name = '9_9_S21_L21_X_X.xef'
-base_write_folder = r'H:\AHRQ\Study_IV\RealData'
-in_format_flag = True
+######################################
+########## INITIALIZATION ############
+######################################
+lexicon_id = 'L21'
+base_write_folder = r'E:\AHRQ\Study_IV\RealData'
+subject_id = None
 
-parser = Parser(xef_file_name, base_write_folder, in_format_flag = in_format_flag, display = True)
+val = raw_input('Are you sure it is '+lexicon_id+' ?')
+if(val in ['q','Q','n','N']):
+	sys.exit('Exiting!!')
+
+lexicon_path = join(base_write_folder, lexicon_id)
+
+if(subject_id is None):
+	if(not isdir(lexicon_path)):
+		subject_id = 1
+	else:
+		files_path = glob(join(lexicon_path, '*'))
+		existing_subject_ids = list(set([int(float(basename(file_path).split('_')[2][1:])) for file_path in files_path]))
+		sorted(existing_subject_ids)
+		subject_id = existing_subject_ids[-1]+1
+
+xef_file_name = 'A_A_S' + str(subject_id) + '_' + lexicon_id + '_A_A.xef'
+
+print('Subject ID: ', 'S'+str(subject_id))
+print('Lexicon ID: ', lexicon_id)
+
+parser = Parser(xef_file_name, base_write_folder, in_format_flag = True, display = True)
 parser.parse()

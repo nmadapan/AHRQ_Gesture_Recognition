@@ -15,7 +15,7 @@ from scipy.signal import medfilt
 import json
 
 
-class SynapseAction:
+class OsirixAction:
     def __init__(self, keyboard=True, calibrationPath = None):
         ####################
         ## autogui setup  ##
@@ -28,42 +28,30 @@ class SynapseAction:
         (self.nativeW, self.nativeH) = tuple(float(e) for e in ImageGrab.grab().size)
         self.scale = self.nativeW / self.width
         # Get the Synapse window
-        (self.macH, self.viewer, self.prompt) = ((0, "\\\\Remote", "Command Prompt") if platform.system() == "Windows"
-            else (44.0 * self.nativeW / 2880.0, "Citrix Viewer", "Terminal"))
-        # Border around the window
-        # IMPORTANT
-        # For Mac, just found out that doing "alt+tab" goes through the windows
-        # Which shows and doesn't show the dash
-        # Use that with a proper image difference to get the boundBoxNoDash
-        #
-        self.border = (20.0 * self.nativeW / 2880.0) + (4.0 * self.scale)
-        self.boundBoxNoDash = (self.border, self.macH + self.border, self.nativeW - self.border, self.nativeH - self.border)
+        (self.macH, self.viewer, self.prompt) = (44.0 * self.nativeW / 2880.0, "OsiriX Lite", "Terminal")
         # Get the path for the calibration file
         if calibrationPath is None:
             self.calibrationPath = "calibration" + "_".join(list(str(e) for \
                 e in [self.width, self.height, self.scale])).replace(".", "-") + ".txt"
 
-        # Variables of the synapse window
+        # Variables of the osirix window
         # TODO all of this variables should probably go. Check that the code that uses them
         # goes away
-        self.optionH = None
-        self.rightHR = None
-        self.rightPlus = None
-        self.rightIcons = None
-        self.rightOffset = None
-        self.rightBoxW = None
-        self.rightBoxH = None
+        # self.optionH = None
+        # self.rightHR = None
+        # self.rightPlus = None
+        # self.rightIcons = None
+        # self.rightOffset = None
+        # self.rightBoxW = None
+        # self.rightBoxH = None
 
         # Status of the system:
         self.status = {"prev_action": "", "panel_dim": [1, 1],
             "window_open": False, "active_panel": [1, 1],
-            "rulers": {"len": 0}, "toUse": "Keyboard",
-            # "hold_action": None,
-            "topBarHeight": None, "defaultCommand": None, "group1_command": None,
+            "rulers": {"len": 0}, "defaultCommand": None, "group1_command": None,
             "firstW": None, "firstH": None, "jumpW": None,"jumpH": None}
 
         # Command action list. The first row is an internal action list for self management
-
         self.actionList = [["Admin", "Quit", "Get Status", "Switch ToUse", "Reset"],
             ["Scroll", "Up", "Down"],
             ["Flip", "Horizontal", "Vertical"],
@@ -84,15 +72,7 @@ class SynapseAction:
     # Closes/Minimizes every window and leaves active the windows
     # with the name "toOpen"
     def openWindow(self, toOpen):
-        # Look into "start" command for Windows
-        if (platform.system() == "Windows"):
-            window_names = auto.getWindows().keys()
-            for window_name in window_names: auto.getWindow(window_name).minimize()
-            for window_name in window_names:
-                if toOpen in window_name and "Patient Information" not in window_name:
-                    auto.getWindow(window_name).maximize()
-                    break
-        else: os.system("open -a " + toOpen.replace(" ", "\\ "))
+        os.system("open -a " + toOpen.replace(" ", "\\ "))
 
     # Remove images generated in the process of running the program
     def removeImages(self):
@@ -173,108 +153,11 @@ class SynapseAction:
         moveToY = self.status["firstH"] + (self.status["active_panel"][0] - 1) * (self.status["jumpH"])
         auto.moveTo(moveToX, moveToY)
 
-    # Reset height of top bar and save it
-    def resetTopBarHeight(self):
-        self.moveToActivePanel()
-        time.sleep(3)
-        auto.click()
-        ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.nativeH)).\
-            save(os.path.join("SCA_Images", "fullscreen.png"))
-        auto.moveTo(auto.position()[0], 0)
-        time.sleep(3)
-        ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.nativeH)).\
-            save(os.path.join("SCA_Images", "afterTopBar.png"))
-        topBarBox = self.get_bbox(os.path.join("SCA_Images", "fullscreen.png"), \
-            os.path.join("SCA_Images", "afterTopBar.png"))
-        self.status["topBarHeight"] = topBarBox[3] - topBarBox[1] + 1
-        ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.status["topBarHeight"] + self.macH)).save(os.path.join("SCA_Images", "topBar.png"))
-
-    # Reset the right click
-    def resetRightClick(self):
-        self.moveToActivePanel()
-        auto.click()
-        beforeRightPath = os.path.join("SCA_Images", "RightClick", "beforeRight.png")
-        ImageGrab.grab(bbox=self.boundBoxNoDash).save(beforeRightPath)
-        auto.click(button='right')
-        time.sleep(1)
-        afterRightPath = os.path.join("SCA_Images", "RightClick", "afterRight.png")
-        ImageGrab.grab(bbox=self.boundBoxNoDash).save(afterRightPath)
-        rightBox = self.get_bbox(beforeRightPath, afterRightPath)
-        print "rightBox: %s" % (rightBox,)
-        (self.rightBoxW, self.rightBoxH) = (rightBox[2] - rightBox[0] + 1, rightBox[3] - rightBox[1] + 1)
-        print "rightBox WxH: %s" % ((self.rightBoxW, self.rightBoxH),)
-        self.optionH = (self.rightBoxH * 36.0 / 1000.0) / self.scale
-        self.rightHR = (self.rightBoxH * 10.0 / 1000.0) / self.scale
-        self.rightPlus = (self.rightBoxH * 8.0 / 1000.0) / self.scale
-        self.rightIcons = (self.rightBoxH * 50.0 / 1000.0)
-        self.rightOffset = (self.rightBoxH * 58.0 / 1000.0)
-
-        (rightx1, righty1) = (rightBox[0] + self.boundBoxNoDash[0], rightBox[1] + self.boundBoxNoDash[1])
-        (x1, y1) = (rightx1 + self.rightIcons, righty1 + self.rightOffset)
-        (x2, y2) = (rightx1 + self.rightBoxW, righty1 + self.rightBoxH)
-        ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
-
-        self.moveToActivePanel()
-        auto.click()
-
-    # Reset rightClick's presets or its scaleRotateFlip
-    def resetRightOptions(self, option, offset):
-        self.moveToActivePanel()
-        auto.click()
-        auto.click(button='right')
-        located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
-        if (located is not None): (rightx1, righty1, w, h) = located
-        else:
-            print "Cannot find " + option + " on calibration reset. Attempting reset on rightClick."
-            self.resetRightClick()
-            located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
-            if (located is not None): (rightx1, righty1, w, h) = located
-            else:
-                print "Failed to reset " + option + "."
-                return
-        moveToX = (rightx1 + w / 2.0) / self.scale
-        moveToY = (righty1 / self.scale) + (self.optionH * offset) + self.rightHR
-        auto.moveTo(moveToX, moveToY)
-        time.sleep(1)
-        self.moveToActivePanel()
-        auto.press("0")
-        afterRightPath = os.path.join("SCA_Images", "RightClick", "afterRight.png")
-        afterOptionPath = os.path.join("SCA_Images", "RightClick", "after" + option + ".png")
-        ImageGrab.grab(bbox=self.boundBoxNoDash).save(afterOptionPath)
-        box = self.get_bbox(afterRightPath, afterOptionPath)
-        print option + " box: %s" % (box,)
-        (boxW, boxH) = (box[2] - box[0] + 1, box[3] - box[1] + 1)
-        print option + " box WxH: %s" % ((boxW, boxH),)
-        (x1, y1) = (box[0], box[1])
-        optionPath = os.path.join("SCA_Images", "RightClick", option + ".png")
-        ImageGrab.grab(bbox=(x1 + self.rightIcons, y1, x1 + boxW, y1 + boxH)).save(optionPath)
-        auto.click()
-
-    def resetAll(self):
-        print "\nWarming up synapse system...\n"
-        self.resetTopBarHeight()
-        self.resetRightClick()
-        self.resetRightOptions("presets", 8.5)
-        self.resetRightOptions("scaleRotateFlip", 9.5)
-        print "\nCompleted warm-up, make your gestures!\n"
-
-
     # Report situation to command prompt, useful for debugging and for users understanding an issue.
     def promptNotify(self,message, sleepAmt):
         openWindow(prompt)
         print message
         time.sleep(sleepAmt)
-
-    # Find Synapse's rightClick image
-    def findRightClick(self,offset):
-        located = auto.locateOnScreen(os.path.join("SCA_Images", "RightClick", "rightClick.png"))
-        if (located is not None):
-            (x1, y1, w, h) = located
-            auto.moveTo((x1 / self.scale) + (w / 2.0) * self.scale, (y1 + (offset / 1000.0) * self.status["rightBoxH"]) / self.scale)
-            return True
-        else:
-            print "Error when performing right click function."
-            return False
 
     # Handles the killing signals of the class
     # def signalHandler(self, sig, frame):
@@ -293,7 +176,6 @@ class SynapseAction:
             self.status = json.loads(" ".join([line.rstrip('\n') for line in f]))
             f.close()
         else:
-            self.resetAll()
             f = open(self.calibrationPath, "w")
             f.write(json.dumps(self.status, indent=4, separators=(',', ': ')))
             f.close()
@@ -309,7 +191,6 @@ class SynapseAction:
         if (sequence.find(" ") != -1):
             commandAction = sequence[:sequence.find(" ")]
             self.status["params"] = sequence[sequence.find(" ") + 1:]
-        #elif (self.status["hold_action"] is None): self.status["params"] = ""
         else: self.status["params"] = ""
         if (commandAction.find("_") != -1):
             try:
@@ -383,13 +264,8 @@ class SynapseAction:
         ####################################################
 
         elif (command == "Scroll" and action != "Scroll"):
-            self.moveToActivePanel()
-            auto.click()
-            scrollAmount = (50 if self.status["params"] == "" else int(self.status["params"]))
-            auto.PAUSE = 0
-            for i in range(scrollAmount): auto.press("right" if action == "Up" else "left")
-            auto.PAUSE = 0.25
-            auto.click()
+            scrollAmount = (10 if status["params"] == "" else int(status["params"]))
+            auto.scroll((-1 * scrollAmount if action == "Up" else scrollAmount))
 
         ####################################################
         ####################### FLIP #######################
@@ -397,14 +273,8 @@ class SynapseAction:
 
         elif (command == "Flip" and action != "Flip"):
             self.moveToActivePanel()
-            auto.click(button='right')
-            auto.PAUSE = 0.1
-            auto.press("0")
-            auto.press("s")
-            time.sleep(self.menuSleep)
-            auto.press("0")
+            auto.click()
             auto.press("h" if action == "Horizontal" else "v")
-            auto.PAUSE = 0.25
 
         ####################################################
         ##################### ROTATE #######################
@@ -413,15 +283,17 @@ class SynapseAction:
         elif (command == "Rotate" and action != "Rotate"):
             self.moveToActivePanel()
             auto.click(button='right')
-            auto.PAUSE = 0.1
-            auto.press("0")
-            auto.press("s")
-            time.sleep(self.menuSleep)
-            auto.press("0")
-            auto.press("r")
-            if (action != "Clockwise"): auto.press("down")
-            auto.press("enter")
-            auto.PAUSE = 0.25
+            auto.click()
+            auto.moveTo(794.0 / self.scale, macH / (2.0 * self.scale))
+            auto.click()
+            (moveToX, moveToY) = (1089.0, (macH / 2.0) + (7.0 + (38.0 * 5.0) + 24.0 + (38.0) + 24.0 + (38.0 * 4.5)))
+            auto.moveTo(moveToX / self.scale, moveToY / self.scale)
+            moveToX = (1468.0 + (482.0 / 2.0))
+            auto.moveTo(moveToX / self.scale, moveToY / self.scale)
+            moveToY += (-1.0 * (38.0 * 0.5) + (64.0 * 2.0) + 22.0 + 92.0)
+            moveToY += ((106.0 * 0.5) if action == "Clockwise" else 106.0 + (96.0 * 0.5))
+            auto.moveTo(moveToX / self.scale, moveToY / self.scale)
+            auto.click()
 
         ####################################################
         ##################### ZOOM #########################
@@ -432,7 +304,7 @@ class SynapseAction:
             # If performing just the context
             # or an a modifier alone
             if actionID == 0 or\
-            (self.status["defaultCommand"] is None and commandID !=0):
+            (self.status["defaultCommand"] is None and commandID != 0):
                 self.moveToActivePanel()
                 auto.click()
                 auto.click(button='right')
@@ -526,123 +398,9 @@ class SynapseAction:
         # General way it should work, but it would have issues.
         # For now, don't test Window Open/Close (no 8_1 or 8_2)
         elif (command == "Window" and action != "Window"):
-            # Coordinates on AHRQ Dell with scale 1.0:
-            # (iconW, barW) = (57.0, 15.0)
-            # (moveToX, moveToY) = (iconW * 5.5 + barW, (self.status["topBarHeight"] - 9.0) / 2.0)
-            #
-            # Coordinates on Mac with scale 2.0:
-            # (iconW, barW) = (74.0, 19.0)
-            # (moveToX, moveToY) = (iconW * 5.5 + barW, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
-            #
-            # Therefore, try using:
-            # (iconW, barW) = (57.0 * self.status["topBarHeight"] / 169.0, 15.0 * self.status["topBarHeight"] / 169.0)
-            # (moveToX, moveToY) = (iconW * 5.5 + barW, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
-            # Uncomment the return to not ignore window
-            #return True
             if (action == "Open" and not self.status["window_open"]):
-                self.moveToActivePanel()
-                auto.click()
-                if (platform.system() == "Windows"):
-                    auto.hotkey("win", "alt", "e")
-                    time.sleep(5)
-                else:
-                    # original Page with a dash
-                    time.sleep(1)
-                    regularPath = os.path.join("SCA_Images", "Window", "regular.png")
-                    regular = ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.nativeH))
-                    regular.save(regularPath)
-                    # new page without the dash, "ICA Seamless Host Agent"
-                    auto.hotkey("alt", "tab")
-                    time.sleep(1)
-                    icaSHAPath = os.path.join("SCA_Images", "Window", "icaSHA.png")
-                    icaSHA = ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.nativeH))
-                    icaSHA.save(icaSHAPath)
-                    auto.hotkey("alt", "tab")
-                    # patient info window pop-up
-                    auto.hotkey("command", "altleft", "e")
-                    time.sleep(5)
-                    auto.moveTo(0, self.height / 2.0)
-                    # patient info window without a dash
-                    patInfoPath = os.path.join("SCA_Images", "Window", "patInfo.png")
-                    patInfo = ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.nativeH))
-                    patInfo.save(patInfoPath)
-                    # Get the patient information window box
-                    patInfoBox = ImageChops.difference(icaSHA, patInfo).getbbox()
-                    window = patInfo.crop(box=patInfoBox)
-                    window.save(os.path.join("SCA_Images", "Window", "window.png"))
-                    # Save Close
-                    seriesClosePath = os.path.join("SCA_Images", "Window", "Closes", "seriesClose.png")
-                    (x1, y1, x2, y2) = patInfoBox
-                    (tempX, tempY) = (x2, y1)
-                    (x1, y1) = (tempX + ((-14.0 - 90.0) * self.scale / 2.0), tempY + (3.0) * self.scale / 2.0)
-                    (x2, y2) = (tempX + (-14.0) * self.scale / 2.0, tempY + (43.0) * self.scale / 2.0)
-                    seriesClose = ImageGrab.grab(bbox=(x1, y1 + self.macH, x2, y2 + self.macH))
-                    seriesClose.save(seriesClosePath)
-                    # patient info window gray without a dash
-                    auto.keyDown("alt")
-                    auto.press("tab")
-                    auto.press("tab")
-                    auto.keyUp("alt")
-                    time.sleep(1)
-                    patInfoGrayPath = os.path.join("SCA_Images", "Window", "patInfoGray.png")
-                    patInfoGray = ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.nativeH))
-                    patInfoGray.save(patInfoGrayPath)
-                    window_gray = patInfoGray.crop(box=patInfoBox)
-                    window_gray.save(os.path.join("SCA_Images", "Window", "window_gray.png"))
-                    # Save Close_Gray
-                    seriesClose_GrayPath = os.path.join("SCA_Images", "Window", "Closes", "seriesClose_Gray.png")
-                    seriesClose_Gray = ImageGrab.grab(bbox=(x1, y1 + self.macH, x2, y2 + self.macH))
-                    seriesClose_Gray.save(seriesClose_GrayPath)
-                    auto.hotkey("alt", "tab")
-                    # Hover over close box, save Close_Red
-                    auto.moveTo((x1 + x2) / (2.0 * self.scale), (y1 + y2) / (2.0 * self.scale) + self.macH / self.scale)
-                    time.sleep(1)
-                    patInfoRedPath = os.path.join("SCA_Images", "Window", "patInfoRed.png")
-                    patInfoRed = ImageGrab.grab(bbox=(0, self.macH, self.nativeW, self.nativeH))
-                    patInfoRed.save(patInfoRedPath)
-                    window_red = patInfoRed.crop(box=patInfoBox)
-                    window_red.save(os.path.join("SCA_Images", "Window", "window_red.png"))
-                    seriesClose_RedPath = os.path.join("SCA_Images", "Window", "Closes", "seriesClose_Red.png")
-                    seriesClose_Red = ImageGrab.grab(bbox=(x1, y1 + self.macH, x2, y2 + self.macH))
-                    seriesClose_Red.save(seriesClose_RedPath)
                 self.status["window_open"] = True
             elif (action == "Close" and self.status["window_open"]):
-                # Windows hasn't been tested but it should work
-                if (platform.system() == "Windows"):
-                    # Have not tested the code below, but hopefully will work
-                    # Should do the following:
-                    # Minimize all windows except for ones inside Synapse
-                    window_names = auto.getWindows().keys()
-                    for window_name in window_names:
-                        if not (window_name.endswith(" - \\\\Remote")):
-                            auto.getWindow(window_name).minimize()
-                    window_names = auto.getWindows().keys()
-                    # Maximize only the "Patient Information" window that's in Synapse
-                    for window_name in window_names:
-                        try:
-                            if window_name.endswith(" - \\\\Remote") and window_name.startswith("Patient Information for "):
-                                xef_window = auto.getWindow(window_name)
-                                # Resize the window to be half screen-width x half screen-height
-                                # Click on the close button
-                                xef_window.maximize()
-                                xef_window.resize(width / 2.0, height / 2.0)
-                                (closeX, closeY) = (10 + (width * 90.0 / 1920.0), 2 + (width * 40.0 / 1920.0))
-                                xef_window.clickRel(x=(width / 2.0 - closeX), y=closeY, clicks=1, button='left')
-                                break
-                        except Exception as e:
-                            continue
-                    #auto.hotkey("fn", "alt", "f4")
-                else:
-                    for file in os.listdir(os.path.join("SCA_Images", "Window", "Closes")):
-                        if (not file.endswith(".png")): continue
-                        close = auto.locateCenterOnScreen(os.path.join("SCA_Images", "Window", "Closes", file))
-                        if (close is not None):
-                            (x, y) = close
-                            auto.moveTo(x / scale, y / scale)
-                            auto.click()
-                            status["window_open"] = (not status["window_open"])
-                            break
-                    #auto.hotkey("command", "fn", "f4")
                 self.status["window_open"] = False
 
         ####################################################
@@ -654,8 +412,7 @@ class SynapseAction:
             if (self.status["defaultCommand"] is None):
                 if (self.status["group1_command"] is None):
                     self.moveToActivePanel()
-                    auto.click(button='right')
-                    (auto.press(e) for e in ["0", "w"])
+                    auto.press("w")
                 if (command == action):
                     self.status["defaultCommand"] = command
                     auto.mouseDown()
@@ -685,104 +442,35 @@ class SynapseAction:
         ####################################################
 
         elif (command == "Layout" and action != "Layout"):
-            # Coordinates on AHRQ Dell with scale 1.0:
-            # (iconW, barW) = (57.0, 15.0)
-            # (moveToX, moveToY) = (iconW * 10.5 + barW * 3.0, (self.status["topBarHeight"] - 9.0) / 2.0)
-            #
-            # Coordinates on Mac with scale 2.0:
-            # (iconW, barW) = (74.0, 19.0)
-            # (moveToX, moveToY) = (iconW * 10.5 + barW * 3.0, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
-            #
-            # Therefore, try using:
-            # (iconW, barW) = (57.0 * self.status["topBarHeight"] / 169.0, 15.0 * self.status["topBarHeight"] / 169.0)
-            # (moveToX, moveToY) = (iconW * 10.5 + barW * 3.0, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
-            (oldLocationX, oldLocationY) = auto.position()
-            auto.moveTo(oldLocationX, 0)
-            time.sleep(1)
-            (iconW, barW) = (57.0 * self.status["topBarHeight"] / 169.0, 15.0 * self.status["topBarHeight"] / 169.0)
-            (moveToX, moveToY) = (iconW * 10.5 + barW * 3.0, (self.macH + (self.status["topBarHeight"] - 9.0) / 2.0) / self.scale)
-            auto.moveTo(moveToX, moveToY)
+            auto.moveTo(194.0 / scale, 105.0 / scale)
             auto.click()
-            time.sleep(5)
-            if (platform.system() == "Windows"):
-                window_names = auto.getWindows().keys()
-                for window_name in window_names:
-                    try:
-                        if window_name.endswith(" - \\\\Remote") and window_name.startswith("Page Layout - "):
-                            (winX, winY) = auto.getWindow(window_name).position()
-                            (x1, y1) = (winX + 67.0 * width / 1920.0, winY + 95.0 * width / 1920.0)
-                            (jumpX, jumpY) = (93.0 * width / 1920.0, 97.0 * width / 1920.0)
-                            (self.status["panel_dim"][0], self.status["panel_dim"][1]) = (1, actionID)
-                            x1 += (self.status["panel_dim"][1] - 1) * jumpX
-                            auto.moveTo(x1, y1)
-                            auto.click()
-                            resetPanelMoves()
-                            moveToActivePanel()
-                            auto.click()
-                            break
-                    except Exception as e:
-                        continue
-            else:
-                # For mac
-            # box = (1.0 * scale, status["topBarHeight"], -1.0 * scale, -1.0 * scale)
-            # box = tuple(boundBoxNoDash[i] + box[i] for i in range(4))
-            # afterHoverPath = os.path.join("SCA_Images", "Layout", "afterHover.png")
-            # ImageGrab.grab(bbox=box).save(afterHoverPath)
-            # 429,54 on mac from topBar, without scale
-            # if (platform.system() == "Windows"): auto.moveTo(642.0 * width / 1920.0, 80.0 * height / 1080.0)
-            # else: auto.moveTo(857.0 / 2.0, (109.0 + 44.0) / 2.0)
-            # (iconW, barW) = (57.0 * self.status["topBarHeight"] / 169.0, 15.0 * self.status["topBarHeight"] / 169.0)
-            # (moveToX, moveToY) = (iconW * 10.5 + barW * 3.0, (macH + (self.status["topBarHeight"] - 9.0) / 2.0) / scale)
-            # auto.moveTo(moveToX, moveToY)
-            # auto.click()
-            # time.sleep(5)
-            # windowPath = os.path.join("SCA_Images", "Layout", "window.png")
-            # ImageGrab.grab(bbox=box).save(windowPath)
-            # diffLayoutPath = os.path.join("SCA_Images", "Layout", "diffLayout.png")
-            # diffBox = get_bbox(afterHoverPath, windowPath)
-            # (x1, y1, x2, y2) = (diffBox[i] + box[(i % 2)] for i in range(4))
-            # ImageGrab.grab(bbox=(x1, y1, x2, y2)).save(diffLayoutPath)
-            # auto.moveTo(x1, y1)
-            # time.sleep(2)
-            # auto.moveTo(x1 / scale, y1 / scale)
-            # time.sleep(2)
-            # (x1, y1) = ((x1 + 91.0) / 2.0, (y1 + 127.0) / 2.0)
-            # jumpX = (122.0 / 2.0)
-            # (status["panel_dim"][0], status["panel_dim"][1]) = (1, actionID)
-            # (x1, y1) = (472.0 + (actionID - 1) * 62.0, 217.0)
-            # x1 += (status["panel_dim"][1] - 1) * jumpX
-            # auto.moveTo(x1, y1)
-            # auto.click()
-            # resetPanelMoves()
-            # moveToActivePanel()
-            # auto.click()
+            auto.PAUSE = 0
+            for i in range(12): auto.press("up")
+            (status["panel_dim"][0], status["panel_dim"][1]) = (1, actionID)
+            for i in range((actionID - 1) * (actionID - 1)): auto.press("down")
+            auto.PAUSE = 0.75
+            auto.press("space")
+            self.resetPanelMoves()
+            (status["active_panel"][0], status["active_panel"][1]) = (1, 1)
+            self.moveToActivePanel()
+            auto.click()
 
         ####################################################
         ################ CONTRAST PRESETS ##################
         ####################################################
 
         elif (command == "Contrast Presets" and action != "Contrast Presets"):
-            self.moveToActivePanel()
-            auto.click()
-            auto.click(button='right')
-            auto.PAUSE = 0.1
-            (auto.press(e) for e in ["0", "i", "right"])
-            time.sleep(0.5)
-            auto.press("0")
-            for i in range(actionID + 1): auto.press("down")
-            auto.press("enter")
-            auto.PAUSE = 0.25
-            time.sleep(1)
+            auto.press(action)
 
         return True
 
 
 if __name__ == "__main__":
-    syn_action = SynapseAction()
+    osirix_action = OsirixAction()
     # set up the signal handler
-    # signal.signal(signal.SIGINT, syn_action.signalHandler)
+    # signal.signal(signal.SIGINT, osirix_action.signalHandler)
     # Run the program
-    syn_action.calibrate()
+    # osirix_action.calibrate()
     command_list = ["1_0", "1_1", "1_2", "1_1", "2_0", "2_1", "2_2", "2_1", "2_1", "2_2", "2_0","3_0", "3_1", "3_2", "3_1", "3_1", "3_2", "3_0", "4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0", "6_0", "6_1", "6_1", "6_2", "6_2", "6_0", "6_0", "6_1", "6_2"]
     command_list = ["4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0"]
     command_list = ["4_0", "4_1", "4_1", "4_2", "4_2", "4_0", "4_0", "4_1", "4_2", "3_1", "4_1", "4_1", "4_0", "6_0", "6_1", "6_1", "6_2", "6_2", "6_0", "6_0", "6_1", "6_2"]
@@ -790,17 +478,15 @@ if __name__ == "__main__":
     # command_list = ["6_0", "6_1", "6_1", "6_1", "6_1", "6_1", "6_1", "6_1", "6_1"]
     command_list = ["8_1", "8_2", "10_1", "10_2", "10_3", "10_4"]
 
-    # For now, don't test Window Open/Close (no 8_1 or 8_2)
-
     for cmd in command_list:
-        success = syn_action.gestureCommands(cmd)
+        success = osirix_action.gestureCommands(cmd)
         print "execution of command", cmd, "flag:", success
         time.sleep(2)
 
-    # syn_action.resetTopBarHeight()
-    # OPEN PATIENT INFO  WINDOW
+    # osirix_action.resetTopBarHeight()
+    # OPEN PATIENT INFO WINDOW
     # TODO: ONLY WORKS if the windows in in focus from before. FIGURE OUT HOW TO FOCUS THE WINDOW AUTOMATICALLY ON THE CALIBRATON
-    # syn_action.moveToActivePanel()
+    # osirix_action.moveToActivePanel()
     # auto.click()
     # auto.hotkey("command", "optionLeft", "e")
     # time.sleep(5)
@@ -809,7 +495,7 @@ if __name__ == "__main__":
     # time.sleep(1)
 
     #auto.hotkey("command", "enter")
-    syn_action.openWindow(syn_action.prompt)
+    osirix_action.openWindow(osirix_action.prompt)
     while True: continue
 
 
