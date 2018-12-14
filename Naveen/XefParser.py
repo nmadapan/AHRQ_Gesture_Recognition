@@ -39,7 +39,7 @@ from KinectReader import kinect_reader
 
 class Parser(object):
 	def __init__(self, xef_file_name, base_write_folder = '..\\Data', compress_flag = False, \
-				thresh_empty_cycles = 200, dynamic_thresh_fac = 2, in_format_flag = True,  display = False):
+				thresh_empty_cycles = 200, dynamic_thresh_fac = 2, in_format_flag = True,  display = False, kr = None):
 
 		self.xef_file_name = os.path.basename(xef_file_name)
 		self.base_write_folder = base_write_folder
@@ -72,7 +72,10 @@ class Parser(object):
 		self.depth_vid_addr = os.path.join(os.path.join(self.write_folder, self.xef_file_name+'_depth.avi'))
 
 		# Initialize Kinect
-		self.kr = kinect_reader()
+		if(kr is None):
+			self.kr = kinect_reader()
+		else:
+			self.kr = kr
 
 		# Video Recorder
 		fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -169,10 +172,10 @@ class Parser(object):
 					self.depth_pts_file_id.flush()
 					self.rgb_timestamp_file_id.flush()
 					self.skel_timestamp_file_id.flush()
-					
+
 				# Breaking condition
 				if(self.display):
-					if cv2.waitKey(1) == ord('q'): 
+					if cv2.waitKey(1) == ord('q'):
 						spin = False
 						cv2.destroyAllWindows()
 				time.sleep(loop_delay)

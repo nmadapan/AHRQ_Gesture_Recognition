@@ -11,7 +11,7 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lex_folder = r'H:\AHRQ\Study_IV\NewData\L2'# Where to write the files
+lex_folder = r'G:\AHRQ\Study_IV\NewData\L8'# Where to write the files
 fps = 120
 default_width, default_height = 1920, 1080
 
@@ -21,6 +21,7 @@ all_cmds = sorted(cmd_dict.keys(), cmp=class_str_cmp)
 cmds = deepcopy(all_cmds)
 class_dict = {}
 bframe = []
+
 def synchronize(color_skel_files_list):
 	'''
 	Description: synchronize the RGB timestamps with SKELETON timestamps.
