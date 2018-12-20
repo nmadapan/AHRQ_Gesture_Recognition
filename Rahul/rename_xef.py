@@ -6,10 +6,10 @@ import os,sys
 import glob
 
 #we have to to give the from(read) and to(write) folder
-base_path_read=r'E:\AHRQ\Study_IV\XEF_Files'
-base_path_write =r'G:\AHRQ\XEF_Files'
-read_folder='S1_L11'
-write_folder='S3_L11'
+base_path_read=r'D:\AHRQ\Study_IV\XEF_Files'
+base_path_write =r'D:\AHRQ\Study_IV\XEF_Files'
+read_folder='S9_L10'
+write_folder='S10_L10'
 
 #files in the read folder are sorted based on gestures id(1_1,2_1 etc)
 #files in write_folder are sorted based on time of the files creation.

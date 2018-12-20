@@ -11,8 +11,8 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lex_folder = r'G:\AHRQ\Study_IV\NewData\L8'# Where to write the files
-fps = 120
+lex_folder = r'D:\AHRQ\Study_IV\NewData2\L11'# Where to write the files
+fps = 180
 default_width, default_height = 1920, 1080
 
 ## Initialization
@@ -66,8 +66,14 @@ for cmd in all_cmds:
 	if(len(vids)==0) : cmds.remove(cmd); continue
 	class_dict[cmd] = len(vids)
 
-expect_num_inst = max(class_dict.values())
+try:
+	if(len(class_dict) == 0): 
+		raise Exception('No Videos Present !!')
+except Exception as exp:
+	print exp
+	sys.exit()
 
+expect_num_inst = max(class_dict.values())
 
 if(expect_num_inst <= 6): M = 2
 else: M = 3
@@ -116,7 +122,7 @@ while(True):
 
 				frame = draw_body(frame, skel_pts)
 				frame = cv2.resize(frame, dsize=(des_w, des_h))
-				cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA)
+				cv2.putText(frame, name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA)
 			else:
 				frame = 255*np.ones((des_h, des_w, 3))
 			bframe[i][j] = np.uint8(frame)
@@ -124,7 +130,7 @@ while(True):
 		cframe = []
 		for sublist in bframe: cframe.append(np.concatenate(sublist, axis = 1))
 		cframe = np.concatenate(cframe, axis = 0)
-		cv2.putText(cframe,cmd_dict[cmd], (default_width/(N+1), 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (120,50,220),2,cv2.LINE_AA)
+		cv2.putText(cframe,cmd_dict[cmd], (default_width/(N+5), 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (120,50,220),2,cv2.LINE_AA)
 		cv2.imshow('Full Frame', np.uint8(cframe))
 
 		key = cv2.waitKey(1000/fps)
