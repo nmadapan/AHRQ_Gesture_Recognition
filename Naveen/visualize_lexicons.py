@@ -11,8 +11,9 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lex_folder = r'G:\AHRQ\Study_IV\NewData\L3'# Where to write the files
-enable_skeleton = False
+lexicon_id = 'L3'
+lex_folders = [r'G:\AHRQ\Study_IV\NewData'] # Where to write the files
+enable_skeleton = True
 fps = 180
 default_width, default_height = 1920, 1080
 
@@ -22,6 +23,8 @@ all_cmds = sorted(cmd_dict.keys(), cmp=class_str_cmp)
 cmds = deepcopy(all_cmds)
 class_dict = {}
 bframe = []
+
+lex_folders = [join(lex_folder, lexicon_id) for lex_folder in lex_folders]
 
 def synchronize(color_skel_files_list):
 	'''
@@ -63,7 +66,8 @@ def synchronize(color_skel_files_list):
 	return rgb_to_skel_list, skel_data_list
 
 for cmd in all_cmds:
-	vids = glob(join(lex_folder, cmd+'*_rgb.avi'))
+	vids = []
+	for lex_folder in lex_folders: vids += glob(join(lex_folder, cmd+'*_rgb.avi'))
 	if(len(vids)==0) : cmds.remove(cmd); continue
 	class_dict[cmd] = len(vids)
 
@@ -80,7 +84,9 @@ if(expect_num_inst <= 6): M = 2
 else: M = 3
 
 if(expect_num_inst%2 == 1):	N = 1 + expect_num_inst/M
-else: N = expect_num_inst/M
+else: N = int(np.ceil(float(expect_num_inst)/M))
+
+print M, ' X ', N, ' Window'
 
 des_w, des_h = default_width/(N+2), default_height/(M+2)
 
@@ -102,9 +108,16 @@ while(True):
 
 	if(close_flag): break
 
-	vids = glob(join(lex_folder, cmd+'*_rgb.avi'))
+	vids = []
+	for lex_folder in lex_folders:
+		vids += glob(join(lex_folder, cmd+'*_rgb.avi'))
+	vids = sorted(vids, cmp = subject_str_cmp)
+
 	if(enable_skeleton):
-		color_skel_files = glob(join(lex_folder, cmd+'*_color.txt'))
+		color_skel_files = []
+		for lex_folder in lex_folders:
+			color_skel_files += glob(join(lex_folder, cmd+'*_color.txt'))
+		color_skel_files = sorted(color_skel_files, cmp = subject_str_cmp)
 		rgb_to_skel_list, skel_data_list = synchronize(color_skel_files)
 
 	vcaps = [(os.path.basename(vid).split('_')[2], cv2.VideoCapture(vid)) for vid in vids]
@@ -131,7 +144,7 @@ while(True):
 		cframe = []
 		for sublist in bframe: cframe.append(np.concatenate(sublist, axis = 1))
 		cframe = np.concatenate(cframe, axis = 0)
-		cv2.putText(cframe,cmd_dict[cmd], (default_width/(N+5), 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (120,50,220),2,cv2.LINE_AA)
+		cv2.putText(cframe,cmd_dict[cmd], (cframe.shape[1]/3, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (120,50,220),2,cv2.LINE_AA)
 		cv2.imshow('Full Frame', np.uint8(cframe))
 
 		key = cv2.waitKey(1000/fps)
