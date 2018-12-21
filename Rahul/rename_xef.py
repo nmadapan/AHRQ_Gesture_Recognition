@@ -6,10 +6,10 @@ import os,sys
 import glob
 
 #we have to to give the from(read) and to(write) folder
-base_path_read=r'E:\AHRQ\Study_IV\XEF_Files'
-base_path_write =r'G:\AHRQ\XEF_Files'
-read_folder='S1_L11'
-write_folder='S3_L11'
+base_path_read=r'H:\AHRQ\Study_IV\XEF_Files'
+base_path_write =r'E:\AHRQ\Study_IV\XEF_Files'
+read_folder='S7_L10'
+write_folder='S11_L10'
 
 #files in the read folder are sorted based on gestures id(1_1,2_1 etc)
 #files in write_folder are sorted based on time of the files creation.
@@ -17,8 +17,8 @@ write_folder='S3_L11'
 read_file_path = os.path.join(base_path_read,read_folder)
 write_file_path = os.path.join(base_path_write,write_folder)
 
-if os.stat(read_file_path).st_ctime > os.stat(write_file_path).st_ctime:
-	sys.exit('write folder was created before than read_folder')
+# if os.stat(read_file_path).st_ctime > os.stat(write_file_path).st_ctime:
+# 	sys.exit('write folder was created before read_folder')
 
 if read_folder.split('_')[1]!=write_folder.split('_')[1]:
 	sys.exit('Read and Write lexicons are different. This code will not work if the lexicons are different')

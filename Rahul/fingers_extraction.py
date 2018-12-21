@@ -4,7 +4,7 @@ from scipy.interpolate import interp1d
 from utils import *
 
 
-pickle_path1= r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L2'
+pickle_path1= r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L8'
 pkl_suffix=r'_fingers_coords_no_intrpn.pkl'
 
 #FEATURES FOR HANDS
@@ -35,7 +35,7 @@ for key in fingers_data:
     lexicon_id = key.split('_')[3]
     gest_list=[]
     if subject_wise_normalization: norm_const = subject_parameters[lexicon_id][subject_id]['finger_length']
-    else: norm_constant = normalization_constant
+    else: norm_const = normalization_constant
     for line in fingers_data[key]:
         gest_frames=[]
         #Since each gesture is 1D array ,interpolated to 40 frames, 

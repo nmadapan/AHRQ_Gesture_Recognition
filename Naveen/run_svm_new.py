@@ -100,6 +100,7 @@ if(ENABLE_FINGERS):
 		s='_'
 		key=s.join(key)
 		dom_type=fe.dominant_type[idx]
+		print (key)
 		for idx1,line in enumerate(np.round(fingers_data.get(key),4)):
 			if dom_type[idx1]==1:data_merge.append(line)
 			else:

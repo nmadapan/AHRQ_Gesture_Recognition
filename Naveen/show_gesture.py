@@ -17,7 +17,7 @@ parser.add_argument("-c", "--command_id",
 					default='1_1',
 					help=("Command ID. For example: 4_1"))
 parser.add_argument("-p", "--data_path",
-					default=r'G:\AHRQ\Study_IV\NewData',
+					default=r'H:\AHRQ\Study_IV\NewData',
 					help=("Data path to the folders containing L2/6/8..."))
 
 ### Arguments

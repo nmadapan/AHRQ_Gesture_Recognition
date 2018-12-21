@@ -12,11 +12,12 @@ right_hand_id = 11
 right_wrist_id = 10
 blur_nondom_hand=False
 
-skip_existing_folder = True # True if don't want to override existing folders
+skip_existing_folder = True # set it to True if don't want to override existing folders
 
 read_base_path = r"H:\AHRQ\Study_IV\NewData"
-write_base_path = r"H:\AHRQ\Study_IV\Data\Data_cpm_new"
+write_base_path = r"H:\AHRQ\Study_IV\Data\Data_cpm_new2"
 frames_folder="Frames"
+
 frames_dir=os.path.join(write_base_path,frames_folder)
 if not os.path.isdir(frames_dir): create_writefolder_dir(frames_dir)
 lexicons=glob.glob(os.path.join(read_base_path,"*"))

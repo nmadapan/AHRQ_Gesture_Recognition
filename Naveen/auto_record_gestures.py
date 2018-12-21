@@ -11,7 +11,7 @@ from KinectReader import kinect_reader
 ### GLOBAL PARAMETERS ###
 #########################
 base_write_folder = ".\\" # Where to write the files
-images_folder = os.path.join('.', 'Images') ####### Change this
+images_folder = os.path.join('.', 'Images_Rahul') ####### Change this
 kinect_studio_open_time = 3 # 'in seconds
 fixed_num_gestures = 20
 kinect_joint_names_path = 'kinect_joint_names.json'

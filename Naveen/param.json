@@ -6,7 +6,7 @@
 	"gesture_thresh_level": 0.2,
 
 	"all_feature_types": false,
-	"feature_types": ["d_left", "d_right"],
+	"feature_types": ["left", "right"],
 
 	"num_joints": 1,
 
