@@ -243,6 +243,24 @@ def skelfile_cmp(path1, path2):
 	if(c1==c2): return m1 - m2
 	else: return c1 - c2
 
+def subject_str_cmp(path1, path2):
+	'''
+	Description:
+		Compare two skeleton file paths based on subject ID. 
+		Format of the path is the following ('a/b/4_1_S*_L*_Context_Modifier_skel.txt)
+	Input arguments:
+		* path1: string. Path to a skeleton file.
+		* path2: string. Path to a skeleton file.
+	Return:
+		* Negative number if path2 is smaller than path1, positive number otherwise.
+	Example usage:
+		# skelfile_cmp('4_1_S2_L2_Zoom_In_skel.txt', '3_0_S1_L2_Rotate_X_skel.txt')
+		# S1 is supposed to come after S2. So it returns a negative number
+	'''
+	sid1 = int(os.path.basename(path1).split('_')[2][1:])
+	sid2 = int(os.path.basename(path2).split('_')[2][1:])
+	return sid1 - sid2
+
 def class_str_cmp(str1, str2):
 	'''
 	Description:
