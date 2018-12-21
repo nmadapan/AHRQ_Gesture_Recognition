@@ -11,7 +11,8 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lex_folder = r'D:\AHRQ\Study_IV\NewData2\L11'# Where to write the files
+lex_folder = r'G:\AHRQ\Study_IV\NewData\L3'# Where to write the files
+enable_skeleton = False
 fps = 180
 default_width, default_height = 1920, 1080
 
@@ -67,7 +68,7 @@ for cmd in all_cmds:
 	class_dict[cmd] = len(vids)
 
 try:
-	if(len(class_dict) == 0): 
+	if(len(class_dict) == 0):
 		raise Exception('No Videos Present !!')
 except Exception as exp:
 	print exp
@@ -102,9 +103,9 @@ while(True):
 	if(close_flag): break
 
 	vids = glob(join(lex_folder, cmd+'*_rgb.avi'))
-	color_skel_files = glob(join(lex_folder, cmd+'*_color.txt'))
-
-	rgb_to_skel_list, skel_data_list = synchronize(color_skel_files)
+	if(enable_skeleton):
+		color_skel_files = glob(join(lex_folder, cmd+'*_color.txt'))
+		rgb_to_skel_list, skel_data_list = synchronize(color_skel_files)
 
 	vcaps = [(os.path.basename(vid).split('_')[2], cv2.VideoCapture(vid)) for vid in vids]
 	counter = [0]*len(vcaps)
@@ -117,10 +118,10 @@ while(True):
 			ret, frame = vcap.read()
 
 			if ret:
-				skel_idx = rgb_to_skel_list[idx][counter[idx]]
-				skel_pts = skel_data_list[idx][skel_idx, :]
-
-				frame = draw_body(frame, skel_pts)
+				if(enable_skeleton):
+					skel_idx = rgb_to_skel_list[idx][counter[idx]]
+					skel_pts = skel_data_list[idx][skel_idx, :]
+					frame = draw_body(frame, skel_pts)
 				frame = cv2.resize(frame, dsize=(des_w, des_h))
 				cv2.putText(frame, name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA)
 			else:
