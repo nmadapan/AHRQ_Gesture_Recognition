@@ -26,20 +26,32 @@ from helpers import *
 # Initialization
 # If you want to process all directories, then path should like r'G:\_\_\*'
 # If you want to process all files in a directory, then path should look like r'G:\_\_'
+<<<<<<< HEAD
 xef_folder_paths = [r'H:\AHRQ\Study_IV\XEF_Files\S7_L3', r'H:\AHRQ\Study_IV\XEF_Files\S7_L2',r'E:\AHRQ\Study_IV\XEF_Files\S8_L2',\
 					r'H:\AHRQ\Study_IV\XEF_Files\S7_L11',r'E:\AHRQ\Study_IV\XEF_Files\S8_L6',]
+=======
+xef_folder_paths = [r'D:\AHRQ\Study_IV\XEF_Files\*']
+>>>>>>> a114a1df4b541d0136ae3d2e7fdb41a5e9fbca33
 in_format_flag = True # True since the filename is in the correct format
 enable_repeat = False # If True, all xef files will be executed, Otherwise, only the files that werent read previously or the files that were incompletely read
 xef_rgb_factor = 2.5 # Max is 3.8
 print_fnames = False
-images_folder = '.\\Images_Rahul'
+images_folder = '.\\Images_AHRQ'
 
 
+<<<<<<< HEAD
 error_log_folder = r'H:\AHRQ\Study_IV\XEF_Files'
 error_log_filename = os.path.join(error_log_folder, 'error_log_'+datetime.now().strftime("%Y_%m_%d_%H_%M")+'.txt')
 
 # Default settings
 base_write_folder = r'H:\AHRQ\Study_IV\NewData' # Where to write the files
+=======
+error_log_folder = r'D:\AHRQ\Study_IV\Logfiles'
+error_log_filename = os.path.join(error_log_folder, 'error_log_'+datetime.now().strftime("%Y_%m_%d_%H_%M")+'.txt')
+
+# Default settings
+base_write_folder = r'D:\AHRQ\Study_IV\NewData2' # Where to write the files
+>>>>>>> a114a1df4b541d0136ae3d2e7fdb41a5e9fbca33
 kinect_studio_open_time = 3 # in seconds
 thresh_empty_cycles = 200 # No. of cycles to wait before obtaining the first RGB image. Quit after 200 cycles. 
 dynamic_thresh_fac = 10 # How long to wait later for the arrival of RGB frame 

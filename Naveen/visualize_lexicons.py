@@ -11,8 +11,15 @@ from copy import deepcopy
 ###
 
 ## Global Variables
+<<<<<<< HEAD
 lex_folder = r'H:\AHRQ\Study_IV\NewData\L3'# Where to write the files
 fps = 120
+=======
+lexicon_id = 'L3'
+lex_folders = [r'G:\AHRQ\Study_IV\NewData'] # Where to write the files
+enable_skeleton = True
+fps = 180
+>>>>>>> a114a1df4b541d0136ae3d2e7fdb41a5e9fbca33
 default_width, default_height = 1920, 1080
 
 ## Initialization
@@ -21,6 +28,9 @@ all_cmds = sorted(cmd_dict.keys(), cmp=class_str_cmp)
 cmds = deepcopy(all_cmds)
 class_dict = {}
 bframe = []
+
+lex_folders = [join(lex_folder, lexicon_id) for lex_folder in lex_folders]
+
 def synchronize(color_skel_files_list):
 	'''
 	Description: synchronize the RGB timestamps with SKELETON timestamps.
@@ -61,18 +71,27 @@ def synchronize(color_skel_files_list):
 	return rgb_to_skel_list, skel_data_list
 
 for cmd in all_cmds:
-	vids = glob(join(lex_folder, cmd+'*_rgb.avi'))
+	vids = []
+	for lex_folder in lex_folders: vids += glob(join(lex_folder, cmd+'*_rgb.avi'))
 	if(len(vids)==0) : cmds.remove(cmd); continue
 	class_dict[cmd] = len(vids)
 
-expect_num_inst = max(class_dict.values())
+try:
+	if(len(class_dict) == 0):
+		raise Exception('No Videos Present !!')
+except Exception as exp:
+	print exp
+	sys.exit()
 
+expect_num_inst = max(class_dict.values())
 
 if(expect_num_inst <= 6): M = 2
 else: M = 3
 
 if(expect_num_inst%2 == 1):	N = 1 + expect_num_inst/M
-else: N = expect_num_inst/M
+else: N = int(np.ceil(float(expect_num_inst)/M))
+
+print M, ' X ', N, ' Window'
 
 des_w, des_h = default_width/(N+2), default_height/(M+2)
 
@@ -94,10 +113,17 @@ while(True):
 
 	if(close_flag): break
 
-	vids = glob(join(lex_folder, cmd+'*_rgb.avi'))
-	color_skel_files = glob(join(lex_folder, cmd+'*_color.txt'))
+	vids = []
+	for lex_folder in lex_folders:
+		vids += glob(join(lex_folder, cmd+'*_rgb.avi'))
+	vids = sorted(vids, cmp = subject_str_cmp)
 
-	rgb_to_skel_list, skel_data_list = synchronize(color_skel_files)
+	if(enable_skeleton):
+		color_skel_files = []
+		for lex_folder in lex_folders:
+			color_skel_files += glob(join(lex_folder, cmd+'*_color.txt'))
+		color_skel_files = sorted(color_skel_files, cmp = subject_str_cmp)
+		rgb_to_skel_list, skel_data_list = synchronize(color_skel_files)
 
 	vcaps = [(os.path.basename(vid).split('_')[2], cv2.VideoCapture(vid)) for vid in vids]
 	counter = [0]*len(vcaps)
@@ -110,12 +136,12 @@ while(True):
 			ret, frame = vcap.read()
 
 			if ret:
-				skel_idx = rgb_to_skel_list[idx][counter[idx]]
-				skel_pts = skel_data_list[idx][skel_idx, :]
-
-				frame = draw_body(frame, skel_pts)
+				if(enable_skeleton):
+					skel_idx = rgb_to_skel_list[idx][counter[idx]]
+					skel_pts = skel_data_list[idx][skel_idx, :]
+					frame = draw_body(frame, skel_pts)
 				frame = cv2.resize(frame, dsize=(des_w, des_h))
-				cv2.putText(frame,name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA)
+				cv2.putText(frame, name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA)
 			else:
 				frame = 255*np.ones((des_h, des_w, 3))
 			bframe[i][j] = np.uint8(frame)
@@ -123,7 +149,7 @@ while(True):
 		cframe = []
 		for sublist in bframe: cframe.append(np.concatenate(sublist, axis = 1))
 		cframe = np.concatenate(cframe, axis = 0)
-		cv2.putText(cframe,cmd_dict[cmd], (default_width/(N+1), 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (120,50,220),2,cv2.LINE_AA)
+		cv2.putText(cframe,cmd_dict[cmd], (cframe.shape[1]/3, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (120,50,220),2,cv2.LINE_AA)
 		cv2.imshow('Full Frame', np.uint8(cframe))
 
 		key = cv2.waitKey(1000/fps)
