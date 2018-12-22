@@ -69,7 +69,7 @@ for cmd in all_cmds:
 	vids = []
 	for lex_folder in lex_folders: vids += glob(join(lex_folder, cmd+'*_rgb.avi'))
 	if(len(vids)==0) : cmds.remove(cmd); continue
-	class_dict[cmd] = len(vids)
+	class_dict[cmd] = len(list(set(vids)))
 
 try:
 	if(len(class_dict) == 0):
