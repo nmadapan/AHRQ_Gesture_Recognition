@@ -45,7 +45,7 @@ class XEF(Thread):
 class GUI():
 	def __init__(self):
 		auto.FAILSAFE = True # Drag the mouse to top left to stop autogui
-		auto.PAUSE = 2 # Pause for 2 seconds after every autogui operation
+		auto.PAUSE = 1 # Pause for 2 seconds after every autogui operation
 		self.width, self.height = auto.size()
 
 	def run_gui(self):
