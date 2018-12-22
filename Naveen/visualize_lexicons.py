@@ -14,7 +14,7 @@ from copy import deepcopy
 lexicon_id = 'L2'
 lex_folders = [r'E:\AHRQ\Study_IV\NewData', r'E:\AHRQ\Study_IV\NewData2'] # Where to write the files
 enable_skeleton = False
-fps = 180
+fps = 300
 default_width, default_height = 1920, 1080
 
 ## Initialization
@@ -106,12 +106,14 @@ while(True):
 	vids = []
 	for lex_folder in lex_folders:
 		vids += glob(join(lex_folder, cmd+'*_rgb.avi'))
+	vids = list(set(vids)) ## Eliminate the duplicates
 	vids = sorted(vids, cmp = subject_str_cmp)
 
 	if(enable_skeleton):
 		color_skel_files = []
 		for lex_folder in lex_folders:
 			color_skel_files += glob(join(lex_folder, cmd+'*_color.txt'))
+		color_skel_files = list(set(color_skel_files)) ## Eliminate the duplicates
 		color_skel_files = sorted(color_skel_files, cmp = subject_str_cmp)
 		rgb_to_skel_list, skel_data_list = synchronize(color_skel_files)
 
