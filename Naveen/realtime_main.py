@@ -36,7 +36,7 @@ DATA_WRITE_FLAG = False
 DEBUG = False
 
 ## IMPORTANT
-LEXICON_ID = 'L8'
+LEXICON_ID = 'L6'
 SUBJECT_ID = 'S1'
 
 ## If a gesture has less than 20 frames ignore.

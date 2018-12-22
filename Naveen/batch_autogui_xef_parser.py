@@ -42,10 +42,6 @@ in_format_flag = True # True since the filename is in the correct format
 enable_repeat = False # If True, all xef files will be executed, Otherwise, only the files that werent read previously or the files that were incompletely read
 xef_rgb_factor = 2.5 # Max is 3.8
 print_fnames = False
-# Default settings
-kinect_studio_open_time = 3 # in seconds
-thresh_empty_cycles = 200 # No. of cycles to wait before obtaining the first RGB image. Quit after 200 cycles. 
-dynamic_thresh_fac = 10 # How long to wait later for the arrival of RGB frame 
 
 error_log_folder = os.path.join(os.path.dirname(base_write_folder), 'Logfiles')
 if(not os.path.isdir(error_log_folder)): os.makedirs(error_log_folder)

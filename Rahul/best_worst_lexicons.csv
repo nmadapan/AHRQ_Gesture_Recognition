@@ -1,0 +1,29 @@
+﻿S.No.,Code,Command Name,Best Lexicon,Worst Lexicon
+1,1_1,Scroll Up,8,3
+2,1_2,Scroll Down,8,3
+3,2_1,Flip Horizontal,4,7
+4,2_2,Flip Vertical,4,7
+5,3_1,Rotate Clockwise,8,3
+6,3_2,Rotate Anti_clockwise,8,3
+7,4_1,Zoom In,8,3
+8,4_2,Zoom Out,8,3
+9,5_1,Switch_panel Left,8,3
+10,5_2,Switch_panel Right,8,3
+11,5_3,Switch_panel Up,8,3
+12,5_4,Switch_panel Down,8,3
+13,6_1,Pan Left,6,4
+14,6_2,Pan Right,6,4
+15,6_3,Pan Up,6,4
+16,6_4,Pan Down,6,4
+17,7_1,Measure with Ruler,5,2
+18,7_2,Delete Ruler,5,2
+19,8_1,PIW Open,6,3
+20,8_2,PIW Close,6,3
+21,9_1,Manual_contrast Increase,1,2
+22,9_2,Manual_contrast Decrease,1,2
+23,10_1,Layout One_panel,6,2
+24,10_2,Layout Two_panels,6,2
+25,10_3,Layout Three_panels,6,2
+26,10_4,Layout Four_panels,6,2
+27,11_1,Contrast_presets Stanadard_1,1,4
+28,11_2,Contrast_presets Stanadard_2,1,4

@@ -6,10 +6,24 @@ import os,sys
 import glob
 
 #we have to to give the from(read) and to(write) folder
+<<<<<<< HEAD
 base_path_read = r'F:\AHRQ\Study_IV\XEF_Files'
 base_path_write = r'E:\AHRQ\Study_IV\XEF_Files'
 read_folder = 'S2_L2'
 write_folder = 'S10_L2'
+=======
+<<<<<<< HEAD
+base_path_read=r'H:\AHRQ\Study_IV\XEF_Files'
+base_path_write =r'E:\AHRQ\Study_IV\XEF_Files'
+read_folder='S7_L10'
+write_folder='S11_L10'
+=======
+base_path_read=r'D:\AHRQ\Study_IV\XEF_Files'
+base_path_write =r'D:\AHRQ\Study_IV\XEF_Files'
+read_folder='S9_L10'
+write_folder='S10_L10'
+>>>>>>> a114a1df4b541d0136ae3d2e7fdb41a5e9fbca33
+>>>>>>> f1537ff82edec34521499fefa2d3edcf79d1f46d
 
 #files in the read folder are sorted based on gestures id(1_1,2_1 etc)
 #files in write_folder are sorted based on time of the files creation.
@@ -17,8 +31,8 @@ write_folder = 'S10_L2'
 read_file_path = os.path.join(base_path_read,read_folder)
 write_file_path = os.path.join(base_path_write,write_folder)
 
-if os.stat(read_file_path).st_ctime > os.stat(write_file_path).st_ctime:
-	sys.exit('write folder was created before than read_folder')
+# if os.stat(read_file_path).st_ctime > os.stat(write_file_path).st_ctime:
+# 	sys.exit('write folder was created before read_folder')
 
 if read_folder.split('_')[1]!=write_folder.split('_')[1]:
 	sys.exit('Read and Write lexicons are different. This code will not work if the lexicons are different')

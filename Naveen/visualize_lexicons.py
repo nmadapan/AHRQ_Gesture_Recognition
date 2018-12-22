@@ -11,8 +11,9 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lexicon_id = 'L11'
-lex_folders = [r'D:\AHRQ\Study_IV\NewData2', r'D:\AHRQ\Study_IV\NewData'] # Where to write the files
+lexicon_id = 'L2'
+lex_folders = [r'E:\AHRQ\Study_IV\NewData', r'E:\AHRQ\Study_IV\NewData2'] # Where to write the files
+enable_skeleton = False
 fps = 180
 default_width, default_height = 1920, 1080
 
@@ -71,20 +72,15 @@ for cmd in all_cmds:
 	class_dict[cmd] = len(vids)
 
 try:
-	if(len(class_dict) == 0): 
+	if(len(class_dict) == 0):
 		raise Exception('No Videos Present !!')
 except Exception as exp:
 	print exp
 	sys.exit()
 
 expect_num_inst = max(class_dict.values())
-
-if(expect_num_inst <= 6): M = 2
-else: M = 3
-
-if(expect_num_inst%2 == 1):	N = 1 + expect_num_inst/M
-else: N = int(np.ceil(float(expect_num_inst)/M))
-
+M = int(np.ceil(np.sqrt(expect_num_inst)))
+N = M
 print M, ' X ', N, ' Window'
 
 des_w, des_h = default_width/(N+2), default_height/(M+2)
@@ -108,14 +104,16 @@ while(True):
 	if(close_flag): break
 
 	vids = []
-	color_skel_files = []
 	for lex_folder in lex_folders:
 		vids += glob(join(lex_folder, cmd+'*_rgb.avi'))
-		color_skel_files += glob(join(lex_folder, cmd+'*_color.txt'))
 	vids = sorted(vids, cmp = subject_str_cmp)
-	color_skel_files = sorted(color_skel_files, cmp = subject_str_cmp)
 
-	rgb_to_skel_list, skel_data_list = synchronize(color_skel_files)
+	if(enable_skeleton):
+		color_skel_files = []
+		for lex_folder in lex_folders:
+			color_skel_files += glob(join(lex_folder, cmd+'*_color.txt'))
+		color_skel_files = sorted(color_skel_files, cmp = subject_str_cmp)
+		rgb_to_skel_list, skel_data_list = synchronize(color_skel_files)
 
 	vcaps = [(os.path.basename(vid).split('_')[2], cv2.VideoCapture(vid)) for vid in vids]
 	counter = [0]*len(vcaps)
@@ -128,10 +126,10 @@ while(True):
 			ret, frame = vcap.read()
 
 			if ret:
-				skel_idx = rgb_to_skel_list[idx][counter[idx]]
-				skel_pts = skel_data_list[idx][skel_idx, :]
-
-				frame = draw_body(frame, skel_pts)
+				if(enable_skeleton):
+					skel_idx = rgb_to_skel_list[idx][counter[idx]]
+					skel_pts = skel_data_list[idx][skel_idx, :]
+					frame = draw_body(frame, skel_pts)
 				frame = cv2.resize(frame, dsize=(des_w, des_h))
 				cv2.putText(frame, name, (frame.shape[1]/8,frame.shape[0]/8), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,50,0),1,cv2.LINE_AA)
 			else:
