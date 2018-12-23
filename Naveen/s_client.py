@@ -8,7 +8,6 @@ sys.path.insert(0,parentdir)
 
 from CustomSocket import Client
 
-time.sleep(2)
 #### Variables #######
 # tcp_ip = '10.186.42.155'
 tcp_ip = 'localhost'
@@ -39,6 +38,7 @@ for elem in dataList:
         print("sending command:", elem)
         flag = client.send_data(elem+extra_msg)
         print("Command Executed: ", flag)
+        time.sleep(1)
     except Exception as exp:
         print('raising exception', exp)
         client.connect_status = False

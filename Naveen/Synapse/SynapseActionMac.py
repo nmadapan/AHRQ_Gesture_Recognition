@@ -19,7 +19,7 @@ from SynapseCommand import SynapseCommand
 from Tkinter import *
 import tkFont
 import keyboard
-from helpers import file_to_list, json_to_dict
+from helpers import file_to_list, json_to_dict, turn_int
 
 
 class SynapseAction:
@@ -343,7 +343,9 @@ class SynapseAction:
         # bring the python window to the  front
         os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
         auto.PAUSE = 0.5
+        self.root_window.deiconify()
         pressed = False
+        y_pressed = False
         # Init colors
         first_row = True
         for btn_index in range(len(self.btn_list)-1):
@@ -366,8 +368,7 @@ class SynapseAction:
 
         option = 0
         option_number = len(sequence_list)+1
-        while True:#making a loop
-            # try: #usedtry so that if user pressed other than the given key error will not be shown
+        while True:
             if keyboard.is_pressed('down') and not pressed:
                 pressed= True
                 highlight_index = option % option_number
@@ -378,7 +379,8 @@ class SynapseAction:
                 self.btn_list[highlight_index]['fg'] = self.fg_colors[1]
                 self.btn_list[highlight_index]['bg'] = self.bg_colors[1]
 
-            elif keyboard.is_pressed('y') and not pressed:
+            elif keyboard.is_pressed('y') and not y_pressed:
+                y_pressed = True
                 text_index = option % option_number
                 self.openWindow(self.viewer)
                 auto.PAUSE = 1
@@ -388,25 +390,96 @@ class SynapseAction:
                     window = Toplevel(self.root_window,width=sub_win_w,height=sub_win_h)
                     window.geometry('%dx%d+%d+%d' % (sub_win_w, sub_win_h, 20, 50))
                     cmd_keys = self.cmd_dict.keys()
+                    cmd_keys.sort(key=turn_int)
                     # create the windows with all the commands
+                    option_matrix = []
                     for i in range(3):
                         max_j = 10 if i < 2 else 8
+                        column = []
                         for j in range(max_j):
-                            Label(window,font=self.big_font,
+                            label = Label(window,font=self.big_font,
                                 text=self.cmd_dict[cmd_keys[i*10+j]],
                                 background = self.bg_colors[0],
                                 borderwidth=2, relief="groove", width=22
-                                ).grid(row=j, column=i, padx=10, pady=10)
+                                )
+                            label.grid(row=j, column=i, padx=10, pady=10)
+                            column.append(label)
+                        option_matrix.append(column)
+                    window.lift()
+                    window.attributes("-topmost", True)
+                    sub_pressed = [False, False, False, False]
+                    keys = ['down','up','left','right']
+                    option_modifier = [1,-1,-1,1]
+                    column_option = 0
+                    row_option = 0
+                    highlight_row = 1
+                    highlight_col = 0
+
+                    # Make the first element highlighted
+                    option_matrix[0][0]['fg'] = self.fg_colors[1]
+                    option_matrix[0][0]['bg'] = self.bg_colors[1]
+                    while True:
+                        for pressed_index in range(len(keys)):
+                            if keyboard.is_pressed(keys[pressed_index]) \
+                                    and not sub_pressed[pressed_index]:
+                                sub_pressed[pressed_index]= True
+                                highlight_row = row_option % len(option_matrix)
+                                highlight_col = column_option % len(option_matrix[highlight_row])
+                                print("UNHIGHLIGHTING =", highlight_col, highlight_row)
+                                option_matrix[highlight_row][highlight_col]['fg'] = self.fg_colors[0]
+                                option_matrix[highlight_row][highlight_col]['bg'] = self.bg_colors[0]
+                                # if up or down
+                                if pressed_index < 2:
+                                    column_option += option_modifier[pressed_index]
+                                    highlight_col = column_option % len(option_matrix[highlight_row])
+                                else:
+                                    row_option += option_modifier[pressed_index]
+                                    highlight_row = row_option % len(option_matrix)
+                                    highlight_col = column_option % len(option_matrix[highlight_row])
+                                    column_option = highlight_col
+                                option_matrix[highlight_row][highlight_col]['fg'] = self.fg_colors[1]
+                                option_matrix[highlight_row][highlight_col]['bg'] = self.bg_colors[1]
+
+                        for pressed_index in range(len(keys)):
+                            if not keyboard.is_pressed(keys[pressed_index]):
+                                sub_pressed[pressed_index] = False
+                            if not keyboard.is_pressed('y'):
+                                y_pressed = False
+
+                        if keyboard.is_pressed('y') and not y_pressed:
+                            y_pressed = True
+                            #Get the selected option
+                            row_num = row_option % len(option_matrix)
+                            col_num = column_option % len(option_matrix[highlight_row])
+                            key_index = row_num*len(option_matrix[0]) + col_num
+                            window.destroy()
+                            self.root_window.withdraw()
+                            auto.PAUSE = 0.5
+                            self.openWindow(self.viewer)
+                            auto.PAUSE = 1
+                            print("RETURNING HERE",cmd_keys[key_index])
+                            return cmd_keys[key_index]
+
+                        self.root_window.update_idletasks()
+                        self.root_window.update()
                 else:
+                    self.root_window.withdraw()
+                    auto.PAUSE = 0.5
+                    self.openWindow(self.viewer)
+                    auto.PAUSE = 1
                     return sequence_list[text_index]
 
             elif keyboard.is_pressed('x') and not pressed:
+                self.root_window.withdraw()
+                auto.PAUSE = 0.5
                 self.openWindow(self.viewer)
                 auto.PAUSE = 1
                 return None
 
             if not keyboard.is_pressed('down'):
                 pressed = False
+            if not keyboard.is_pressed('y'):
+                y_pressed = False
             # except:
                 # break #if user pressed other than the given key the loop will break   while 1:
             self.root_window.update_idletasks()
@@ -415,10 +488,11 @@ class SynapseAction:
 
     def gestureCommands(self, sequence_list):
         sequence = self.acklowledment(sequence_list)
+        print ("EXECUTING", sequence)
         (commandID, actionID) = (-1, -1)
-        commandAction = self.finalCmd.get_command(sequence)
+        # commandAction = self.finalCmd.get_command(sequence)
+        commandAction = sequence
 
-        ##################################################################
         ############# CHECK THAT THE COMMAND IS VALID ####################
         ##################################################################
         if commandAction is None:
