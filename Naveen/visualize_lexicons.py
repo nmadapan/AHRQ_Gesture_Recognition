@@ -70,7 +70,7 @@ for cmd in all_cmds:
 	vids = []
 	for lex_folder in lex_folders: vids += glob(join(lex_folder, cmd+'*_rgb.avi'))
 	if(len(vids)==0) : cmds.remove(cmd); continue
-	class_dict[cmd] = len(vids)
+	class_dict[cmd] = len(list(set(vids)))
 
 try:
 	if(len(class_dict) == 0):
@@ -80,13 +80,8 @@ except Exception as exp:
 	sys.exit()
 
 expect_num_inst = max(class_dict.values())
-
-if(expect_num_inst <= 6): M = 2
-else: M = 3
-
-if(expect_num_inst%2 == 1):	N = 1 + expect_num_inst/M
-else: N = int(np.ceil(float(expect_num_inst)/M))
-
+M = int(np.ceil(np.sqrt(expect_num_inst)))
+N = M
 print M, ' X ', N, ' Window'
 
 des_w, des_h = default_width/(N+2), default_height/(M+2)
@@ -112,12 +107,14 @@ while(True):
 	vids = []
 	for lex_folder in lex_folders:
 		vids += glob(join(lex_folder, cmd+'*_rgb.avi'))
+	vids = list(set(vids)) ## Eliminate the duplicates
 	vids = sorted(vids, cmp = subject_str_cmp)
 
 	if(enable_skeleton):
 		color_skel_files = []
 		for lex_folder in lex_folders:
 			color_skel_files += glob(join(lex_folder, cmd+'*_color.txt'))
+		color_skel_files = list(set(color_skel_files)) ## Eliminate the duplicates
 		color_skel_files = sorted(color_skel_files, cmp = subject_str_cmp)
 		rgb_to_skel_list, skel_data_list = synchronize(color_skel_files)
 
