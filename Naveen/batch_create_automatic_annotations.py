@@ -23,7 +23,7 @@ from helpers import json_to_dict
 #####################
 
 ## GLOBAL PARAMETERS
-base_skel_folder = r'H:\AHRQ\Study_IV\NewData\L6'
+base_skel_folder = r'H:\AHRQ\Study_IV\NewData\L8'
 base_write_folder = os.path.join(base_skel_folder, 'Annotations')
 in_format_flag = True
 kinect_joint_names_path = 'kinect_joint_names.json'
