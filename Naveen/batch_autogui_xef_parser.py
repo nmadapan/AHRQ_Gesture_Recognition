@@ -23,27 +23,29 @@ from helpers import *
 #
 #####################
 
+##############################
+##### CHANGE PATHS HERE ######
+##############################
 # Initialization
 # If you want to process all directories, then path should like r'G:\_\_\*'
 # If you want to process all files in a directory, then path should look like r'G:\_\_'
-xef_folder_paths = [r'E:\AHRQ\XEF_Files\S3_L10',r'E:\AHRQ\XEF_Files\S3_L11',r'E:\AHRQ\XEF_Files\S4_L10',\
-					r'E:\AHRQ\XEF_Files\S4_L11',r'E:\AHRQ\XEF_Files\S5_L10',r'E:\AHRQ\XEF_Files\S5_L11',\
-					r'E:\AHRQ\XEF_Files\S6_L10',r'E:\AHRQ\XEF_Files\S6_L11'	]
+xef_folder_paths = [r'E:\AHRQ\Study_IV\XEF_Files\S8_L2', r'E:\AHRQ\Study_IV\XEF_Files\S8_L6',\
+					r'E:\AHRQ\Study_IV\XEF_Files\S8_L10', r'E:\AHRQ\Study_IV\XEF_Files\S12_L6',\
+					r'E:\AHRQ\Study_IV\XEF_Files\S10_L2', r'E:\AHRQ\Study_IV\XEF_Files\S10_L3']
+images_folder = '.\\Images_AHRQ'
+base_write_folder = r'E:\AHRQ\Study_IV\NewData2' # Where to write the files
+
+################################
+######## DEFAULT FLAGS #########
+################################
 in_format_flag = True # True since the filename is in the correct format
 enable_repeat = False # If True, all xef files will be executed, Otherwise, only the files that werent read previously or the files that were incompletely read
 xef_rgb_factor = 2.5 # Max is 3.8
 print_fnames = False
-images_folder = '.\\Images_AHRQ'
 
-
-error_log_folder = r'E:\AHRQ\XEF_Files\Logfiles'
+error_log_folder = os.path.join(os.path.dirname(base_write_folder), 'Logfiles')
+if(not os.path.isdir(error_log_folder)): os.makedirs(error_log_folder)
 error_log_filename = os.path.join(error_log_folder, 'error_log_'+datetime.now().strftime("%Y_%m_%d_%H_%M")+'.txt')
-
-# Default settings
-base_write_folder = r'E:\AHRQ\Study_IV\NewData' # Where to write the files
-kinect_studio_open_time = 3 # in seconds
-thresh_empty_cycles = 200 # No. of cycles to wait before obtaining the first RGB image. Quit after 200 cycles. 
-dynamic_thresh_fac = 10 # How long to wait later for the arrival of RGB frame 
 
 ## Flags
 global parse_flag, xef_flag, gui_flag, file_active

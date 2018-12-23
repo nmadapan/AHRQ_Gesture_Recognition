@@ -33,7 +33,7 @@ ENABLE_SYNAPSE_SOCKET = False
 ENABLE_CPM_SOCKET = True
 # If True, write data to disk
 DATA_WRITE_FLAG = False
-DEBUG = True
+DEBUG = False
 
 ## IMPORTANT
 LEXICON_ID = 'L6'
@@ -516,6 +516,12 @@ class Realtime:
 					# Detuple cpm_instance
 					cpm_ts, raw_cpm_frames = zip(*self.cpm_instance)
 					if(DEBUG): print('No. of frames in CPM feature: ', len(raw_cpm_frames))
+					if(len(raw_cpm_frames) < MIN_FRAMES_IN_GESTURE/3):
+						print('Less frames. Gesture Ignored. ')
+						self.fl_cmd_ready = False
+						self.fl_skel_ready = False
+						if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False
+						continue										
 					# Detuple CPM frames int right and left
 					right_cpm, left_cpm = zip(*raw_cpm_frames)
 					if(DEBUG):
@@ -550,6 +556,7 @@ class Realtime:
 				label, cname, top_three_labels_str = self.feat_ext.pred_output_realtime(final_overall_inst, K = 3)
 				# self.command_to_execute = label ## For only one label
 				self.command_to_execute = top_three_labels_str ## For three labels
+				print(self.command_to_execute)
 
 				print('Predicted: ', label, cname, '\n\n')
 

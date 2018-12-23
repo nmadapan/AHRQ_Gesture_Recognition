@@ -20,14 +20,14 @@ plt.ioff()
 ####################
 
 ## Fingers variables/paths
-ENABLE_FINGERS = False
+ENABLE_FINGERS = True
 MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1.
-display = False
-write_flag = False
+display = True
+write_flag = True
 TASK_ID = 2
 
 ## Skeleton variables/paths
-skel_folder_path = r'G:\AHRQ\Study_IV\NewData\L8'
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L8'
 
 ## Variables
 all_subject_ids = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
@@ -35,7 +35,7 @@ eliminate_subject_id = 'S6'
 out_filename_suffix = '_data.pickle'
 
 ## CPM
-pickle_base_path = r'G:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
+pickle_base_path = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
 pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
 
 pickle_path = os.path.join(pickle_base_path,os.path.basename(skel_folder_path))
@@ -86,6 +86,9 @@ else:
 	sys.exit('Error! Incorrect Value in TASK_ID')
 ########################
 
+old_to_new, new_to_old, cmd_flags = remove_some_classes(deepcopy(data_output), id_to_labels, ignore_command_ids_list)
+fe.new_to_old = new_to_old
+
 if(ENABLE_FINGERS):
 	# # ## Appending finger lengths with dominant_hand first
 	print('Appending finger lengths: ', end = '')
@@ -97,6 +100,7 @@ if(ENABLE_FINGERS):
 		s='_'
 		key=s.join(key)
 		dom_type=fe.dominant_type[idx]
+		print (key)
 		for idx1,line in enumerate(np.round(fingers_data.get(key),4)):
 			if dom_type[idx1]==1:data_merge.append(line)
 			else:
@@ -107,6 +111,7 @@ if(ENABLE_FINGERS):
 				data_merge.append(np.array(gesture_shuffle).flatten().tolist())
 
 	hand_data_input = deepcopy(np.array(data_merge))
+	print('Hand Data: ', hand_data_input.shape, end = '')
 	combined_data_input = np.concatenate([body_data_input, hand_data_input], axis = 1)
 	print('DONE !!!')
 else:
@@ -138,7 +143,6 @@ subject_flags = np.array(subject_flags)
 print('\nBody ====> SVM')
 st = time.time()
 t_data_in, t_data_out = deepcopy(body_data_input), deepcopy(data_output)
-old_to_new, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
 train_flags = np.logical_and(cmd_flags, subject_flags)
 test_flags = np.logical_and(cmd_flags, np.logical_not(subject_flags))
 ## Leave one subject out
@@ -160,7 +164,6 @@ if(ENABLE_FINGERS):
 	print('\nHand ====> SVM')
 	st = time.time()
 	t_data_in, t_data_out = deepcopy(hand_data_input), deepcopy(data_output)
-	old_to_new, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
 	train_flags = np.logical_and(cmd_flags, subject_flags)
 	test_flags = np.logical_and(cmd_flags, np.logical_not(subject_flags))
 	## Leave one subject out
@@ -180,7 +183,6 @@ if(ENABLE_FINGERS):
 	print('\nBody + Hand ====> SVM')
 	st = time.time()
 	t_data_in, t_data_out = deepcopy(combined_data_input), deepcopy(data_output)
-	old_to_new, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
 	train_flags = np.logical_and(cmd_flags, subject_flags)
 	test_flags = np.logical_and(cmd_flags, np.logical_not(subject_flags))
 	## Leave one subject out

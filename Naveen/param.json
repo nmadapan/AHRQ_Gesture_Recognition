@@ -6,7 +6,7 @@
 	"gesture_thresh_level": 0.2,
 
 	"all_feature_types": false,
-	"feature_types": ["d_left", "d_right"],
+	"feature_types": ["left", "right"],
 
 	"num_joints": 1,
 
@@ -23,7 +23,7 @@
 
 	"equate_dim": true,
 
-	"fixed_num_frames": 20,
+	"fixed_num_frames": 40,
 
 	"cpm_downsample_rate": 8,
 	"num_fingers": 7

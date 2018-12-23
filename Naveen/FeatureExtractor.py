@@ -582,18 +582,19 @@ class FeatureExtractor():
 
 		## Predict
 		prediction_list = []
-		for _, clf in self.classifiers.items():
-			pred_output = clf.predict(feature_instance)[0]
-			class_probabilities = clf.predict_proba(feature_instance)[0]
-			top_three_class_ids = np.argsort(class_probabilities)[:K]
-			top_three_class_labels = self.id_to_labels[top_three_class_ids]
-			top_three_class_labels_str = ','.join(top_three_class_labels.tolist())
+		# for _, clf in self.classifiers.items():
+		clf = self.classifiers['svm_clf']
+		pred_output = clf.predict(feature_instance)[0]
+		class_probabilities = clf.predict_proba(feature_instance)[0]
+		top_three_class_ids = np.argsort(class_probabilities)[::-1][:K]
+		top_three_class_labels = [self.id_to_labels[self.new_to_old[pred_id]] for pred_id in top_three_class_ids]
+		top_three_class_labels_str = ','.join(top_three_class_labels)
 
-			label = self.id_to_labels[pred_output]
-			cname = self.label_to_name[label]
-			prediction_list.append((pred_output, label, cname))
+		label = self.id_to_labels[self.new_to_old[pred_output]]
+		cname = self.label_to_name[label]
+		prediction_list.append((pred_output, label, cname))
 
-		final_pred_output, final_label, final_cname_list = self.decision_fusion(prediction_list)
+		final_pred_output, final_label, final_cname = self.decision_fusion(prediction_list)
 
 		# pred_test_output = self.svm_clf.predict(feature_instance)[0]
 		# label = self.id_to_labels[pred_test_output]
@@ -697,7 +698,7 @@ class FeatureExtractor():
 			conf_mat = confusion_matrix(np.argmax(valid_output, axis = 1), pred_valid_output)
 			cname_list = []
 			for idx in range(num_classes):
-				cname_list.append(self.label_to_name[self.id_to_labels[idx]])
+				cname_list.append(self.label_to_name[self.id_to_labels[self.new_to_old[idx]]])
 			self.plot_confusion_matrix(conf_mat, cname_list, normalize = True, title = 'Validation Confusion Matrix')
 
 		## Test Predict
@@ -720,7 +721,7 @@ class FeatureExtractor():
 				conf_mat = confusion_matrix(np.argmax(test_output, axis = 1), pred_test_output)
 				cname_list = []
 				for idx in range(test_output.shape[1]):
-					cname_list.append(self.label_to_name[self.id_to_labels[idx]])
+					cname_list.append(self.label_to_name[self.id_to_labels[self.new_to_old[idx]]])
 				self.plot_confusion_matrix(conf_mat, cname_list, normalize = True, title = 'LOSO Confusion Matrix')
 
 		setattr(self, inst_var_name, deepcopy(clf))
