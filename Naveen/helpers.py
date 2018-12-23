@@ -776,24 +776,5 @@ def draw_body(img = None, img_skel_pts = None, only_upper_body = True, line_colo
 
 	return img
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+def turn_int(x):
+    return int(x.split('_')[0])*10+int(x.split('_')[1])
