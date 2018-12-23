@@ -15,12 +15,29 @@ blur_nondom_hand=False
 skip_existing_folder = True # set it to True if don't want to override existing folders
 
 read_base_path = r"H:\AHRQ\Study_IV\NewData"
-write_base_path = r"H:\AHRQ\Study_IV\Data\Data_cpm_new2"
+write_base_path = r"H:\AHRQ\Study_IV\Data\Data_cpm_new"
 frames_folder="Frames"
 
 frames_dir=os.path.join(write_base_path,frames_folder)
 if not os.path.isdir(frames_dir): create_writefolder_dir(frames_dir)
 lexicons=glob.glob(os.path.join(read_base_path,"*"))
+
+def match_ts(rgb_ts,skel_ts):
+    '''
+        Description: 
+            This function maps skeleton time stamps to rgb time stamps and vice versa
+        Input Arguments:
+            rgb_ts - path to the file with rgb time stamps
+            skel_ts - path to the file with skeleton time stamps
+        Returns:
+            s_to_r - mapping from skeleton time stamps to rgb time stamps 
+            r_to_s - mapping from rgb time stamps to skeleton time stamps
+    '''
+    rgb_ts=np.array(rgb_ts)
+    skel_ts=np.array(skel_ts)
+    s_to_r=np.argmin(np.abs(rgb_ts.reshape(-1,1)-skel_ts.reshape(1,-1)),axis=1)
+    r_to_s=np.argmin(np.abs(rgb_ts.reshape(-1,1)-skel_ts.reshape(1,-1)),axis=0)
+    return s_to_r,r_to_s
 
 def get_lhand_bbox(color_skel_pts, max_wh , \
                    des_size = 300):
@@ -97,7 +114,9 @@ def extract_frames_cpm(video_file,rgb_ts_file,skle_ts_file,rgb_skel_file,write_f
 
     rgb_ts = readlines_txt(rgb_ts_file)
     skel_ts = readlines_txt(skle_ts_file)
-    s_to_r = match_ts(rgb_ts,skel_ts)
+    rgb_ts_num = [np.float32(ts) for ts in rgb_ts]
+    skel_ts_num = [np.float32(ts) for ts in skel_ts]
+    s_to_r,_ = match_ts(rgb_ts_num,skel_ts_num)
     # print(s_to_r)
     # sys.exit(0)
     skel_coo=readlines_txt(rgb_skel_file)
