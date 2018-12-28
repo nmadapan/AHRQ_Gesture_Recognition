@@ -20,14 +20,14 @@ plt.ioff()
 ####################
 
 ## Fingers variables/paths
-ENABLE_FINGERS = True
+ENABLE_FINGERS = False
 MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1.
-display = True
+display = False
 write_flag = True
 TASK_ID = 2
 
 ## Skeleton variables/paths
-skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L8'
+skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
 
 ## Variables
 all_subject_ids = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
@@ -153,11 +153,11 @@ print('New no. of classes: ', train_data_output.shape[1])
 test_data_input = t_data_in[test_flags, :]
 test_data_output = modify_output_indices(t_data_out, old_to_new, test_flags)
 X, Y = augment_data(train_data_input, train_data_output, multiplier = MULTIPLIER)
-fe.run_svm(X, Y, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf_body', display = display)
-body_prob = fe.svm_clf_body.predict_proba(test_data_input)
+fe.run_svm(X, Y, test_data_input, test_data_output, train_per = 0.80, inst_var_name = 'svm_clf', display = display)
+body_prob = fe.svm_clf.predict_proba(test_data_input)
 body_pred_output = np.argmax(body_prob, axis = 1)
 print('Time taken: %.04f seconds'%(time.time()-st))
-print('DONE !!! Storing variable in svm_clf_body')
+print('DONE !!! Storing variable in svm_clf')
 
 if(ENABLE_FINGERS):
 	## Only Hand

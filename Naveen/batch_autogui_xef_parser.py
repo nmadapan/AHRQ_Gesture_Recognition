@@ -29,7 +29,7 @@ from helpers import *
 # Initialization
 # If you want to process all directories, then path should like r'G:\_\_\*'
 # If you want to process all files in a directory, then path should look like r'G:\_\_'
-xef_folder_paths = [r'G:\AHRQ\XEF_Files\S5_L11']
+xef_folder_paths = [r'G:\AHRQ\Study_IV\XEF_Files\S12_L8']
 
 in_format_flag = True # True since the filename is in the correct format
 enable_repeat = False # If True, all xef files will be executed, Otherwise, only the files that werent read previously or the files that were incompletely read
@@ -39,11 +39,11 @@ print_fnames = False
 images_folder = '.\\Images_Rahul'
 
 
-error_log_folder = r'G:\AHRQ\XEF_Files'
+error_log_folder = r'G:\AHRQ\Study_IV\Logfiles'
 error_log_filename = os.path.join(error_log_folder, 'error_log_'+datetime.now().strftime("%Y_%m_%d_%H_%M")+'.txt')
 
 # Default settings
-base_write_folder = r'G:\AHRQ\Study_IV\NewData' # Where to write the files
+base_write_folder = r'G:\AHRQ\Study_IV\NewData2' # Where to write the files
 
 kinect_studio_open_time = 3 # in seconds
 thresh_empty_cycles = 200 # No. of cycles to wait before obtaining the first RGB image. Quit after 200 cycles. 

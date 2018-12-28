@@ -14,8 +14,8 @@ blur_nondom_hand=False
 
 skip_existing_folder = True # set it to True if don't want to override existing folders
 
-read_base_path = r"E:\AHRQ\Study_IV\NewData2"
-write_base_path = r"G:\AHRQ\Study_IV\Data\Data_cpm_new"
+read_base_path = r"G:\AHRQ\Study_IV\NewData2"
+write_base_path = r"H:\AHRQ\Study_IV\Data\Data_cpm_new"
 frames_folder="Frames"
 
 frames_dir=os.path.join(write_base_path,frames_folder)

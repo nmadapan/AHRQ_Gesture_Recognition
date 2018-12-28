@@ -5,25 +5,11 @@ DON'T use this file if gestures(folders to be written) are not recorded in the s
 import os,sys
 import glob
 
-#we have to to give the from(read) and to(write) folder
-<<<<<<< HEAD
-base_path_read = r'F:\AHRQ\Study_IV\XEF_Files'
-base_path_write = r'E:\AHRQ\Study_IV\XEF_Files'
-read_folder = 'S2_L2'
-write_folder = 'S10_L2'
-=======
-<<<<<<< HEAD
-base_path_read=r'H:\AHRQ\Study_IV\XEF_Files'
-base_path_write =r'E:\AHRQ\Study_IV\XEF_Files'
-read_folder='S7_L10'
-write_folder='S11_L10'
-=======
-base_path_read=r'D:\AHRQ\Study_IV\XEF_Files'
-base_path_write =r'D:\AHRQ\Study_IV\XEF_Files'
-read_folder='S9_L10'
-write_folder='S10_L10'
->>>>>>> a114a1df4b541d0136ae3d2e7fdb41a5e9fbca33
->>>>>>> f1537ff82edec34521499fefa2d3edcf79d1f46d
+#Enter the paths: from(read) and to(write) folder
+base_path_read = r'E:\AHRQ\Study_IV\XEF_Files'
+base_path_write = r'G:\AHRQ\Study_IV\XEF_Files'
+read_folder = 'S11_L8'
+write_folder = 'S12_L8'
 
 #files in the read folder are sorted based on gestures id(1_1,2_1 etc)
 #files in write_folder are sorted based on time of the files creation.

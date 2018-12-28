@@ -21,7 +21,7 @@ from CustomSocket import Client
 ###############################
 
 ## TCP/IP of Synapse Computer
-IP_SYNAPSE = '10.186.47.6' # IP of computer that is running Synapse
+IP_SYNAPSE = '10.186.40.121' # IP of computer that is running Synapse
 PORT_SYNAPSE = 10000  # Both server and client should have a common IP and Port
 
 ## TCP/IP of CPM Computer
@@ -29,8 +29,8 @@ IP_CPM = 'localhost'
 PORT_CPM = 3000
 
 ## Flags
-ENABLE_SYNAPSE_SOCKET = False
-ENABLE_CPM_SOCKET = True
+ENABLE_SYNAPSE_SOCKET = True
+ENABLE_CPM_SOCKET = False
 # If True, write data to disk
 DATA_WRITE_FLAG = False
 DEBUG = False
