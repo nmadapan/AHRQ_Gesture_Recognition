@@ -29,9 +29,7 @@ from helpers import *
 # Initialization
 # If you want to process all directories, then path should like r'G:\_\_\*'
 # If you want to process all files in a directory, then path should look like r'G:\_\_'
-xef_folder_paths = [r'E:\AHRQ\Study_IV\XEF_Files\S8_L2', r'E:\AHRQ\Study_IV\XEF_Files\S8_L6',\
-					r'E:\AHRQ\Study_IV\XEF_Files\S8_L10', r'E:\AHRQ\Study_IV\XEF_Files\S12_L6',\
-					r'E:\AHRQ\Study_IV\XEF_Files\S10_L2', r'E:\AHRQ\Study_IV\XEF_Files\S10_L3']
+xef_folder_paths = [r'E:\AHRQ\Study_IV\XEF_Files\S12_L8']
 images_folder = '.\\Images_AHRQ'
 base_write_folder = r'E:\AHRQ\Study_IV\NewData2' # Where to write the files
 
