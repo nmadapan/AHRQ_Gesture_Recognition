@@ -18,6 +18,7 @@ class Server():
 
         ## Socket Initialization
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Opening the socket
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.tcp_ip, self.tcp_port))
         self.sock.listen(self.max_clients)
         self.connect_status = False # Connection not yet established.
