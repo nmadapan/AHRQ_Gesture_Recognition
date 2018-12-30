@@ -42,38 +42,38 @@
 								"S7":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length": ""
 								},
 								"S8":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length": "" 
 								},
 								"S9":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length": ""
 								},
 								"S10":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length": ""
 								},
 								"S11":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length":"" ,
+									"finger_length": ""
 								},
 								"S12":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								}
 							},
 
@@ -118,38 +118,38 @@
 								"S7":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S8":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S9":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S10":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S11":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length": "" 
 								},
 								"S12":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length": ""
 								}
 							},	
 						"L6":
@@ -193,38 +193,38 @@
 								"S7":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S8":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S9":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S10":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S11":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S12":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length": ""
 								}
 							},	
 						"L8":
@@ -268,38 +268,38 @@
 								"S7":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S8":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S9":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S10":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S11":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S12":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								}				
 							},
 						"L10":
@@ -325,56 +325,56 @@
 								"S4":
 								{
 									"name": "",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S5":
 								{
 									"name": "",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S6":
 								{
 									"name": "",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S7":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S8":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S9":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S10":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length":""
+									"finger_length"""
 								},
 								"S11":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":""
 								},
 								"S12":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length": ""
 								}				
 							},
 						"L11":
@@ -400,56 +400,56 @@
 								"S4":
 								{
 									"name": "",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S5":
 								{
 									"name": "",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S6":
 								{
 									"name": "",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S7":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S8":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S9":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S10":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S11":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length": "",
+									"finger_length":"" 
 								},
 								"S12":
 								{
 									"name": " ",
-									"arm_length": ,
-									"finger_length": 
+									"arm_length":"" ,
+									"finger_length": ""
 								}				
 							}
 					}		

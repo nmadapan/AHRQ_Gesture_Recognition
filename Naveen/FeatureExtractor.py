@@ -588,11 +588,17 @@ class FeatureExtractor():
 		class_probabilities = clf.predict_proba(feature_instance)[0]
 		top_three_class_ids = np.argsort(class_probabilities)[::-1][:K]
 		top_three_class_labels = [self.id_to_labels[self.new_to_old[pred_id]] for pred_id in top_three_class_ids]
-		top_three_class_labels_str = ','.join(top_three_class_labels)
 
 		label = self.id_to_labels[self.new_to_old[pred_output]]
 		cname = self.label_to_name[label]
 		prediction_list.append((pred_output, label, cname))
+
+		if(label in top_three_class_labels):
+			top_three_class_labels.remove(label)
+		else:
+			top_three_class_labels.pop()
+		top_three_class_labels.insert(0, label)
+		top_three_class_labels_str = ','.join(top_three_class_labels)
 
 		final_pred_output, final_label, final_cname = self.decision_fusion(prediction_list)
 
