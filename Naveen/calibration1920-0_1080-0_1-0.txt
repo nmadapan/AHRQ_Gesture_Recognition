@@ -8,16 +8,16 @@
         "len": 0
     },
     "defaultCommand": null,
-    "firstH": 450.0,
+    "firstH": 540.0,
     "panel_dim": [
         1,
         1
     ],
     "toUse": "Keyboard",
     "group1_command": null,
-    "topBarHeight": 224,
+    "topBarHeight": 105,
     "jumpW": 0,
     "prev_action": "",
     "jumpH": 0,
-    "firstW": 720.0
+    "firstW": 960.0
 }
