@@ -78,7 +78,7 @@ def interpn(yp, num_points=40, kind = 'linear'):
         y[:, dim] = f(x)
     return y
 
-def fingers_length_from_base(key_points,norm_constant=300):
+def fingers_length_from_base(key_points,norm_constant=300, normalize = True):
     '''
     Description:
         Given all the hand keypoints(of a frame) extracted from CPM, returns finger lengths. Lengths are calculated from the hand of the base
@@ -93,7 +93,10 @@ def fingers_length_from_base(key_points,norm_constant=300):
     for x in hand_base_key_points[1:]:
         finger_len=(np.sqrt((key_points[2*x]-key_points[0])**2+(key_points[2*x+1]-key_points[1])**2))
         fingers_len.append(finger_len)
-    return np.round((np.array(fingers_len)/norm_constant),4)
+    if normalize:
+        return np.round((np.array(fingers_len)/norm_constant),4)
+    else:
+        return np.round(np.array(fingers_len),4)
 
 def fingers_length_from_base_with_direction(key_points,norm_constant=300,norm='L2'):
     '''

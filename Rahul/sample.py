@@ -3,15 +3,17 @@ import pickle,os,sys,json
 from scipy.interpolate import interp1d
 from utils import *
 
+base_path = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\Frames\L2'
 
-pickle_path1= r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L2'
-pkl_suffix=r'_fingers_from_hand_base_equate_dim_subsample.pkl'
+lex_gest_dict = {'L2':'2_1',
+ 'L3':'4_0',
+ 'L6':'6_3',
+ 'L8':'6_4'
+}
 
-file_path = 'G:\\AHRQ\\Study_IV\\Data\\Data_cpm_new\\fingers\\L2_fingers_coords_no_intrpn.pkl'
 
-with open(file_path, 'rb') as fp:
-    fingers_data = pickle.load(fp)
+gest_id = lex_gest_dict[os.path.basename(base_path)]
+gest_folders=glob.glob(os.path.join(base_path,gest_id+'*'))
 
-for key in fingers_data.keys():
-	print(key,fingers_data[key])
-	sys.exit(0)
+for fold in gest_folders:
+	print(os.path.basename(fold).split("_")[2])
