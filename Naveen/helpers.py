@@ -648,7 +648,7 @@ def augment_data(X, Y, multiplier = 2):
 	return np.array(X_new), np.array(Y_new)
 
 def remove_some_classes(data_output, id_to_labels, elim_label_list):
-	## Clone data_input and data_output
+	## Clone data_output
 	data_output = deepcopy(data_output)
 
 	## Compute label to ids dict
@@ -676,7 +676,7 @@ def remove_some_classes(data_output, id_to_labels, elim_label_list):
 
 	## old id to new id dictionary
 	oldid_to_newid = {old_labels.index(label): new_labels.index(label) for label in new_labels}
-	newid_to_oldid = {new_labels.index(label):old_labels.index(label) for label in new_labels}
+	newid_to_oldid = {new_labels.index(label): old_labels.index(label) for label in new_labels}
 
 	## Find out ids of labels in elim_label_list
 	elim_id_arr = np.array([label_to_ids[label] for label in elim_label_list])

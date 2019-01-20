@@ -269,36 +269,36 @@
 								{
 									"name": " ",
 									"arm_length": "",
-									"finger_length":"" 
+									"finger_length":240 
 								},
 								"S8":
 								{
 									"name": " ",
 									"arm_length": "",
-									"finger_length":"" 
+									"finger_length":240 
 								},
 								"S9":
 								{
 									"name": " ",
 									"arm_length": "",
-									"finger_length":"" 
+									"finger_length":240 
 								},
 								"S10":
 								{
 									"name": " ",
 									"arm_length": "",
-									"finger_length":"" 
+									"finger_length":240 
 								},
 								"S11":
 								{
 									"name": " ",
 									"arm_length": "",
-									"finger_length":"" 
+									"finger_length":240 
 								},
 								"S12":
 								{
 									"name": " ",
-									"arm_length": "",
+									"arm_length": 240,
 									"finger_length":"" 
 								}				
 							},
@@ -361,8 +361,8 @@
 								"S10":
 								{
 									"name": " ",
-									"arm_length":""
-									"finger_length"""
+									"arm_length":"",
+									"finger_length":""
 								},
 								"S11":
 								{

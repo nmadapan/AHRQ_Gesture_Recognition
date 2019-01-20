@@ -16,15 +16,16 @@ plt.rcdefaults()
 ## Initialization ##
 ####################
 
-## Skeleton variables/paths
-skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
+## Paths
+skel_folder_path = r'G:\\AHRQ\\Study_IV\\NewData2\\L11'
+pickle_base_path = r'F:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
+pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
 
-## Fingers variables/paths
+## Variables
 ENABLE_FINGERS = False
 MULTIPLIER = 1
-pickle_base_path = r'F:\AHRQ\Study_IV\Data\Data_cpm_new\fingers'
 pickle_path = os.path.join(pickle_base_path, os.path.basename(skel_folder_path))
-fingers_pkl_fname = os.path.basename(skel_folder_path)+'_fingers_from_hand_base_equate_dim_subsample.pkl'
+fingers_pkl_fname = os.path.basename(skel_folder_path) + pickle_file_suffix
 
 #####################
 
@@ -111,11 +112,12 @@ plt.grid(True)
 print('\nBody ====> SVM')
 st = time.time()
 t_data_in, t_data_out = deepcopy(body_data_input), deepcopy(data_output)
-old_to_new, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
+old_to_new, new_to_old, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
+fe.new_to_old = new_to_old
 t_data_in = t_data_in[cmd_flags, :]
 t_data_out = modify_output_indices(t_data_out, old_to_new, cmd_flags)
 X, Y = augment_data(t_data_in, t_data_out, multiplier = MULTIPLIER)
-result = fe.run_svm(X, Y, train_per = 0.60, inst_var_name = 'svm_clf_body')
+result = fe.run_svm(X, Y, train_per = 0.60, inst_var_name = 'svm_clf')
 print('Time taken: %.04f seconds'%(time.time()-st))
 print('DONE !!! Storing variable in svm_clf_body')
 
@@ -124,7 +126,7 @@ if(ENABLE_FINGERS):
 	print('\nHand ====> SVM')
 	st = time.time()
 	t_data_in, t_data_out = deepcopy(hand_data_input), deepcopy(data_output)
-	old_to_new, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
+	old_to_new, new_to_old, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
 	t_data_in = t_data_in[cmd_flags, :]
 	t_data_out = modify_output_indices(t_data_out, old_to_new, cmd_flags)
 	X, Y = augment_data(t_data_in, t_data_out, multiplier = MULTIPLIER)
@@ -136,11 +138,11 @@ if(ENABLE_FINGERS):
 	print('\nBody + Hand ====> SVM')
 	st = time.time()
 	t_data_in, t_data_out = deepcopy(combined_data_input), deepcopy(data_output)
-	old_to_new, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
+	old_to_new, new_to_old, cmd_flags = remove_some_classes(t_data_out, id_to_labels, ignore_command_ids_list)
 	t_data_in = t_data_in[cmd_flags, :]
 	t_data_out = modify_output_indices(t_data_out, old_to_new, cmd_flags)
 	X, Y = augment_data(combined_data_input, data_output, multiplier = MULTIPLIER)
-	result = fe.run_svm(X, Y, train_per = 0.60, inst_var_name = 'svm_clf')
+	result = fe.run_svm(X, Y, train_per = 0.60, inst_var_name = 'svm_clf_both')
 	print('Time taken: %.04f seconds'%(time.time()-st))
 	print('DONE !!! Storing variable in svm_clf')
 

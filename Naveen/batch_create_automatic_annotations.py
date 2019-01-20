@@ -3,6 +3,7 @@ from __future__ import print_function
 import cv2, numpy as np, os, sys
 import glob
 from helpers import json_to_dict
+import argparse
 
 #####################
 #
@@ -23,7 +24,18 @@ from helpers import json_to_dict
 #####################
 
 ## GLOBAL PARAMETERS
-base_skel_folder = r'G:\AHRQ\Study_IV\NewData2\L10'
+# base_skel_folder = r'I:\AHRQ\Study_IV\NewData2\L10'
+
+##########################
+#####   PARSING       ####
+##########################
+parser = argparse.ArgumentParser()
+parser.add_argument("-p", "--folder_path",
+					default=r'I:\AHRQ\Study_IV\NewData2\L11',
+					help=("Path to folder containing xef parsed files."))
+args = vars(parser.parse_args())
+base_skel_folder = args['folder_path']
+
 base_write_folder = os.path.join(base_skel_folder, 'Annotations')
 in_format_flag = True
 kinect_joint_names_path = 'kinect_joint_names.json'

@@ -22,7 +22,7 @@ from CustomSocket import Client
 
 ## TCP/IP of Synapse Computer
 IP_SYNAPSE = '10.186.40.121' # IP of computer that is running Synapse
-PORT_SYNAPSE = 10000  # Both server and client should have a common IP and Port
+PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port
 
 ## TCP/IP of CPM Computer
 IP_CPM = 'localhost'
@@ -44,7 +44,7 @@ MIN_FRAMES_IN_GESTURE = 20
 
 ## DATA PATHS
 # path to trained *_data.pickle file.
-TRAINED_PKL_PATH = 'H:\\AHRQ\\Study_IV\\NewData\\' + LEXICON_ID + '_data.pickle'
+TRAINED_PKL_PATH = 'E:\\AHRQ\\Study_IV\\NewData\\' + LEXICON_ID + '_data.pickle'
 # Path to json file consiting of list of command ids and command names
 CMD_JSON_PATH  = 'commands.json'
 # Path where to write images so that CPM can read from this path.

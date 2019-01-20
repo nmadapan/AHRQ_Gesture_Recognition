@@ -27,7 +27,7 @@ write_flag = True
 TASK_ID = 2
 
 ## Skeleton variables/paths
-skel_folder_path = r'H:\AHRQ\Study_IV\NewData\L2'
+skel_folder_path = r'E:\AHRQ\Study_IV\NewData\L6'
 
 ## Variables
 all_subject_ids = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
