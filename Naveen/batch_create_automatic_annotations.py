@@ -31,7 +31,7 @@ import argparse
 ##########################
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--folder_path",
-					default=r'I:\AHRQ\Study_IV\NewData2\L11',
+					default=r'G:\AHRQ\Study_IV\NewData2\L8',
 					help=("Path to folder containing xef parsed files."))
 args = vars(parser.parse_args())
 base_skel_folder = args['folder_path']

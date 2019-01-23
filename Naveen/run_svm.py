@@ -20,7 +20,7 @@ plt.rcdefaults()
 ENABLE_FINGERS = True
 MULTIPLIER = 1
 TASK_ID = 1
-LEXICON_ID = 'L8'
+LEXICON_ID = 'L6'
 DISPLAY = False
 WRITE_FLAG = True
 

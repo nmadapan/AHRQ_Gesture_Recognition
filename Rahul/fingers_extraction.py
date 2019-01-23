@@ -3,7 +3,7 @@ import pickle,os,sys,json
 from scipy.interpolate import interp1d
 from utils import *
 
-base_path = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L8'
+base_path = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L3'
 pkl_suffix =r'_fingers_coords_no_intrpn_combined.pkl'
 
 #FEATURES FOR HANDS

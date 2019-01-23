@@ -12,6 +12,7 @@ from sklearn.metrics import confusion_matrix
 from scipy import stats
 from DST import DST
 import time
+import argparse
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 plt.ioff()
@@ -26,7 +27,24 @@ MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1.
 DISPLAY = False
 WRITE_FLAG = True
 TASK_ID = 2
-LEXICON_ID = 'L6'
+LEXICON_ID = 'L2'
+NUM_SUBJECTS = 12
+
+##########################
+#####   PARSING       ####
+##########################
+parser = argparse.ArgumentParser()
+parser.add_argument("-t", "--task_id",
+					default=TASK_ID,
+					help=("Task ID. Should be 1 or 2."))
+parser.add_argument("-l", "--lexicon_id",
+					default=LEXICON_ID,
+					help=("Lexicon ID string. Format: 'L2'."))
+args = vars(parser.parse_args())
+TASK_ID = args['task_id']
+LEXICON_ID = args['lexicon_id']
+
+print('Lexicon ID: ', LEXICON_ID, '   ', 'Task ID: ', TASK_ID)
 
 ## Paths
 skel_folder_path = r'G:\AHRQ\Study_IV\NewData2\\' + LEXICON_ID
@@ -38,7 +56,7 @@ full_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\commands.
 out_result_filename_suffix = '_result.pickle' ## New
 
 ## Subject Variables
-all_subject_ids = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
+all_subject_ids = map(lambda x: 'S' + x, map(str, range(1, NUM_SUBJECTS + 1)))
 eliminate_subject_id = 'S6'
 
 ## Other variables

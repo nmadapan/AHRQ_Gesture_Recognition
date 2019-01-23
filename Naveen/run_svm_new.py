@@ -26,6 +26,7 @@ DISPLAY = False
 WRITE_FLAG = True
 LEXICON_ID = 'L8'
 TASK_ID = 2
+NUM_SUBJECTS = 12
 
 ## Paths and variables
 skel_folder_path = r'G:\AHRQ\Study_IV\NewData2\\' + LEXICON_ID
@@ -38,7 +39,7 @@ pickle_path = os.path.join(pickle_base_path,os.path.basename(skel_folder_path))
 fingers_pkl_fname = os.path.basename(skel_folder_path) + pickle_file_suffix
 
 ## Subject Variables
-all_subject_ids = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
+all_subject_ids =  map(lambda x: 'S' + x, map(str, range(1, NUM_SUBJECTS + 1)))
 eliminate_subject_id = 'S6'
 #######################
 
