@@ -45,6 +45,9 @@ error_log_folder = os.path.join(os.path.dirname(base_write_folder), 'Logfiles')
 if(not os.path.isdir(error_log_folder)): os.makedirs(error_log_folder)
 error_log_filename = os.path.join(error_log_folder, 'error_log_'+datetime.now().strftime("%Y_%m_%d_%H_%M")+'.txt')
 
+kinect_studio_open_time = 3
+thresh_empty_cycles = 200
+dynamic_thresh_fac = 10
 ## Flags
 global parse_flag, xef_flag, gui_flag, file_active
 xef_flag = False
