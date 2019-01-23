@@ -19,11 +19,11 @@ from SynapseCommand import SynapseCommand
 from Tkinter import *
 import tkFont
 import keyboard
-from helpers import file_to_list, json_to_dict
+from helpers import file_to_list, json_to_dict, turn_int
 
 
 class SynapseAction:
-    def __init__(self, lexicon, recordingPath, imageFolder=None, keyboard=True, calibrationPath = None):
+    def __init__(self, lexicon, commandFile, recordingPath, imageFolder=None, keyboard=True, calibrationPath = None):
         ####################
         ## autogui setup  ##
         auto.FAILSAFE = True
@@ -45,9 +45,10 @@ class SynapseAction:
         if calibrationPath is None:
             self.calibrationPath = "calibration" + "_".join(list(str(e) for \
                 e in [self.width, self.height, self.scale])).replace(".", "-") + ".txt"
+        print(self.calibrationPath)
         # Initialize the command desambiguation tool
         self.finalCmd = SynapseCommand(lexicon, recordingPath)
-        self.cmd_dict = json_to_dict('commands.json')
+        self.cmd_dict = json_to_dict(commandFile)
 
         # Variables of the synapse window
         # TODO all of this variables should probably go. Check that the code that uses them
@@ -62,7 +63,7 @@ class SynapseAction:
 
         # Status of the system:
         self.status = {"prev_action": "", "panel_dim": [1, 1],
-            "window_open": False, "active_panel": [1, 1],
+            "window_open": False, "active_panel": [0, 0],
             "rulers": {"len": 0}, "toUse": "Keyboard",
             # "hold_action": None,
             "topBarHeight": None, "defaultCommand": None, "group1_command": None,
@@ -211,8 +212,8 @@ class SynapseAction:
             self.status["jumpH"] = (self.status["firstH"] * 2.0 if self.status["panel_dim"][0] != 1 else 0)
 
     def moveToActivePanel(self):
-            moveToX = self.status["firstW"] + (self.status["active_panel"][1] - 1) * (self.status["jumpW"])
-            moveToY = self.status["firstH"] + (self.status["active_panel"][0] - 1) * (self.status["jumpH"])
+            moveToX = self.status["firstW"] + (self.status["active_panel"][1]) * (self.status["jumpW"])
+            moveToY = self.status["firstH"] + (self.status["active_panel"][0]) * (self.status["jumpH"])
             auto.moveTo(moveToX, moveToY)
 
     # Reset height of top bar and save it
@@ -343,13 +344,16 @@ class SynapseAction:
         # bring the python window to the  front
         os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
         auto.PAUSE = 0.5
+        self.root_window.deiconify()
         pressed = False
+        y_pressed = False
         # Init colors
         first_row = True
         for btn_index in range(len(self.btn_list)-1):
             if sequence_list[btn_index] in self.cmd_dict:
                 btn_tex = self.cmd_dict[sequence_list[btn_index]]
             else:
+                print "WRONG TASK"
                 return None
             if first_row:
                 self.btn_list[btn_index]['fg'] = self.fg_colors[1]
@@ -366,9 +370,8 @@ class SynapseAction:
 
         option = 0
         option_number = len(sequence_list)+1
-        while True:#making a loop
-            # try: #usedtry so that if user pressed other than the given key error will not be shown
-            if keyboard.is_pressed('down') and not pressed:
+        while True:
+            if keyboard.is_pressed('3') and not pressed:
                 pressed= True
                 highlight_index = option % option_number
                 self.btn_list[highlight_index]['fg'] = self.fg_colors[0]
@@ -378,7 +381,8 @@ class SynapseAction:
                 self.btn_list[highlight_index]['fg'] = self.fg_colors[1]
                 self.btn_list[highlight_index]['bg'] = self.bg_colors[1]
 
-            elif keyboard.is_pressed('y') and not pressed:
+            elif keyboard.is_pressed('y') and not y_pressed:
+                y_pressed = True
                 text_index = option % option_number
                 self.openWindow(self.viewer)
                 auto.PAUSE = 1
@@ -388,25 +392,95 @@ class SynapseAction:
                     window = Toplevel(self.root_window,width=sub_win_w,height=sub_win_h)
                     window.geometry('%dx%d+%d+%d' % (sub_win_w, sub_win_h, 20, 50))
                     cmd_keys = self.cmd_dict.keys()
+                    column_number = 3
+                    num_of_cmds = len(cmd_keys)
+                    column_elem_num = num_of_cmds/column_number
+                    cmd_keys.sort(key=turn_int)
                     # create the windows with all the commands
+                    option_matrix = []
                     for i in range(3):
-                        max_j = 10 if i < 2 else 8
+                        max_j = column_elem_num if i < 2 else num_of_cmds - column_elem_num*(column_number-1)
+                        column = []
                         for j in range(max_j):
-                            Label(window,font=self.big_font,
-                                text=self.cmd_dict[cmd_keys[i*10+j]],
+                            label = Label(window,font=self.big_font,
+                                text=self.cmd_dict[cmd_keys[i*column_elem_num+j]],
                                 background = self.bg_colors[0],
                                 borderwidth=2, relief="groove", width=22
-                                ).grid(row=j, column=i, padx=10, pady=10)
+                                )
+                            label.grid(row=j, column=i, padx=10, pady=10)
+                            column.append(label)
+                        option_matrix.append(column)
+                    window.lift()
+                    window.attributes("-topmost", True)
+                    sub_pressed = [False, False, False, False]
+                    keys = ['3','2','1','4']
+                    option_modifier = [1,-1,-1,1]
+                    column_option = 0
+                    row_option = 0
+                    highlight_row = 1
+                    highlight_col = 0
+
+                    # Make the first element highlighted
+                    option_matrix[0][0]['fg'] = self.fg_colors[1]
+                    option_matrix[0][0]['bg'] = self.bg_colors[1]
+                    while True:
+                        for pressed_index in range(len(keys)):
+                            if keyboard.is_pressed(keys[pressed_index]) \
+                                    and not sub_pressed[pressed_index]:
+                                sub_pressed[pressed_index]= True
+                                highlight_row = row_option % len(option_matrix)
+                                highlight_col = column_option % len(option_matrix[highlight_row])
+                                print("UNHIGHLIGHTING =", highlight_col, highlight_row)
+                                option_matrix[highlight_row][highlight_col]['fg'] = self.fg_colors[0]
+                                option_matrix[highlight_row][highlight_col]['bg'] = self.bg_colors[0]
+                                # if up or down
+                                if pressed_index < 2:
+                                    column_option += option_modifier[pressed_index]
+                                    highlight_col = column_option % len(option_matrix[highlight_row])
+                                else:
+                                    row_option += option_modifier[pressed_index]
+                                    highlight_row = row_option % len(option_matrix)
+                                    highlight_col = column_option % len(option_matrix[highlight_row])
+                                    column_option = highlight_col
+                                option_matrix[highlight_row][highlight_col]['fg'] = self.fg_colors[1]
+                                option_matrix[highlight_row][highlight_col]['bg'] = self.bg_colors[1]
+
+                        for pressed_index in range(len(keys)):
+                            if not keyboard.is_pressed(keys[pressed_index]):
+                                sub_pressed[pressed_index] = False
+                            if not keyboard.is_pressed('y'):
+                                y_pressed = False
+
+                        if keyboard.is_pressed('y') and not y_pressed:
+                            y_pressed = True
+                            #Get the selected option
+                            row_num = row_option % len(option_matrix)
+                            col_num = column_option % len(option_matrix[highlight_row])
+                            key_index = row_num*len(option_matrix[0]) + col_num
+                            window.destroy()
+                            self.root_window.withdraw()
+                            self.openWindow(self.viewer)
+                            auto.PAUSE = 1
+                            return cmd_keys[key_index]
+
+                        self.root_window.update_idletasks()
+                        self.root_window.update()
                 else:
+                    self.root_window.withdraw()
+                    self.openWindow(self.viewer)
+                    auto.PAUSE = 1
                     return sequence_list[text_index]
 
             elif keyboard.is_pressed('x') and not pressed:
+                self.root_window.withdraw()
                 self.openWindow(self.viewer)
                 auto.PAUSE = 1
                 return None
 
-            if not keyboard.is_pressed('down'):
+            if not keyboard.is_pressed('3'):
                 pressed = False
+            if not keyboard.is_pressed('y'):
+                y_pressed = False
             # except:
                 # break #if user pressed other than the given key the loop will break   while 1:
             self.root_window.update_idletasks()
@@ -415,10 +489,11 @@ class SynapseAction:
 
     def gestureCommands(self, sequence_list):
         sequence = self.acklowledment(sequence_list)
+        print ("EXECUTING", sequence)
         (commandID, actionID) = (-1, -1)
-        commandAction = self.finalCmd.get_command(sequence)
+        # commandAction = self.finalCmd.get_command(sequence)
+        commandAction = sequence
 
-        ##################################################################
         ############# CHECK THAT THE COMMAND IS VALID ####################
         ##################################################################
         if commandAction is None:
@@ -581,10 +656,12 @@ class SynapseAction:
         ####################################################
 
         elif (command == "Switch Panel" and action != "Switch Panel"):
-            ind = int(actionID / 3)
-            self.status["active_panel"][ind] += (-1 if action == "Left" or action == "Up" else 1)
-            self.status["active_panel"][ind] = max(1, self.status["active_panel"][ind])
-            self.status["active_panel"][ind] = min(self.status["active_panel"][ind], self.status["panel_dim"])
+            # TODO change if we are going to use more than 1 by X pannel configs
+            self.status["active_panel"][1] += (-1 if action == "Left" or action == "Up" else 1)
+            self.status["active_panel"][1] = max(0, self.status["active_panel"][1])
+            self.status["active_panel"][1] = min(self.status["active_panel"][1], self.status["panel_dim"][1]-1)
+            print("active pannels:",self.status["active_panel"])
+            print("layout:",self.status["panel_dim"])
             self.moveToActivePanel()
             auto.click()
 
@@ -714,11 +791,13 @@ class SynapseAction:
             print layoutOptionPath
             (center_x, center_y) = auto.locateCenterOnScreen(layoutOptionPath)
             auto.click(center_x/2,center_y/2)
+            self.status["panel_dim"] = [1, actionID]
+            self.status["active_panel"] = [0, 1] if actionID ==3 else [0,0]
             time.sleep(2)
             self.resetPanelMoves()
             self.moveToActivePanel()
             auto.click()
-            pass
+            return True
 
 
         ####################################################

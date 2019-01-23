@@ -70,6 +70,7 @@ class FeatureExtractor():
 
 		self.type_flags = {feat_type: False for feat_type in self.available_types} # What feature types to consider
 		self.num_feature_types = None
+		self.new_to_old = None # Updated when you call self.update_new_to_old_ids()
 
 		self.skel_file_order = None # What is the order in which skeleton files are read.
 		self.dominant_type = None # What is the dominant type of each instance in the skeleton files (in the same order).
@@ -570,7 +571,7 @@ class FeatureExtractor():
 
 
 	###### ONLINE Function ########
-	def pred_output_realtime(self, feature_instance, K = 3):
+	def pred_output_realtime(self, feature_instance, K = 3, clf_flag = False):
 		########################
 		# Input arguments:
 		#	'feature_instance': numpy.ndarray (1 x feature_size)
@@ -582,24 +583,36 @@ class FeatureExtractor():
 
 		## Predict
 		prediction_list = []
-		# for _, clf in self.classifiers.items():
-		clf = self.classifiers['svm_clf']
+		if(clf_flag):
+			clf = self.classifiers['svm_clf_both']
+		else:
+			clf = self.classifiers['svm_clf']
 		pred_output = clf.predict(feature_instance)[0]
 		class_probabilities = clf.predict_proba(feature_instance)[0]
 		top_three_class_ids = np.argsort(class_probabilities)[::-1][:K]
 		top_three_class_labels = [self.id_to_labels[self.new_to_old[pred_id]] for pred_id in top_three_class_ids]
-		top_three_class_labels_str = ','.join(top_three_class_labels)
 
 		label = self.id_to_labels[self.new_to_old[pred_output]]
 		cname = self.label_to_name[label]
 		prediction_list.append((pred_output, label, cname))
+
+		##########################
+		## TODO: It is a hack. If SVM prediction is not equal to argmax, give priority to svm prediction. 
+		if(label in top_three_class_labels):
+			top_three_class_labels.remove(label)
+		else:
+			top_three_class_labels.pop()
+		top_three_class_labels.insert(0, label)
+		##########################
+
+		top_three_class_labels_str = ','.join(top_three_class_labels)
 
 		final_pred_output, final_label, final_cname = self.decision_fusion(prediction_list)
 
 		# pred_test_output = self.svm_clf.predict(feature_instance)[0]
 		# label = self.id_to_labels[pred_test_output]
 		# cname = self.label_to_name[label]
-		# # print(cname)
+		# print(cname)
 
 		return final_label, final_cname, top_three_class_labels_str
 
@@ -663,7 +676,12 @@ class FeatureExtractor():
 		plt.show()
 
 	###### OFFLINE Function ########
-	def run_svm(self, data_input, data_output, test_input = None, test_output = None, train_per = 0.8, kernel = 'linear', inst_var_name = 'clf', display = False):
+	def update_new_to_old_ids(self, new_to_old):
+		self.new_to_old = new_to_old
+
+	###### OFFLINE Function ########
+	def run_svm(self, data_input, data_output, test_input = None, test_output = None, \
+		train_per = 0.8, kernel = 'linear', inst_var_name = 'clf', display = False):
 		result = {}
 
 		num_inst = data_input.shape[0]

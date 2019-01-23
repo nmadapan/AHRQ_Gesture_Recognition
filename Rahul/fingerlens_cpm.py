@@ -34,7 +34,6 @@ lexicons_names=[os.path.basename(x) for x in glob.glob(os.path.join(data_basepat
 dominant_hand = True
 hand_all_coords = True # if all hand skeleton coordinates are required
 num_hand_all_coords = 21 #number of hand skeleton keypoints
-num_fingers_coords=10 #number of keypoints only for fingers
 # hands_key_points=[3,5,6,9,10,13,14,17,18,21]  # first point starts from 1
 hands_key_points=[2,4,5,8,9,12,13,16,17,20] #referencing elements of joint coord set
 skip_exisiting_fold = True
@@ -213,7 +212,7 @@ def interpn(yp, num_points=num_points, kind = 'linear'):
 
 
 def create_fingers_data(annot_rgb_file, annot_skel_file,rgb_ts_file,skel_ts_file,rgb_skel_file,frames_folder,\
-                        num_fingers = num_fingers, dominant_hand = dominant_hand):
+                        dominant_hand = dominant_hand):
 
     '''
         Description:
