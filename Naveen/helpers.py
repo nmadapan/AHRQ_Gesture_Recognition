@@ -691,7 +691,8 @@ def modify_output_indices(data_output, oldid_to_newid, flags):
 	data_output = [oldid_to_newid[value] for value in data_output]
 	return np.eye(np.max(data_output)+1)[data_output, :]
 
-def draw_body(img = None, img_skel_pts = None, only_upper_body = True, line_color = (255,255,255), thickness = 15, draw_gest_thresh = True, thresh_level = 0.2):
+def draw_body(img = None, img_skel_pts = None, only_upper_body = True, line_color = \
+	(255,255,255), thickness = 15, draw_gest_thresh = True, thresh_level = 0.2):
 	'''
 	Description:
 		Draw the skeleton on the image (RGB/Depth), given the pixel coordinates of the skeleton.
@@ -797,3 +798,26 @@ def draw_body(img = None, img_skel_pts = None, only_upper_body = True, line_colo
 
 def turn_int(x):
     return int(x.split('_')[0])*10+int(x.split('_')[1])
+
+def plot_class_hist(feat_ext):
+	'''
+	Description:
+		Plots the number of instances per each class as a histogram
+	Input arguments:
+		* feat_ext: object to the class FeatureExtractor
+	Return:
+		None
+	'''
+	## Plot Histogram - No. of instances per class
+	objects = tuple(feat_ext.inst_per_class.keys())
+	y_pos = np.arange(len(objects))
+	performance = feat_ext.inst_per_class.values()
+	plt.figure()
+	plt.bar(y_pos, performance, align='center', alpha=0.5)
+	# plt.xticks(y_pos, objects)
+	plt.xlabel('Class IDs')
+	plt.ylabel('No. of instances')
+	plt.title('No. of instances per class')
+	plt.grid(True)
+	plt.show()
+	return None

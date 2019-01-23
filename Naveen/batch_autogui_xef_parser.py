@@ -29,7 +29,7 @@ from helpers import *
 # Initialization
 # If you want to process all directories, then path should like r'G:\_\_\*'
 # If you want to process all files in a directory, then path should look like r'G:\_\_'
-xef_folder_paths = [r'G:\AHRQ\Study_IV\XEF_Files\S12_L8']
+xef_folder_paths = [r'G:\AHRQ\Study_IV\XEF_Files\S12_L11']
 
 in_format_flag = True # True since the filename is in the correct format
 enable_repeat = False # If True, all xef files will be executed, Otherwise, only the files that werent read previously or the files that were incompletely read

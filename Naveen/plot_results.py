@@ -13,7 +13,7 @@ import cv2
 ## Initialization ##
 ####################
 out_base_dir = 'Backup\\test\\all_commands'
-out_res_pkl_fname = 'Backup\\test\\all_commands\\L2_result.pickle'
+out_res_pkl_fname = 'Backup\\test\\all_commands\\L6_result.pickle'
 
 ######################
 ## Global Variables ##
@@ -49,7 +49,6 @@ dir_path = os.path.join(out_base_dir, lexicon_id)
 if(not os.path.isdir(dir_path)): os.makedirs(dir_path)
 fname = os.path.join(out_base_dir, os.path.join(lexicon_id, 'overall_accuracies' + '.jpg'))
 custom_bar(acc_values, ylim = [0, 1.05], xticks = subject_values, legends = overall_acc_keys, title = 'Overall Accuracies', write_path = fname)
-
 
 #################################
 #### CLF SPECIFIC ACCURACIES ####

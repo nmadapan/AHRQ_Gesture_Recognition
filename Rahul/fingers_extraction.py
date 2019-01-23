@@ -2,16 +2,16 @@ import numpy as np
 import pickle,os,sys,json
 from scipy.interpolate import interp1d
 from utils import *
+
 base_path = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L8'
 pkl_suffix =r'_fingers_coords_no_intrpn_combined.pkl'
 
-
 #FEATURES FOR HANDS
-combine_pkls = False
+combine_pkls = True # if new and old raw fatures need to be combined before fingerleangths extraction
 subject_wise_normalization=False
 direction=False #set this flag if finger lengths from the base with direction are required
 num_hand_all_coords = 21
-normalization_constant=300
+normalization_constant = 300
 subsample = True
 lexicon = os.path.basename(base_path)
 
@@ -86,7 +86,7 @@ for key in fingers_data:
         gest_list.append(np.array(gest_frames).flatten().tolist()) 
     new_dict[key]=gest_list
 
-print('writing finger features')
+print('writing fingers features')
 if equate_dim and subsample:
     with open(os.path.join(base_path,lexicon+'_'+'fingers_from_hand_base'+'_equate_dim'+'_subsample.pkl'),'wb') as pkl_file:
         pickle.dump(new_dict,pkl_file)

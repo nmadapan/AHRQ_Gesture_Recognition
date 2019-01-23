@@ -553,7 +553,7 @@ class Realtime:
 				else: # Only skeleton
 					final_overall_inst = final_skel_inst
 
-				label, cname, top_three_labels_str = self.feat_ext.pred_output_realtime(final_overall_inst, K = 3)
+				label, cname, top_three_labels_str = self.feat_ext.pred_output_realtime(final_overall_inst, K = 3, clf_flag = ENABLE_CPM_SOCKET)
 				# self.command_to_execute = label ## For only one label
 				self.command_to_execute = top_three_labels_str ## For three labels
 				print(self.command_to_execute)
