@@ -78,15 +78,36 @@ def interpn(yp, num_points=40, kind = 'linear'):
         y[:, dim] = f(x)
     return y
 
-def fingers_length_from_base(key_points,norm_constant=300):
+def fingers_length_from_base(key_points,norm_constant=300, normalize = True):
+    '''
+    Description:
+        Given all the hand keypoints(of a frame) extracted from CPM, returns finger lengths. Lengths are calculated from the hand of the base
+    Input Arguments:
+        key_points - 1D array of hand coordiantes(21(jointss)*2(x,y)) extarcted from CPM
+        norm -  L1 or L2 distance
+    Return:
+        1D array of signed length of fingers
+    '''
     fingers_len=[]
     fingers_tips=[]
     for x in hand_base_key_points[1:]:
         finger_len=(np.sqrt((key_points[2*x]-key_points[0])**2+(key_points[2*x+1]-key_points[1])**2))
         fingers_len.append(finger_len)
-    return np.round((np.array(fingers_len)/norm_constant),4)
+    if normalize:
+        return np.round((np.array(fingers_len)/norm_constant),4)
+    else:
+        return np.round(np.array(fingers_len),4)
 
 def fingers_length_from_base_with_direction(key_points,norm_constant=300,norm='L2'):
+    '''
+    Description:
+        Given all the hand keypoints(of a frame) extracted from CPM, returns finger lengths. Lengths are calculated from the hand of the base
+    Input Arguments:
+        key_points - 1D array of hand coordiantes(21(jointss)*2(x,y)) extarcted from CPM
+        norm -  L1 or L2 distance
+    Return:
+        1D array of signed length of fingers
+    '''
     fingers_len=[]
     fingers_tips=[]
     for x in hand_base_key_points[1:]:
@@ -98,9 +119,17 @@ def fingers_length_from_base_with_direction(key_points,norm_constant=300,norm='L
     return np.round((np.array(fingers_len)/norm_constant),4)
 
 def fingers_length_with_direction(key_points,norm_constant=300):
+    '''
+    Description:
+        Given all the hand keypoints(of a frame) extracted from CPM, returns finger lengths 
+    Input Arguments:
+        key_points - 1D array of hand coordiantes(21(jointss)*2(x,y)) extarcted from CPM
+    Return:
+        1D array of signed length of fingers (absolute L1 distance)
+    '''
     fingers_len=[]  
-    key_points_base=fingers_key_points[0::2]
-    key_points_tip=fingers_key_points[1::2]
+    key_points_base=hand_key_points[0::2]
+    key_points_tip=hand_key_points[1::2]
     # if key_points_base != key_points_tip: #add assertion here to verify that key_points_base=key_points_tip
     #   assert 
     for i,j in zip(key_points_base,key_points_tip):
@@ -115,7 +144,7 @@ def fingers_length(key_points,norm_constant=300):
     Input Arguments:
         key_points - 1D array of hand coordiantes(21(jointss)*2(x,y)) extarcted from CPM
     Return:
-        1D array of length of fingers 
+        1D array of length of fingers (l2 distance)
     '''
     fingers_len=[]  
     key_points_base=fingers_key_points[0::2]
@@ -138,6 +167,9 @@ def hand_direction(key_points):
     return np.round(np.mean(angle)/math.pi,4)
 
 def thumb_pinky_dist(key_points,norm_constant=300):
+    '''
+    L2 distance between the tip of the thumb and tip of pinky inger 
+    '''
     fingers_key_points= [4,20]
     i,j = fingers_key_points
     finger_dist=np.sqrt((key_points[2*j]-key_points[2*i])**2+(key_points[2*j+1]-key_points[2*i+1])**2)

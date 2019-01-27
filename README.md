@@ -55,6 +55,15 @@ $ git clone https://github.com/nmadapan/AHRQ_Gesture_Recognition.git
 3. Make sure to plug in the Kinect in USB 3.0 port.
 4. In order to batch process XEF files, you need to take the images from *Kinect Studio V2.0*. Open *Kinect Studio V2.0* by entering **kstudio** on your terminal. You can find the images in *AHRQ_Gesture_Recognition/Naveen/Images*
 
+## Data Recording and Processing
+### Step - 1: Record data using Kinect Studio v2.0
+
+### Step - 2: Processing the .XEF files
+
+### Step - 3: Creating annotations automatically
+
+### Step - 4: Running a base SVM classifier
+
 ## How to Run
 ### Main Computer [Incomplete]
 Open two terminals: one for python 2 and one for python 3.

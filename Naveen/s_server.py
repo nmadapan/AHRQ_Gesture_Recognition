@@ -7,13 +7,13 @@ from CustomSocket import Server
 DEFAULT_PATH  = os.path.join("Synapse","SCA_Images")
 
 class SynapseServer(Server):
-    def run(self, only_once = False, lexicon='L3', filename='test', syn_path=DEFAULT_PATH):
+    def run(self, only_once = False, lexicon='L3', commandFile='commands.json', filename='test', syn_path=DEFAULT_PATH):
         ########################
         # Receives a data string from a client, prints it, sends True/False to the client
         # If only_once is True, it will receive only one data string. Otherwise, it will receive infinitely.
         ########################
         print('--------- Server ---------')
-        syn_action = sa.SynapseAction(lexicon, filename, imageFolder=syn_path)
+        syn_action = sa.SynapseAction(lexicon, commandFile, filename, imageFolder=syn_path)
         # signal.signal(signal.SIGINT, syn_action.signalHandler)
         syn_action.calibrate()
         while True:
@@ -52,16 +52,18 @@ if __name__ == '__main__':
     parser.add_argument('-s', action="store", dest="syn_path",
             help="Path to the SCA synapse folder",
             default=DEFAULT_PATH)
+    parser.add_argument('-c', action="store", dest="command_file",
+            help="command file", required=True)
     # parser.add_argument('-t',action="store", dest="use_thread",
             # type=bool, default=True)
     args = parser.parse_args()
 
     #### Variables #######
-    # tcp_ip = socket.gethostbyname(socket.gethostname())
-    # tcp_ip='10.186.42.155'
-    tcp_ip = 'localhost'
+    tcp_ip = socket.gethostbyname(socket.gethostname())
+    tcp_ip='10.186.40.121'
+    # tcp_ip = 'localhost'
     # print(tcp_ip)
-    tcp_port = 10000
+    tcp_port = 9000
     server = SynapseServer(tcp_ip, tcp_port, buffer_size = 1000000)
     # print args.use_thread
     # if args.use_thread:
@@ -73,4 +75,4 @@ if __name__ == '__main__':
         # server_thread.start()
     # else:
         # print "HERE"
-    server.run(lexicon=args.lexicon,filename=args.filepath, syn_path=args.syn_path)
+    server.run(lexicon=args.lexicon, commandFile=args.command_file, filename=args.filepath, syn_path=args.syn_path)

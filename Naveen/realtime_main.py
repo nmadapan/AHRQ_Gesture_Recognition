@@ -21,8 +21,8 @@ from CustomSocket import Client
 ###############################
 
 ## TCP/IP of Synapse Computer
-IP_SYNAPSE = '10.186.47.6' # IP of computer that is running Synapse
-PORT_SYNAPSE = 10000  # Both server and client should have a common IP and Port
+IP_SYNAPSE = '192.168.1.100' # IP of computer that is running Synapse
+PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port
 
 ## TCP/IP of CPM Computer
 IP_CPM = 'localhost'
@@ -30,7 +30,7 @@ PORT_CPM = 3000
 
 ## Flags
 ENABLE_SYNAPSE_SOCKET = False
-ENABLE_CPM_SOCKET = True
+ENABLE_CPM_SOCKET = False
 # If True, write data to disk
 DATA_WRITE_FLAG = False
 DEBUG = False
@@ -44,7 +44,7 @@ MIN_FRAMES_IN_GESTURE = 20
 
 ## DATA PATHS
 # path to trained *_data.pickle file.
-TRAINED_PKL_PATH = 'H:\\AHRQ\\Study_IV\\NewData\\' + LEXICON_ID + '_data.pickle'
+TRAINED_PKL_PATH = 'G:\\AHRQ\\Study_IV\\NewData2\\' + LEXICON_ID + '_data.pickle'
 # Path to json file consiting of list of command ids and command names
 CMD_JSON_PATH  = 'commands.json'
 # Path where to write images so that CPM can read from this path.
@@ -553,7 +553,8 @@ class Realtime:
 				else: # Only skeleton
 					final_overall_inst = final_skel_inst
 
-				label, cname, top_three_labels_str = self.feat_ext.pred_output_realtime(final_overall_inst, K = 3)
+				label, cname, top_three_labels_str = self.feat_ext.pred_output_realtime(final_overall_inst, K = 3, \
+					clf_flag = ENABLE_CPM_SOCKET)
 				# self.command_to_execute = label ## For only one label
 				self.command_to_execute = top_three_labels_str ## For three labels
 				print(self.command_to_execute)
