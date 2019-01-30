@@ -18,15 +18,16 @@ plt.rcdefaults()
 
 ## Global constants
 ENABLE_FINGERS = True
+LEXICON_ID = 'L8'
+TASK_ID = 2
+
 MULTIPLIER = 1
-TASK_ID = 1
-LEXICON_ID = 'L6'
 DISPLAY = False
 WRITE_FLAG = True
 
 ## Paths and variables
 skel_folder_path = r'G:\\AHRQ\\Study_IV\\NewData2\\' + LEXICON_ID
-pickle_base_path = r'H:\\AHRQ\\Study_IV\\Data\\Data_cpm_new\\fingers'
+pickle_base_path = r'G:\\AHRQ\\Study_IV\\Data\\Data_cpm_new\\fingers'
 pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
 out_filename_suffix = '_data.pickle'
 task_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\Commands\commands_t' + str(TASK_ID) + '.json'

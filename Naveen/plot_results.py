@@ -13,8 +13,8 @@ import cv2
 ####################
 ## Initialization ##
 ####################
-LEXICON_ID = 'L6'
-TASK_ID = 2
+LEXICON_ID = 'L2'
+TASK_ID = 1
 NUM_SUBJECTS = 12
 
 ##########################

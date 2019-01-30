@@ -821,3 +821,22 @@ def plot_class_hist(feat_ext):
 	plt.grid(True)
 	plt.show()
 	return None
+
+class Logger():
+	def __init__(self, fpath):
+		self.fpath = fpath
+		self.fp = open(fpath, 'w')
+		self.counter = 0
+
+	def log(self, data, sep = '', end = '\n'):
+		self.counter += 1
+		ts = str(time.time())
+		if(isinstance(data, list)):
+			data = sep.join(map(str, data))
+		ndata = ','.join([ts, data]) + end
+		self.fp.write(ndata)
+		if(self.counter % 2 == 0): self.fp.flush()
+
+	def close(self):
+		self.fp.flush()
+		self.fp.close()

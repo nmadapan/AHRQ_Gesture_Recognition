@@ -20,5 +20,5 @@
 10_2_S*_L6_X_TwoPanels
 10_3_S*_L6_X_ThreePanels
 10_4_S*_L6_X_FourPanels
-11_1_S*_L6_X_StdOne
-11_2_S*_L6_X_StdTwo
+11_1_S*_L6_ContrastPresets_StdOne
+11_2_S*_L6_ContrastPresets_StdTwo

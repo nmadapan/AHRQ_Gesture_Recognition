@@ -21,16 +21,18 @@ plt.ioff()
 
 ## Global constants
 ENABLE_FINGERS = True
+LEXICON_ID = 'L8'
+TASK_ID = 2
+ELIMINATE_SUBJECT_ID = 'S2'
+
 MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1.
 DISPLAY = False
 WRITE_FLAG = True
-LEXICON_ID = 'L8'
-TASK_ID = 2
 NUM_SUBJECTS = 12
 
 ## Paths and variables
 skel_folder_path = r'G:\AHRQ\Study_IV\NewData2\\' + LEXICON_ID
-pickle_base_path = r'H:\\AHRQ\\Study_IV\\Data\\Data_cpm_new\\fingers'
+pickle_base_path = r'G:\\AHRQ\\Study_IV\\Data\\Data_cpm_new\\fingers'
 pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
 out_filename_suffix = '_data.pickle'
 task_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\Commands\commands_t' + str(TASK_ID) + '.json'
@@ -40,7 +42,6 @@ fingers_pkl_fname = os.path.basename(skel_folder_path) + pickle_file_suffix
 
 ## Subject Variables
 all_subject_ids =  map(lambda x: 'S' + x, map(str, range(1, NUM_SUBJECTS + 1)))
-eliminate_subject_id = 'S6'
 #######################
 
 ############################
@@ -119,7 +120,7 @@ if(DISPLAY): plot_class_hist(fe)
 
 ## Leave One Subject Out - Create IDs
 subject_name_order = np.array([fname.split('_')[2] for fname in skel_file_order])
-partial_train_subject_flags = (subject_name_order != eliminate_subject_id)
+partial_train_subject_flags = (subject_name_order != ELIMINATE_SUBJECT_ID)
 subject_flags = []
 for idx, dom_types_list in enumerate(dominant_types_order):
 	subject_flags += [partial_train_subject_flags[idx]]*len(dom_types_list)
