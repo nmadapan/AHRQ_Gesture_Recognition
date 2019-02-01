@@ -72,6 +72,10 @@ for cmd in all_cmds:
 	if(len(vids)==0) : cmds.remove(cmd); continue
 	class_dict[cmd] = len(list(set(vids)))
 
+print 'No. of commands: ', len(cmds)
+# print class_dict
+# print sorted(class_dict.keys(), cmp=class_str_cmp)
+
 try:
 	if(len(class_dict) == 0):
 		raise Exception('No Videos Present !!')
@@ -82,6 +86,7 @@ except Exception as exp:
 expect_num_inst = max(class_dict.values())
 M = int(np.ceil(np.sqrt(expect_num_inst)))
 N = M
+if(expect_num_inst == 12): M, N = 3, 4
 print M, ' X ', N, ' Window'
 
 des_w, des_h = default_width/(N+2), default_height/(M+2)
@@ -150,6 +155,8 @@ while(True):
 		if(key in [ord('q'), 27]): close_flag = True
 		if(key in [ord('n'), ord('N')]): counter = [0]*len(vcaps); cmd_idx += 1; break
 		if(key in [ord('p'), ord('P')]): counter = [0]*len(vcaps); cmd_idx -= 1; break
+		if(key in [ord('e'), ord('E')]): counter = [0]*len(vcaps); cmd_idx = len(cmds); break
+		if(key in [ord('h'), ord('H')]): counter = [0]*len(vcaps); cmd_idx = 0; break
 
 	if(cmd_idx<0): cmd_idx = 0
 	if(cmd_idx>=len(cmds)): cmd_idx = len(cmds) - 1

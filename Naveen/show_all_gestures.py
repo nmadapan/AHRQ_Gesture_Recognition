@@ -17,7 +17,7 @@ parser.add_argument("-s", "--subject_id",
 					default='S3',
 					help=("Subject ID. For example: S2"))
 parser.add_argument("-p", "--data_path",
-					default=r'G:\AHRQ\Study_IV\NewData',
+					default=r'G:\AHRQ\Study_IV\NewData2',
 					help=("Data path to the folders containing L2/6/8..."))
 
 ### Arguments
