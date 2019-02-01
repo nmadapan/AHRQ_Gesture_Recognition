@@ -23,6 +23,7 @@ from helpers import file_to_list, json_to_dict, turn_int
 import ntplib
 import time
 import csv
+import tkMessageBox
 
 
 class SynapseAction:
@@ -109,11 +110,11 @@ class SynapseAction:
         ws = self.root_window.winfo_screenwidth() # width of the screen
         hs = self.root_window.winfo_screenheight() # height of the screen
         # calculate x and y coordinates for the Tk root window
-        x = (ws/2) - (root_w/2)
-        y = (hs/2) - (root_h/2)
+        self.init_winx = (ws/2) - (root_w/2)
+        self.init_winy = (hs/2) - (root_h/2)
         # set the dimensions of the screen
         # and where it is placed
-        self.root_window.geometry('%dx%d+%d+%d' % (root_w, root_h, x, y))
+        self.root_window.geometry('%dx%d+%d+%d' % (root_w, root_h, self.init_winx, self.init_winy))
         self.btn_list = []
         self.bg_colors = ['#C0C0C0', '#002dd3']
         self.fg_colors = ['#000000', '#FFFFFF']
@@ -384,9 +385,7 @@ class SynapseAction:
 
         option = 0
         option_number = len(sequence_list)+1
-        print "I GOT HERE"
         while True:
-            print "INSIDE LOOP"
             if keyboard.is_pressed('3') and not pressed:
                 pressed= True
                 highlight_index = option % option_number
@@ -513,13 +512,39 @@ class SynapseAction:
         ack_init_t, ack_end_ts, sequence, more_cmd_bool = self.acklowledment(sequence_list[2:])
         print ("EXECUTING", sequence)
         (commandID, actionID) = (-1, -1)
-        commandAction = self.finalCmd.get_command(sequence)
+        commandAction, errorMsg = self.finalCmd.get_command(sequence)
+        # Show error window
+        if not commandAction:
+            print "ENTERING NOT comMAND ACTION"
+            os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
+            auto.PAUSE = 0.5
+            self.root_window.deiconify()
+            sub_win_w = 800
+            sub_win_h = 70
+            error_window = Toplevel(self.root_window,width=sub_win_w,height=sub_win_h)
+            error_window.geometry('%dx%d+%d+%d' % (sub_win_w, sub_win_h, 400, 400))
+            Label(master=error_window, font=self.big_font,
+                text=errorMsg, background=self.bg_colors[0]
+                ).pack(fill=X)
+            error_window.lift()
+            error_window.attributes("-topmost", True)
+            self.root_window.update_idletasks()
+            self.root_window.update()
+            auto.PAUSE = 0.5
+            while(not keyboard.is_pressed('x')):
+                continue
+            print("GOT HERE")
+            error_window.destroy()
+            self.root_window.withdraw()
+
         # commandAction = sequence
         # add the acknowlegment timestamps, the final comand and
         # the information about more commands usage to the file recording
         recording_line += [ack_init_t, ack_end_ts, sequence, more_cmd_bool]
 
         synapse_init_ts = time.time()
+
+        ##################################################################
         ############# CHECK THAT THE COMMAND IS VALID ####################
         ##################################################################
         if commandAction is None:
