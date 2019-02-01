@@ -24,19 +24,19 @@ dataList = ["4_1", "6_3", "6_4", "6_1", "6_1", "6_1", "6_2", "6_1", "6_2", "6_1"
 # dataList = ["4_1","6_1", "6_2", "6_3", "6_4", "6_4", "6_3", "6_2", "6_1"]
 # dataList = ["9_0", "9_2", "4_0", "9_2", "3_1", "9_1"]
 # dataList = ["11_1", "11_2", "4_1", "11_1"]
-dataList = ["10_3", "5_1", "5_2", "5_2", "5_2"]
+dataList = ["10_0", "10_2", "10_3", "5_0", "5_1", "5_2"]
 
 ###### Initialize client socket ######
 client = Client(tcp_ip, tcp_port, buffer_size = 1000000)
 
 print("CLIENT GOT HERE")
 # iterate over the list and send the message to the synapse server
-extra_msg=',5_1,5_2'
+extra_msg=',5_1,5_2,4_1,4_2'
 for elem in dataList:
     try:
         if(not client.connect_status): client.init_socket()
         print("sending command:", elem)
-        flag = client.send_data(elem+extra_msg)
+        flag = client.send_data('0,0,'+elem+extra_msg)
         print("Command Executed: ", flag)
         time.sleep(1)
     except Exception as exp:

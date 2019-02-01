@@ -20,6 +20,9 @@ from Tkinter import *
 import tkFont
 import keyboard
 from helpers import file_to_list, json_to_dict, turn_int
+import ntplib
+import time
+import csv
 
 
 class SynapseAction:
@@ -49,6 +52,15 @@ class SynapseAction:
         # Initialize the command desambiguation tool
         self.finalCmd = SynapseCommand(lexicon, recordingPath)
         self.cmd_dict = json_to_dict(commandFile)
+
+        # open the file. If it exists, say that it exists and exit the program with an error.
+        # Do not overrwite
+        if os.path.isfile(recordingPath):
+            print("RECORDING FILE ALREADY EXISTS, CHOOSE ANOTHER NAME")
+            exit(1)
+        else:
+            f = open(recordingPath,'w')
+            self.recording_file = csv.writer(f, delimiter=",")
 
         # Variables of the synapse window
         # TODO all of this variables should probably go. Check that the code that uses them
@@ -92,7 +104,7 @@ class SynapseAction:
         self.big_font = tkFont.Font(family='Helvetica', size=36, weight='bold')
         # window size
         root_w = 400
-        root_h = 300
+        root_h = 455
         # get screen width and height
         ws = self.root_window.winfo_screenwidth() # width of the screen
         hs = self.root_window.winfo_screenheight() # height of the screen
@@ -111,7 +123,7 @@ class SynapseAction:
             Label(master=self.root_window,background=self.fg_colors[1],
                 text='separator',fg=self.fg_colors[1]).pack(fill=X)
         separator()
-        for i in range(3):
+        for i in range(5):
             self.btn_list.append(Label(master=self.root_window, font=self.big_font,
                 text='Option '+str(i), background = self.bg_colors[0]))
             self.btn_list[-1].pack(fill=X)
@@ -341,6 +353,7 @@ class SynapseAction:
             f.close()
 
     def acklowledment(self, sequence_list):
+        ack_init_ts = time.time()
         # bring the python window to the  front
         os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
         auto.PAUSE = 0.5
@@ -350,6 +363,7 @@ class SynapseAction:
         # Init colors
         first_row = True
         for btn_index in range(len(self.btn_list)-1):
+            print "dictionary check:", sequence_list[btn_index]
             if sequence_list[btn_index] in self.cmd_dict:
                 btn_tex = self.cmd_dict[sequence_list[btn_index]]
             else:
@@ -370,7 +384,9 @@ class SynapseAction:
 
         option = 0
         option_number = len(sequence_list)+1
+        print "I GOT HERE"
         while True:
+            print "INSIDE LOOP"
             if keyboard.is_pressed('3') and not pressed:
                 pressed= True
                 highlight_index = option % option_number
@@ -461,7 +477,8 @@ class SynapseAction:
                             self.root_window.withdraw()
                             self.openWindow(self.viewer)
                             auto.PAUSE = 1
-                            return cmd_keys[key_index]
+                            ack_end_ts = time.time()
+                            return ack_init_ts, ack_end_ts, cmd_keys[key_index], True
 
                         self.root_window.update_idletasks()
                         self.root_window.update()
@@ -469,13 +486,15 @@ class SynapseAction:
                     self.root_window.withdraw()
                     self.openWindow(self.viewer)
                     auto.PAUSE = 1
-                    return sequence_list[text_index]
+                ack_end_ts = time.time()
+                return ack_init_ts, ack_end_ts, sequence_list[text_index], False
 
             elif keyboard.is_pressed('x') and not pressed:
                 self.root_window.withdraw()
                 self.openWindow(self.viewer)
                 auto.PAUSE = 1
-                return None
+                ack_end_ts = time.time()
+                return ack_init_ts, ack_end_ts, None, False
 
             if not keyboard.is_pressed('3'):
                 pressed = False
@@ -488,15 +507,26 @@ class SynapseAction:
         # time.sleep(1.5)
 
     def gestureCommands(self, sequence_list):
-        sequence = self.acklowledment(sequence_list)
+        # add the gesture timestamps and the 5 command options to the file recording
+        recording_line = sequence_list
+        print "RECEIVED: ", sequence_list
+        ack_init_t, ack_end_ts, sequence, more_cmd_bool = self.acklowledment(sequence_list[2:])
         print ("EXECUTING", sequence)
         (commandID, actionID) = (-1, -1)
-        # commandAction = self.finalCmd.get_command(sequence)
-        commandAction = sequence
+        commandAction = self.finalCmd.get_command(sequence)
+        # commandAction = sequence
+        # add the acknowlegment timestamps, the final comand and
+        # the information about more commands usage to the file recording
+        recording_line += [ack_init_t, ack_end_ts, sequence, more_cmd_bool]
 
+        synapse_init_ts = time.time()
         ############# CHECK THAT THE COMMAND IS VALID ####################
         ##################################################################
         if commandAction is None:
+            synapse_end_ts = time.time()
+            recording_line += [synapse_init_ts, synapse_init_ts]
+            self.recording_file.writerow(recording_line)
+            print "RETURNING IN HERE"
             return False
         if (sequence.find(" ") != -1):
             commandAction = sequence[:sequence.find(" ")]
@@ -577,7 +607,7 @@ class SynapseAction:
         elif (command == "Scroll" and action != "Scroll"):
             self.moveToActivePanel()
             auto.click()
-            scrollAmount = (50 if self.status["params"] == "" else int(self.status["params"]))
+            scrollAmount = (5 if self.status["params"] == "" else int(self.status["params"]))
             auto.PAUSE = 0
             for i in range(scrollAmount): auto.press("right" if action == "Up" else "left")
             auto.PAUSE = 0.25
@@ -640,7 +670,7 @@ class SynapseAction:
                 if (len(splitParams) % 2 == 1 and self.status["params"] != ""):
                     level = (-1 * int(splitParams[0]) if action == "In" else int([0]))
                 else:
-                    level = (-100 if action == "In" else 100)
+                    level = (-75 if action == "In" else 75)
                     if (len(splitParams) <= 1):
                         (moveToX, moveToY) = auto.position()
                     else:
@@ -685,7 +715,7 @@ class SynapseAction:
             if (len(splitParams) % 2 == 1 and self.status["params"] != ""):
                 level = (int(splitParams[0]) if action == "Left" or action == "Up" else -1 * int(splitParams[0]))
             else:
-                level = (40 if action == "Left" or action == "Up" else -40)
+                level = (20 if action == "Left" or action == "Up" else -20)
             # Get the initial position of the pan according to the parameters
             if (len(splitParams) <= 1):
                 (moveToX, moveToY) = auto.position()
@@ -763,6 +793,9 @@ class SynapseAction:
                         level = (-10 if action == "Decrease" else 10)
                 else:
                     print "For " + command + ", you must pass a maximum of one argument."
+                    synapse_end_ts = time.time()
+                    recording_line += [synapse_init_ts, synapse_init_ts]
+                    self.recording_file.writerow(recording_line)
                     return False
                 auto.moveTo(oldLocationX, oldLocationY + level)
                 self.status["group1_command"] = command
@@ -771,6 +804,11 @@ class SynapseAction:
         ##################### LAYOUT #######################
         ####################################################
         elif (command == "Layout" and action != "Layout"):
+            # Set using_pictures to True to get panels with pyautogui instead of a
+            # hardcoded position
+            hardcoded_x = 410
+            hardcoded_y = 230
+            using_pictures = False
             # NOTE: DIVIDE BY TWO ONLY IN THE MAC. IT HAS THAT PROBLEM
             # Move to the top of the screen so the menu appears
             self.moveToActivePanel()
@@ -786,18 +824,21 @@ class SynapseAction:
             # wait for the image to appear
             time.sleep(4)
             # Get the image name depending on the action:
-            optionImgName = str(actionID) + ".png"
-            layoutOptionPath = os.path.join(self.imageFolder, "Layout", optionImgName)
-            print layoutOptionPath
-            (center_x, center_y) = auto.locateCenterOnScreen(layoutOptionPath)
-            auto.click(center_x/2,center_y/2)
+            if (using_pictures):
+                optionImgName = str(actionID) + ".png"
+                layoutOptionPath = os.path.join(self.imageFolder, "Layout", optionImgName)
+                print layoutOptionPath
+                (center_x, center_y) = auto.locateCenterOnScreen(layoutOptionPath)
+                auto.click(center_x/2,center_y/2)
+            else:
+                # clicl in the position of the panel
+                auto.click(hardcoded_x + 70*actionID,hardcoded_y)
             self.status["panel_dim"] = [1, actionID]
             self.status["active_panel"] = [0, 1] if actionID ==3 else [0,0]
             time.sleep(2)
             self.resetPanelMoves()
             self.moveToActivePanel()
             auto.click()
-            return True
 
 
         ####################################################
@@ -820,6 +861,10 @@ class SynapseAction:
             auto.press("enter")
             auto.PAUSE = 0.25
             time.sleep(1)
+
+        synapse_end_ts = time.time()
+        recording_line += [synapse_init_ts, synapse_init_ts]
+        self.recording_file.writerow(recording_line)
         return True
 
 
