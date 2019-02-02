@@ -17,43 +17,39 @@ import matplotlib.pyplot as plt
 plt.rcdefaults()
 plt.ioff()
 
-####################
-## Initialization ##
-####################
-
-## Fingers variables/paths
-ENABLE_FINGERS = True
-MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1.
-DISPLAY = False
-WRITE_FLAG = True
-TASK_ID = 2
-LEXICON_ID = 'L2'
-NUM_SUBJECTS = 12
-
 ##########################
 #####   PARSING       ####
 ##########################
 parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--task_id",
-					default=TASK_ID,
-					help=("Task ID. Should be 1 or 2."))
 parser.add_argument("-l", "--lexicon_id",
-					default=LEXICON_ID,
-					help=("Lexicon ID string. Format: 'L2'."))
+					default = r'L6',
+					help=("Lexicon ID. Note that this is a string. For ex: L6"))
+parser.add_argument("-t", "--task_id",
+					default = r'T1',
+					help=("Task ID. Note that this is a string. For ex: T2"))
 args = vars(parser.parse_args())
 TASK_ID = args['task_id']
 LEXICON_ID = args['lexicon_id']
 
 print('Lexicon ID: ', LEXICON_ID, '   ', 'Task ID: ', TASK_ID)
 
+####################
+## Initialization ##
+####################
+## Fingers variables/paths
+MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1.
+DISPLAY = False
+WRITE_FLAG = True
+NUM_SUBJECTS = 12
+
 ## Paths
 skel_folder_path = r'G:\AHRQ\Study_IV\NewData2\\' + LEXICON_ID
 pickle_base_path = r'H:\\AHRQ\\Study_IV\\Data\\Data_cpm_new\\fingers'
 pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
-out_filename_suffix = '_data.pickle'
-task_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\Commands\commands_t' + str(TASK_ID) + '.json'
+out_filename_suffix = '_'.join([TASK_ID, 'CPM', 'data.pickle'])
+task_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\Commands\commands_' + str(TASK_ID) + '.json'
 full_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\commands.json'
-out_result_filename_suffix = '_result.pickle' ## New
+out_result_filename_suffix = '_'.join([TASK_ID, 'CPM', 'result.pickle'])
 
 ## Subject Variables
 all_subject_ids = map(lambda x: 'S' + x, map(str, range(1, NUM_SUBJECTS + 1)))
@@ -77,7 +73,7 @@ ignore_command_ids_list = list(set(all_commands).difference(set(task_commands)))
 dirname = os.path.dirname(skel_folder_path)
 fileprefix = os.path.basename(skel_folder_path)
 out_pkl_fname = os.path.join(dirname, fileprefix + out_filename_suffix)
-out_res_pkl_fname = os.path.join(dirname, fileprefix + '_' + str(TASK_ID) + out_result_filename_suffix) ## New
+out_res_pkl_fname = os.path.join(dirname, fileprefix + '_' + TASK_ID + out_result_filename_suffix) ## New
 
 ## Process Skeleton Data - Generate I/O
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
