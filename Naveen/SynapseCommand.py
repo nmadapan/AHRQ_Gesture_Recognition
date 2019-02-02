@@ -23,6 +23,7 @@ class SynapseCommand():
 
         # Gesture desambiguation lists
         data_folder = os.path.join('..',"Data")
+	print "WORKING WITH" + lexicon
         # Context commands
         self.context_list = file_to_list(os.path.join(data_folder,lexicon+"_context.txt"))
         # Flatten the list
@@ -54,6 +55,7 @@ class SynapseCommand():
 
     def context_action_err(self):
         print("Inconsistent context + action")
+        # msg.alert(text="Inconsistent context + action", timeout=3000)
         self.inconsistent_context_action_err =+ 1
         self.command = None
         self.context = None
@@ -88,9 +90,10 @@ class SynapseCommand():
             # Check if the context was executed
             if self.context is None:
                 print("You executed an action without it's context")
+                # msg.alert(text="Inconsistent context + action", timeout=3000)
                 self.mod_without_context_err =+ 1
                 self.command = None
-                return None
+                return None, "You executed an action without it's context"
             # Check if the modifier is a modifier of that context
             elif rcv_context_num == self.context.split("_")[0]:
                     print "CORRECT MODIFIER" #delete
@@ -122,24 +125,26 @@ class SynapseCommand():
                         self.command = replaced_command
                     else:
                         self.context_action_err()
-                        return None
+                        return None, "The action does not match the context"
             # If the modifier is inconsistent with the context:
             else:
                 print "INCONSISTENT"#delete
+                # msg.alert(text="Inconsistent context + action", timeout=3000)
                 self.context_action_err()
-                return None
+                return None, "The action does not match the context"
 
         # A command without context was executed. Reset everything and
         # send the command.
         # TODO maybe we want to pull the previous context but it seems
         # that te mental model might be too much.
         else:
-            print "Valid Command without context" #Delete
+            print "This command needs a context" #Delete
+            # msg.alert(text="This command needs a context", timeout=3000)
             self.command = rcv_command
             self.context = None
 
         self.prev_commands.append(self.command)
-        return self.command
+        return self.command, None
 
 
     def write_results(self,filename):
