@@ -12,19 +12,35 @@ from sklearn.metrics import confusion_matrix
 from scipy import stats
 from DST import DST
 import matplotlib.pyplot as plt
+import argparse
 plt.rcdefaults()
 plt.ioff()
+
+##########################
+#####   PARSING       ####
+##########################
+parser = argparse.ArgumentParser()
+parser.add_argument("-l", "--lexicon_id",
+					default = r'L6',
+					help=("Lexicon ID. Note that this is a string. For ex: L6"))
+parser.add_argument("-t", "--task_id",
+					default = r'T1',
+					help=("Task ID. Note that this is a string. For ex: T2"))
+parser.add_argument("-f", "--fingers",
+					default = 1, # 0 is false and 1 is true
+					help=("0 - False and 1 - True"))
+parser.add_argument("-e", "--eliminate_subject_id",
+					default = r'S2', # 0 is false and 1 is true
+					help=("Subject ID. Ex: S1 or S2 .."))
+args = vars(parser.parse_args())
+LEXICON_ID = args['lexicon_id'] # Param for pilot
+TASK_ID = args['task_id'] # Param for pilot
+ENABLE_FINGERS = bool(int(args['fingers'])) # Param for pilot
+ELIMINATE_SUBJECT_ID = args['eliminate_subject_id'] # Param for pilot
 
 ####################
 ## Initialization ##
 ####################
-
-## Global constants
-ENABLE_FINGERS = True
-LEXICON_ID = 'L8'
-TASK_ID = 2
-ELIMINATE_SUBJECT_ID = 'S2'
-
 MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1.
 DISPLAY = False
 WRITE_FLAG = True
@@ -34,8 +50,12 @@ NUM_SUBJECTS = 12
 skel_folder_path = r'G:\AHRQ\Study_IV\NewData2\\' + LEXICON_ID
 pickle_base_path = r'G:\\AHRQ\\Study_IV\\Data\\Data_cpm_new\\fingers'
 pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
-out_filename_suffix = '_data.pickle'
-task_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\Commands\commands_t' + str(TASK_ID) + '.json'
+if(ENABLE_FINGERS):
+	out_filename_suffix = '_'.join([TASK_ID, 'CPM', 'data.pickle'])
+else:
+	out_filename_suffix = '_'.join([TASK_ID, 'data.pickle'])
+
+task_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\Commands\commands_' + str(TASK_ID) + '.json'
 full_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\commands.json'
 pickle_path = os.path.join(pickle_base_path,os.path.basename(skel_folder_path))
 fingers_pkl_fname = os.path.basename(skel_folder_path) + pickle_file_suffix
@@ -55,7 +75,7 @@ ignore_command_ids_list = list(set(all_commands).difference(set(task_commands)))
 ## Find out pickle filename
 dirname = os.path.dirname(skel_folder_path)
 fileprefix = os.path.basename(skel_folder_path)
-out_pkl_fname = os.path.join(dirname, fileprefix + out_filename_suffix)
+out_pkl_fname = os.path.join(dirname, '_'.join([fileprefix, out_filename_suffix]))
 
 ## Process Skeleton Data - Generate I/O
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')

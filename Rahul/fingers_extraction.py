@@ -3,11 +3,11 @@ import pickle,os,sys,json
 from scipy.interpolate import interp1d
 from utils import *
 
-LEXICON_ID = 'L8'
+LEXICON_ID = 'L11'
 
-base_path = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\\' + LEXICON_ID
+base_path = r'G:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\\' + LEXICON_ID
 base_write_path = r'G:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\\' + LEXICON_ID
-pkl_suffix =r'_fingers_coords_no_intrpn_combined.pkl'
+pkl_suffix =r'_fingers_coords_no_intrpn.pkl'  #suffix of the pickle file from which data needs to be extracted
 
 #FEATURES FOR HANDS
 combine_pkls = False # if new and old raw fatures need to be combined before fingerleangths extraction

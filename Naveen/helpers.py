@@ -840,3 +840,59 @@ class Logger():
 	def close(self):
 		self.fp.flush()
 		self.fp.close()
+
+def smart_ignore(base_path, lexicon_id = 'L6', task_id = 'T1', debug = False):
+	all_cmds_path = os.path.join(base_path, 'commands.json')
+	with open(all_cmds_path) as fp:
+		all_cmds_dict = json.load(fp)
+	all_cmds = all_cmds_dict.keys()
+	all_cmds = sorted(all_cmds, cmp = class_str_cmp)
+	if(debug):
+		print('All comamnds: ')
+		print(all_cmds, '\n')
+	
+	task_cmds_path = os.path.join(base_path, 'commands_' + task_id +'.json')
+	with open(task_cmds_path) as fp:
+		task_cmds_dict = json.load(fp)
+	task_cmds = task_cmds_dict.keys()
+	task_cmds = sorted(task_cmds, cmp = class_str_cmp)
+	if(debug):
+		print('Task Commands: ')
+		print(task_cmds, '\n')
+
+	reps_path = os.path.join(base_path, lexicon_id + '_reps.txt')
+	with open(reps_path, 'r') as fp:
+		lines = fp.readlines()
+		reps = [line.strip().split(' ') for line in lines]
+	if(debug):
+		print('Replications: ')
+		print(reps, '\n')
+
+	ign_cmd_list = list(set(all_cmds).difference(set(task_cmds)))
+	ign_cmd_list = sorted(ign_cmd_list, cmp = class_str_cmp)
+	if(debug):
+		print('Ignore Commands: ')
+		print(ign_cmd_list, '\n')
+
+	def find_sublist_id(doub_list, elem):
+		f_idx = None
+		for idx_, lst_ in enumerate(doub_list):
+			if(elem) in lst_:f_idx = idx_
+		return f_idx
+
+	rem_list = []
+	for ign_cmd in ign_cmd_list:
+		idx_ = find_sublist_id(reps, ign_cmd)
+		if(idx_ is None): continue
+		act_sub_rep = reps[idx_]
+		flag = False
+		for cmd in act_sub_rep:
+			if(cmd in task_cmds): 
+				flag = True
+				break
+		if(flag): rem_list.append(ign_cmd)
+
+	for cmd in rem_list:
+		ign_cmd_list.remove(cmd)
+
+	return ign_cmd_list

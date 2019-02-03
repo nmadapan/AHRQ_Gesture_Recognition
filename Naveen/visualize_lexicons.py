@@ -11,14 +11,14 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-
-lexicon_id = 'L8'
+lexicon_id = 'L6'
 lex_folders = [r'G:\AHRQ\Study_IV\NewData2'] # Where to write the files
+
 enable_skeleton = False
 fps = 360
 default_width, default_height = 1920, 1080
 
-## Initialization
+## Initialization		
 cmd_dict = json_to_dict('commands.json')
 all_cmds = sorted(cmd_dict.keys(), cmp=class_str_cmp)
 cmds = deepcopy(all_cmds)
