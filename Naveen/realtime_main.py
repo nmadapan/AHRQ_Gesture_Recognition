@@ -29,10 +29,8 @@ IP_CPM = 'localhost'
 PORT_CPM = 3000
 
 ## Flags
-ENABLE_SYNAPSE_SOCKET = True 
+ENABLE_SYNAPSE_SOCKET = False 
 ENABLE_CPM_SOCKET = False  # Param for pilot
-# If True, write data to disk
-DATA_WRITE_FLAG = False
 DEBUG = False
 
 ## IMPORTANT
@@ -73,8 +71,6 @@ def print_global_constants():
 		print('ENABLED')
 		print('IP: {0}, PORT: {1}'.format(IP_CPM, PORT_CPM))
 	else: print('DISABLED')
-
-	print('\nWriting realtime data to {0}: --> {1}'.format(BASE_WRITE_DIR, DATA_WRITE_FLAG))
 
 	print('\nLEXICON ID: ', LEXICON_ID)
 	print('SUBJECT ID: ', SUBJECT_ID)

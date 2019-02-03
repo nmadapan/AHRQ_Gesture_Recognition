@@ -173,7 +173,7 @@ class kinect_reader(object):
 			self.color_image = self.sensor.get_last_color_frame()
 			self.color_image  = np.reshape(self.color_image, (self.color_height, self.color_width, -1))
 			self.color_image = cv2.cvtColor(self.color_image,cv2.COLOR_BGRA2BGR)
-			self.last_color_frame_access = self.sensor._last_color_frame_access
+			self.last_color_frame_access = time.time() # self.sensor._last_color_frame_access
 		else:
 			self.color_image = None
 			self.last_color_frame_access = -1
@@ -185,7 +185,7 @@ class kinect_reader(object):
 			depth_arr = self.sensor.get_last_depth_frame()
 			self.depth_image = np.reshape(depth_arr ,(self.depth_height, self.depth_width)) # (424 - depth_height, 512 - depth_width)
 			self.depth_image = np.uint8(self.depth_image*255)
-			self.last_depth_frame_access = self.sensor._last_depth_frame_access
+			self.last_depth_frame_access = time.time() # self.sensor._last_depth_frame_access
 		else:
 			self.depth_image = None
 			self.last_depth_frame_access = -1
@@ -195,7 +195,7 @@ class kinect_reader(object):
 		body_flag = self.sensor.has_new_body_frame()
 		if body_flag:
 			self.body_frame = self.sensor.get_last_body_frame()
-			self.last_body_frame_access = self.sensor._last_body_frame_access
+			self.last_body_frame_access = time.time() # self.sensor._last_body_frame_access
 		else:
 			self.body_frame = None
 			self.last_body_frame_access = -1

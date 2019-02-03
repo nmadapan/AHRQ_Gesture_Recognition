@@ -59,7 +59,8 @@ fingers_pkl_fname = os.path.basename(skel_folder_path) + pickle_file_suffix
 ## The command ids to ignore
 all_commands = json_to_dict(full_command_path).keys()
 task_commands = json_to_dict(task_command_path).keys()
-ignore_command_ids_list = smart_ignore(os.path.join(base_path, 'misc'), lexicon_id = LEXICON_ID, task_id = TASK_ID)
+ignore_command_ids_list = smart_ignore(os.path.join(base_path, 'misc'), \
+	lexicon_id = LEXICON_ID, task_id = TASK_ID)
 
 ## Annotations for skeleton files
 dirname = os.path.dirname(skel_folder_path)
