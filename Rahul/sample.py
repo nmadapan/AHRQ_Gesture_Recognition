@@ -18,23 +18,24 @@ import pickle,os,sys,json
 # for fold in gest_folders:
 # 	print(os.path.basename(fold).split("_")[2])
 
-pickle_base_path = r'H:\\AHRQ\\Study_IV\\Data\\Data_cpm_new\\fingers'
-pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
-skel_folder_path = r'G:\\AHRQ\\Study_IV\\NewData2\\L8'
-pickle_path = os.path.join(pickle_base_path, os.path.basename(skel_folder_path))
-fingers_pkl_fname = os.path.basename(skel_folder_path) + pickle_file_suffix
-
+pkl_file = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L3\L3_fingers_coords_no_intrpn_new.pkl'
 print('loading pickle file')
-with open(os.path.join(pickle_path, fingers_pkl_fname), 'rb') as fp:
+with open(pkl_file, 'rb') as fp:
 	fingers_data = pickle.load(fp)
 print('pickle file loaded')
 
-# print(fingers_data.keys())
+pkl_file = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L3\L3_fingers_coords_no_intrpn_new.pkl_1'
+print('loading pickle file')
+with open(pkl_file, 'rb') as fp:
+	fingers_data_1 = pickle.load(fp)
 
-for key in fingers_data.keys():
-	# print(np.array(fingers_data.get(key)).shape)
-	for idx1,line in enumerate(np.round(fingers_data.get(key),4)):
-	# for idx,line in (fingers_data.get(key)):
-		print(idx1)
-		print(line)
-		sys.exit(0)
+print('pickle file loaded')
+
+key_ = r'3_0_S12_L3_Rotate_X'
+
+fingers_data[key_]=fingers_data_1[key_]
+
+print(fingers_data[key_])
+
+with open(r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L3\L3_fingers_coords_no_intrpn_new_2.pkl','wb') as pkl_file:
+    pickle.dump(fingers_data,pkl_file)

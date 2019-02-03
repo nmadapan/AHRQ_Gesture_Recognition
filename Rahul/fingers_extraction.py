@@ -3,11 +3,14 @@ import pickle,os,sys,json
 from scipy.interpolate import interp1d
 from utils import *
 
-base_path = r'H:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\L3'
-pkl_suffix =r'_fingers_coords_no_intrpn_combined.pkl'
+LEXICON_ID = 'L11'
+
+base_path = r'G:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\\' + LEXICON_ID
+base_write_path = r'G:\AHRQ\Study_IV\Data\Data_cpm_new\fingers\\' + LEXICON_ID
+pkl_suffix =r'_fingers_coords_no_intrpn.pkl'  #suffix of the pickle file from which data needs to be extracted
 
 #FEATURES FOR HANDS
-combine_pkls = True # if new and old raw fatures need to be combined before fingerleangths extraction
+combine_pkls = False # if new and old raw fatures need to be combined before fingerleangths extraction
 subject_wise_normalization=False
 direction=False #set this flag if finger lengths from the base with direction are required
 num_hand_all_coords = 21
@@ -31,7 +34,7 @@ if combine_pkls:
     for key in dicts[1].keys():
         dicts[0][key]=dicts[1][key]
 
-    with open(os.path.join(base_path,os.path.basename(base_path)+'_fingers_coords_no_intrpn_combined.pkl'),'wb') as pkl_file:
+    with open(os.path.join(base_path,os.path.basename(base_path)+pkl_suffix),'wb') as pkl_file:
         pickle.dump(dicts[0],pkl_file)
     print('pickle files combined and saved')
 
@@ -60,6 +63,7 @@ for key in fingers_data:
     gest_list=[]
     if subject_wise_normalization: norm_const = subject_parameters[lexicon_id][subject_id]['finger_length']
     else: norm_const = normalization_constant
+
     for line in fingers_data[key]:
         gest_frames=[]
         #Since each gesture is 1D array ,interpolated to 40 frames, 
@@ -88,15 +92,22 @@ for key in fingers_data:
 
 print('writing fingers features')
 if equate_dim and subsample:
+    with open(os.path.join(base_write_path,lexicon+'_'+'fingers_from_hand_base'+'_equate_dim'+'_subsample.pkl'),'wb') as pkl_file:
+        pickle.dump(new_dict,pkl_file)
     with open(os.path.join(base_path,lexicon+'_'+'fingers_from_hand_base'+'_equate_dim'+'_subsample.pkl'),'wb') as pkl_file:
-        pickle.dump(new_dict,pkl_file)
+        pickle.dump(new_dict,pkl_file)        
 if equate_dim and not subsample:
-    with open(os.path.join(base_path,lexicon+'_'+'fingers_from_hand_base'+'_equate_dim.pkl'),'wb') as pkl_file:
+    with open(os.path.join(base_write_path,lexicon+'_'+'fingers_from_hand_base'+'_equate_dim.pkl'),'wb') as pkl_file:
         pickle.dump(new_dict,pkl_file)
+    with open(os.path.join(base_path,lexicon+'_'+'fingers_from_hand_base'+'_equate_dim.pkl'),'wb') as pkl_file:
+        pickle.dump(new_dict,pkl_file)        
 if not equate_dim and subsample:
-    with open(os.path.join(base_path,lexicon+'_'+'fingers_from_hand_base'+'_subsample.pkl'),'wb') as pkl_file:
+    with open(os.path.join(base_write_path,lexicon+'_'+'fingers_from_hand_base'+'_subsample.pkl'),'wb') as pkl_file:
         pickle.dump(new_dict,pkl_file)    
+    with open(os.path.join(base_path,lexicon+'_'+'fingers_from_hand_base'+'_subsample.pkl'),'wb') as pkl_file:
+        pickle.dump(new_dict,pkl_file)            
 if not equate_dim and not subsample:
+    with open(os.path.join(base_write_path,lexicon+'_'+'fingers_from_hand_base.pkl'),'wb') as pkl_file:
+        pickle.dump(new_dict,pkl_file)
     with open(os.path.join(base_path,lexicon+'_'+'fingers_from_hand_base.pkl'),'wb') as pkl_file:
         pickle.dump(new_dict,pkl_file)
-

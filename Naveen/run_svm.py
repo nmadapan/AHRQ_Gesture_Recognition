@@ -10,26 +10,44 @@ from FeatureExtractor import FeatureExtractor
 from helpers import *
 import matplotlib.pyplot as plt
 import time
+import argparse
 plt.rcdefaults()
+
+##########################
+#####   PARSING       ####
+##########################
+parser = argparse.ArgumentParser()
+parser.add_argument("-l", "--lexicon_id",
+					default = r'L6',
+					help=("Lexicon ID. Note that this is a string. For ex: L6"))
+parser.add_argument("-t", "--task_id",
+					default = r'T1',
+					help=("Task ID. Note that this is a string. For ex: T2"))
+parser.add_argument("-f", "--fingers",
+					default = 1, # 0 is false and 1 is true
+					help=("0 - False and 1 - True"))
+args = vars(parser.parse_args())
+LEXICON_ID = args['lexicon_id'] # Param for pilot
+TASK_ID = args['task_id'] # Param for pilot
+ENABLE_FINGERS = bool(int(args['fingers'])) # Param for pilot
 
 ####################
 ## Initialization ##
 ####################
-
-## Global constants
-ENABLE_FINGERS = True
 MULTIPLIER = 1
-TASK_ID = 1
-LEXICON_ID = 'L6'
 DISPLAY = False
 WRITE_FLAG = True
 
 ## Paths and variables
-skel_folder_path = r'G:\\AHRQ\\Study_IV\\NewData2\\' + LEXICON_ID
-pickle_base_path = r'H:\\AHRQ\\Study_IV\\Data\\Data_cpm_new\\fingers'
+base_path = r'G:\\AHRQ\\Study_IV\\NewData2\\'
+skel_folder_path = base_path + LEXICON_ID
+pickle_base_path = r'G:\\AHRQ\\Study_IV\\Data\\Data_cpm_new\\fingers'
 pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
-out_filename_suffix = '_data.pickle'
-task_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\Commands\commands_t' + str(TASK_ID) + '.json'
+if(ENABLE_FINGERS):
+	out_filename_suffix = '_'.join([TASK_ID, 'CPM', 'data.pickle'])
+else:
+	out_filename_suffix = '_'.join([TASK_ID, 'data.pickle'])
+task_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\Commands\commands_' + TASK_ID + '.json'
 full_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\commands.json'
 pickle_path = os.path.join(pickle_base_path, os.path.basename(skel_folder_path))
 fingers_pkl_fname = os.path.basename(skel_folder_path) + pickle_file_suffix
@@ -41,13 +59,13 @@ fingers_pkl_fname = os.path.basename(skel_folder_path) + pickle_file_suffix
 ## The command ids to ignore
 all_commands = json_to_dict(full_command_path).keys()
 task_commands = json_to_dict(task_command_path).keys()
-ignore_command_ids_list = list(set(all_commands).difference(set(task_commands)))
+ignore_command_ids_list = smart_ignore(os.path.join(base_path, 'misc'), lexicon_id = LEXICON_ID, task_id = TASK_ID)
 
 ## Annotations for skeleton files
 dirname = os.path.dirname(skel_folder_path)
 fileprefix = os.path.basename(skel_folder_path)
 ## Save the trained classifier in this file
-out_pkl_fname = os.path.join(dirname, fileprefix + out_filename_suffix)
+out_pkl_fname = os.path.join(dirname, '_'.join([fileprefix, out_filename_suffix]))
 
 ## Instantiate FeatureExtractor
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
