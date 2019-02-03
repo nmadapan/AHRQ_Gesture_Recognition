@@ -60,8 +60,8 @@ if __name__ == '__main__':
 
     #### Variables #######
     tcp_ip = socket.gethostbyname(socket.gethostname())
-    tcp_ip='10.186.32.66'
-    # tcp_ip = 'lcalhost'
+    # tcp_ip='10.186.32.66'
+    tcp_ip = 'localhost'
     # print(tcp_ip)
     tcp_port = 9000
     server = SynapseServer(tcp_ip, tcp_port, buffer_size = 1000000)
