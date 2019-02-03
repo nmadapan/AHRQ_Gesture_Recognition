@@ -10,8 +10,9 @@ import pymsgbox as msg
 import time
 
 class SynapseCommand():
-    def __init__(self, lexicon, filepath):
+    def __init__(self, lexicon, filepath, task_commands):
         self.cmd_dict = json_to_dict('commands.json')
+        self.task_cmd_dict = json_to_dict(task_commands)
         self.command = None # the command to be currently executed
         self.context = None # the context of the command if this command is executed in two parts
         self.prev_commands = [] # list of previously executed commands
@@ -146,6 +147,18 @@ class SynapseCommand():
         self.prev_commands.append(self.command)
         return self.command, None
 
+    def get_task_sequence(sequence):
+        task_sequence = []
+        for key in sequence:
+            if key in task_cmd_dict:
+                task_sequence.append(key)
+            else:
+                replace_options = self.get_lists_with_gesture(key,self.rep_list)[0]
+                for replace_key in replace_options:
+                    if replace_key in task_cmd_dict:
+                        task_sequence.append(replace_key)
+                        break
+        return task_sequence
 
     def write_results(self,filename):
         file = open(filename, "w")
@@ -157,7 +170,7 @@ class SynapseCommand():
         file.write(json.dumps(file_dict))
 
 if __name__ == '__main__':
-    syn_command = SynapseCommand('L2','test')
+    syn_command = SynapseCommand('L2','test', '../Data/')
     ### TEST 1 ###
     # No conflicts
     comand_list = ["1_0", "1_1", "1_2", "2_0", "2_1", "2_2", "3_0", "3_1", "3_2", "4_0", "4_1", "4_2", "5_0", "5_1", "5_2", "5_3", "5_4", "6_0", "6_1", "6_2", "6_3", "6_4", "7_0", "7_1", "7_2", "8_0", "8_1", "8_2", "9_0", "9_1", "9_2", "10_0", "10_1", "10_2", "10_3", "10_4", "11_0", "11_1", "11_2"]

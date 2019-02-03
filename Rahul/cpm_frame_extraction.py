@@ -14,7 +14,7 @@ right_hand_id = 11
 right_wrist_id = 10
 blur_nondom_hand=False
 
-skip_existing_folder = True # set it to True if don't want to override existing folders
+skip_existing_folder = False # set it to True if don't want to override existing folders
 
 read_base_path = r"G:\AHRQ\Study_IV\NewData2"
 write_base_path = r"G:\AHRQ\Study_IV\Data\Data_cpm_new"

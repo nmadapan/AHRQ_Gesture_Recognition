@@ -36,7 +36,7 @@ enable_repeat = False # If True, all xef files will be executed, Otherwise, only
 xef_rgb_factor = 2.5 # Max is 3.8
 print_fnames = False
 
-images_folder = '.\\Images_Rahul'
+images_folder = '.\\Images_AHRQ'
 
 
 error_log_folder = r'G:\AHRQ\Study_IV\Logfiles'

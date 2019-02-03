@@ -512,6 +512,8 @@ class SynapseAction:
         ack_init_t, ack_end_ts, sequence, more_cmd_bool = self.acklowledment(sequence_list[2:])
         print ("EXECUTING", sequence)
         (commandID, actionID) = (-1, -1)
+        if not sequence:
+            return False
         commandAction, errorMsg = self.finalCmd.get_command(sequence)
         # Show error window
         if not commandAction:
