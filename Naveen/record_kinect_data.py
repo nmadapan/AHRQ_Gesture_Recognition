@@ -12,7 +12,7 @@ from glob import glob
 ########## INITIALIZATION ############
 ######################################
 lexicon_id = 'L21'
-base_write_folder = r'E:\AHRQ\Study_IV\RealData'
+base_write_folder = r'D:\AHRQ\Study_IV\RealData'
 subject_id = None
 
 val = raw_input('Are you sure it is '+lexicon_id+' ?')
@@ -21,6 +21,8 @@ if(val in ['q','Q','n','N']):
 
 lexicon_path = join(base_write_folder, lexicon_id)
 
+if(not isdir(base_write_folder)): os.makedirs(base_write_folder)
+
 if(subject_id is None):
 	if(not isdir(lexicon_path)):
 		subject_id = 1
@@ -28,7 +30,10 @@ if(subject_id is None):
 		files_path = glob(join(lexicon_path, '*'))
 		existing_subject_ids = list(set([int(float(basename(file_path).split('_')[2][1:])) for file_path in files_path]))
 		sorted(existing_subject_ids)
-		subject_id = existing_subject_ids[-1]+1
+		if(len(existing_subject_ids) != 0):
+			subject_id = existing_subject_ids[-1]+1
+		else:
+			subject_id = 1
 
 xef_file_name = 'A_A_S' + str(subject_id) + '_' + lexicon_id + '_A_A.xef'
 
