@@ -14,10 +14,10 @@ parser.add_argument("-l", "--lexicon_id",
 					default='L2',
 					help=("Lexicon ID. For example: L2"))
 parser.add_argument("-c", "--command_id",
-					default='1_1',
+					default='1_2',
 					help=("Command ID. For example: 4_1"))
 parser.add_argument("-p", "--data_path",
-					default=r'H:\AHRQ\Study_IV\NewData',
+					default=r'G:\AHRQ\Study_IV\NewData2',
 					help=("Data path to the folders containing L2/6/8..."))
 
 ### Arguments

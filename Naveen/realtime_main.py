@@ -21,7 +21,7 @@ from CustomSocket import Client
 ################################
 
 ## TCP/IP of Synapse Computer
-IP_SYNAPSE = '10.186.32.66' # IP of computer that is running Synapse  # Param for pilot
+IP_SYNAPSE = '10.186.41.120' # IP of computer that is running Synapse  # Param for pilot
 PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port  # Param for pilot
 
 ## TCP/IP of CPM Computer
@@ -29,13 +29,13 @@ IP_CPM = 'localhost'
 PORT_CPM = 3000
 
 ## Flags
-ENABLE_SYNAPSE_SOCKET = False 
+ENABLE_SYNAPSE_SOCKET = True 
 ENABLE_CPM_SOCKET = False  # Param for pilot
 DEBUG = False
 
 ## IMPORTANT
-LEXICON_ID = 'L6' # Param for pilot
-TASK_ID = 2 # Param for pilot
+LEXICON_ID = 'L2' # Param for pilot
+TASK_ID = 'T2' # Param for pilot
 SUBJECT_ID = 'S1'
 
 ## If a gesture has less than 20 frames ignore.
@@ -45,10 +45,10 @@ MIN_FRAMES_IN_GESTURE = 20
 # path to trained *_data.pickle file.
 if(ENABLE_CPM_SOCKET):
 	# L*_T*_CPM_data.pickle
-	PKL_SUFFIX = '_'.join([LEXICON_ID, 'T'+str(TASK_ID), 'CPM', 'data.pickle'])
+	PKL_SUFFIX = '_'.join([LEXICON_ID, TASK_ID, 'CPM', 'data.pickle'])
 else:
 	# L*_T*_data.pickle
-	PKL_SUFFIX = '_'.join([LEXICON_ID, 'T'+str(TASK_ID), 'data.pickle'])
+	PKL_SUFFIX = '_'.join([LEXICON_ID, TASK_ID, 'data.pickle'])
 TRAINED_PKL_PATH = 'G:\\AHRQ\\Study_IV\\NewData2\\' + PKL_SUFFIX
 
 # Path to json file consiting of list of command ids and command names
@@ -74,6 +74,7 @@ def print_global_constants():
 
 	print('\nLEXICON ID: ', LEXICON_ID)
 	print('SUBJECT ID: ', SUBJECT_ID)
+	print('TASK ID: ', TASK_ID)
 
 	print('\nMinimum size of gesture: ', MIN_FRAMES_IN_GESTURE)
 
