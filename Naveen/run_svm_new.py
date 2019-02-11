@@ -21,13 +21,13 @@ plt.ioff()
 ##########################
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", "--lexicon_id",
-					default = r'L6',
+					default = r'L2',
 					help=("Lexicon ID. Note that this is a string. For ex: L6"))
 parser.add_argument("-t", "--task_id",
-					default = r'T1',
+					default = r'T2',
 					help=("Task ID. Note that this is a string. For ex: T2"))
 parser.add_argument("-f", "--fingers",
-					default = 1, # 0 is false and 1 is true
+					default = 0, # 0 is false and 1 is true
 					help=("0 - False and 1 - True"))
 parser.add_argument("-e", "--eliminate_subject_id",
 					default = r'S2', # 0 is false and 1 is true
@@ -47,7 +47,8 @@ WRITE_FLAG = True
 NUM_SUBJECTS = 12
 
 ## Paths and variables
-skel_folder_path = r'G:\AHRQ\Study_IV\NewData2\\' + LEXICON_ID
+base_path = r'G:\\AHRQ\\Study_IV\\NewData2\\'
+skel_folder_path = base_path + LEXICON_ID
 pickle_base_path = r'G:\\AHRQ\\Study_IV\\Data\\Data_cpm_new\\fingers'
 pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
 if(ENABLE_FINGERS):
@@ -70,7 +71,8 @@ all_subject_ids =  map(lambda x: 'S' + x, map(str, range(1, NUM_SUBJECTS + 1)))
 ## The command ids to ignore
 all_commands = json_to_dict(full_command_path).keys()
 task_commands = json_to_dict(task_command_path).keys()
-ignore_command_ids_list = list(set(all_commands).difference(set(task_commands)))
+ignore_command_ids_list = smart_ignore(os.path.join(base_path, 'misc'), \
+	lexicon_id = LEXICON_ID, task_id = TASK_ID)
 
 ## Find out pickle filename
 dirname = os.path.dirname(skel_folder_path)

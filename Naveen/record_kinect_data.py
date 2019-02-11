@@ -11,8 +11,9 @@ from glob import glob
 ######################################
 ########## INITIALIZATION ############
 ######################################
-lexicon_id = 'L21'
-base_write_folder = r'D:\AHRQ\Study_IV\RealData'
+lexicon_id = 'L22'
+base_write_folder = r'E:\AHRQ\Study_IV\RealData'
+
 subject_id = None
 
 val = raw_input('Are you sure it is '+lexicon_id+' ?')
