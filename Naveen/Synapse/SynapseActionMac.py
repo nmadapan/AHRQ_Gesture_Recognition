@@ -509,10 +509,10 @@ class SynapseAction:
         # add the gesture timestamps and the 5 command options to the file recording
         recording_line = sequence_list[:]
         replaced_sequence = self.finalCmd.replace_task_sequence(sequence_list[2:])
-        recording_line.append(replaced_sequence)
+        recording_line += replaced_sequence
         print "RECEIVED: ", replaced_sequence
         replaced_sequence = self.finalCmd.get_command(replaced_sequence)
-        recording_line.append(replaced_sequence)
+        recording_line += replaced_sequence
         print "FINAL SEQUENCE", replaced_sequence
         ack_init_t, ack_end_ts, sequence, more_cmd_bool = self.acklowledment(replaced_sequence)
 

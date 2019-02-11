@@ -48,9 +48,9 @@ class SynapseCommand():
             return filtered_list
 
         self.context_list = [elem for elem in self.context_list if elem in self.task_dict]
-        self.similar_modifiers = filter_by_task(self.similar_modifiers)
-        self.similar_gestures = filter_by_task(self.similar_gestures)
-        self.repeated_gestures = filter_by_task(self.repeated_gestures)
+        self.filtered_similar_modifiers = filter_by_task(self.similar_modifiers)
+        self.filtered_similar_gestures = filter_by_task(self.similar_gestures)
+        self.filtered_repeated_gestures = filter_by_task(self.repeated_gestures)
 
 
     def get_lists_with_gesture(self,gesture,gesture_list):
@@ -101,8 +101,8 @@ class SynapseCommand():
         # if a modifier with context is executed
         elif rcv_context_num in [num.split("_")[0] for num in self.context_list]:
             ############# Load some conditions #############
-            modifier_in_repeated_commads = any([rcv_command in mod_list for mod_list in self.repeated_gestures])
-            modifier_in_similar_commands = any([rcv_command in mod_list for mod_list in self.similar_modifiers])
+            modifier_in_repeated_commads = any([rcv_command in mod_list for mod_list in self.filtered_repeated_gestures])
+            modifier_in_similar_commands = any([rcv_command in mod_list for mod_list in self.filtered_similar_modifiers])
             ################################################
 
             # Check if the context was executed
@@ -152,8 +152,8 @@ class SynapseCommand():
                 rcv_context_num, rcv_modifier_num = rcv_command.split("_")
 
                 ############# Load some conditions #############
-                modifier_in_repeated_commads = any([rcv_command in mod_list for mod_list in self.repeated_gestures])
-                modifier_in_similar_commands = any([rcv_command in mod_list for mod_list in self.similar_modifiers])
+                modifier_in_repeated_commads = any([rcv_command in mod_list for mod_list in self.filtered_repeated_gestures])
+                modifier_in_similar_commands = any([rcv_command in mod_list for mod_list in self.filtered_similar_modifiers])
                 ################################################
 
                 # Check if the modifier is correct but re-used under another label
@@ -174,7 +174,7 @@ class SynapseCommand():
                     if modifier_in_similar_commands:
                         print "SIMILAR MODIFIER"#delete
                         # Get the list of possible similar modifiers
-                        similar_candidates = self.get_lists_with_gesture(rcv_command,self.similar_modifiers)[0]
+                        similar_candidates = self.get_lists_with_gesture(rcv_command,self.filtered_similar_modifiers)[0]
                         # Get the modifier that has the matching context from the list
                         replaced_command = [cmd for cmd in similar_candidates if \
                                             cmd.split("_")[0]==self.context.split("_")[0]]
@@ -188,7 +188,7 @@ class SynapseCommand():
             replaced_commands = rcv_commands
         # Add the repetitions to the top 1
         top_cmd = replaced_commands[0]
-        repeated_candidates = self.get_lists_with_gesture(top_cmd,self.repeated_gestures)[0]
+        repeated_candidates = self.get_lists_with_gesture(top_cmd,self.filtered_repeated_gestures)[0]
         repeated_candidates = [candidate for candidate in repeated_candidates if candidate not in replaced_commands]
         final_list = repeated_candidates + replaced_commands
         print "final_len", final_len
@@ -202,8 +202,9 @@ class SynapseCommand():
             if key in self.task_dict:
                 task_sequence.append(key)
             else:
-                replace_options = self.get_lists_with_gesture(key,self.repeated_gestures)[0]
-                for replace_key in replace_options:
+                replace_options = self.get_lists_with_gesture(key,self.repeated_gestures)
+                flat_options = [option for options in replace_options for option in options]
+                for replace_key in flat_options:
                     if replace_key in self.task_dict:
                         task_sequence.append(replace_key)
                         break
