@@ -21,13 +21,13 @@ plt.ioff()
 ##########################
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", "--lexicon_id",
-					default = r'L2',
+					default = r'L10',
 					help=("Lexicon ID. Note that this is a string. For ex: L6"))
 parser.add_argument("-t", "--task_id",
-					default = r'T2',
+					default = r'T1',
 					help=("Task ID. Note that this is a string. For ex: T2"))
 parser.add_argument("-f", "--fingers",
-					default = 0, # 0 is false and 1 is true
+					default = 1, # 0 is false and 1 is true
 					help=("0 - False and 1 - True"))
 parser.add_argument("-e", "--eliminate_subject_id",
 					default = r'S2', # 0 is false and 1 is true
@@ -185,29 +185,28 @@ if(ENABLE_FINGERS):
 	full_ret, full_pred_output, _ = train_test(combined_data_input, data_output, 'svm_clf_both', DISPLAY)
 	print('DONE !!! Storing variable in svm_clf_both')
 
-	print('\nJOINT Prediction ====> Predicted label is one ATLEAST one of the models')
-	joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
-
+	# print('\nJOINT Prediction ====> Predicted label is one ATLEAST one of the models')
+	# joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
 	# temp = np.sum(joint_predictions.T == true_test_output, axis = 0) > 0
 	# print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
 	# print('Note. True label is predicted correctly by one of the three classifiers. This is INCORRECT!!')
 
-	print('\nJOINT Prediction ====> ARG MODE is the final predicted label')
-	joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
-	temp = (stats.mode(joint_predictions, axis = 1)[0].flatten() == true_test_output)
-	print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
-	print('Note. Arg Mode is the final class lablel. This is CORRECT!!')
+	# print('\nJOINT Prediction ====> ARG MODE is the final predicted label')
+	# joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
+	# temp = (stats.mode(joint_predictions, axis = 1)[0].flatten() == true_test_output)
+	# print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+	# print('Note. Arg Mode is the final class lablel. This is CORRECT!!')
 
-	#### Using DST for predictions ####
-	print('\nDST =========> Prediction')
-	dst = DST(num_models = 3, num_classes = num_new_classes)
-	prob_mat = np.zeros((full_ret['prob'].shape[0], full_ret['prob'].shape[1], 3))
-	prob_mat[:,:,0] = full_ret['prob']
-	prob_mat[:,:,1] = body_ret['prob']
-	prob_mat[:,:,2] = hand_ret['prob']
-	pred_output = dst.batch_predict(prob_mat)
-	temp = (pred_output == true_test_output)
-	print('Top 1 - DST - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+	# #### Using DST for predictions ####
+	# print('\nDST =========> Prediction')
+	# dst = DST(num_models = 3, num_classes = num_new_classes)
+	# prob_mat = np.zeros((full_ret['prob'].shape[0], full_ret['prob'].shape[1], 3))
+	# prob_mat[:,:,0] = full_ret['prob']
+	# prob_mat[:,:,1] = body_ret['prob']
+	# prob_mat[:,:,2] = hand_ret['prob']
+	# pred_output = dst.batch_predict(prob_mat)
+	# temp = (pred_output == true_test_output)
+	# print('Top 1 - DST - Combined Acc of three classifiers - %.04f'%np.mean(temp))
 
 if(WRITE_FLAG):
 	print('\nSaving in: ', out_pkl_fname)

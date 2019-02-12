@@ -18,13 +18,13 @@ plt.rcdefaults()
 ##########################
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", "--lexicon_id",
-					default = r'L6',
+					default = r'L3',
 					help=("Lexicon ID. Note that this is a string. For ex: L6"))
 parser.add_argument("-t", "--task_id",
-					default = r'T1',
+					default = r'T2',
 					help=("Task ID. Note that this is a string. For ex: T2"))
 parser.add_argument("-f", "--fingers",
-					default = 1, # 0 is false and 1 is true
+					default = 0, # 0 is false and 1 is true
 					help=("0 - False and 1 - True"))
 args = vars(parser.parse_args())
 LEXICON_ID = args['lexicon_id'] # Param for pilot

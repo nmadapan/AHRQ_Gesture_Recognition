@@ -11,7 +11,7 @@ import argparse
 ##########################
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", "--lexicon_id",
-					default='L6',
+					default='L11',
 					help=("Lexicon ID. For example: L2"))
 parser.add_argument("-s", "--subject_id",
 					default='S3',
