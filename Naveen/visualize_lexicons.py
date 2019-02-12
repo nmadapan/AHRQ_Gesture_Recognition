@@ -11,7 +11,7 @@ from copy import deepcopy
 ###
 
 ## Global Variables
-lexicon_id = 'L10'
+lexicon_id = 'L11'
 lex_folders = [r'G:\AHRQ\Study_IV\NewData2'] # Where to write the files
 
 enable_skeleton = False

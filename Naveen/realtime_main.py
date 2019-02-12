@@ -34,12 +34,13 @@ ENABLE_CPM_SOCKET = True  # Param for pilot
 DEBUG = False
 
 ## IMPORTANT
-LEXICON_ID = 'L8' # Param for pilot
+LEXICON_ID = 'L11' # Param for pilot
 TASK_ID = 'T2' # Param for pilot
-SUBJECT_ID = 'S7'
+NSUBJECT_ID = 'S100'
 
 ## If a gesture has less than 20 frames ignore.
 MIN_FRAMES_IN_GESTURE = 20
+SUBJECT_ID = 'S2'
 
 ## DATA PATHS
 # path to trained *_data.pickle file.
@@ -55,7 +56,7 @@ TRAINED_PKL_PATH = 'G:\\AHRQ\\Study_IV\\NewData2\\' + PKL_SUFFIX
 CMD_JSON_PATH  = 'commands.json'
 # Path where to write images so that CPM can read from this path.
 BASE_WRITE_DIR = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
-LOG_FILE_PATH = r'.\\Backup\\test\\' + LEXICON_ID + '_' + SUBJECT_ID + '_' + TASK_ID + '.txt'
+LOG_FILE_PATH = r'.\\Backup\\test\\' + NSUBJECT_ID + '_' + LEXICON_ID + '_' + TASK_ID + '.txt'
 
 ###############################
 
@@ -73,7 +74,7 @@ def print_global_constants():
 	else: print('DISABLED')
 
 	print('\nLEXICON ID: ', LEXICON_ID)
-	print('SUBJECT ID: ', SUBJECT_ID)
+	print('SUBJECT ID: ', NSUBJECT_ID)
 	print('TASK ID: ', TASK_ID)
 
 	print('\nMinimum size of gesture: ', MIN_FRAMES_IN_GESTURE)
