@@ -11,7 +11,7 @@ from glob import glob
 ######################################
 ########## INITIALIZATION ############
 ######################################
-lexicon_id = 'L21'
+lexicon_id = 'L3'
 base_write_folder = r'D:\AHRQ\Study_IV\RealData'
 subject_id = None
 
