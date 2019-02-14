@@ -842,6 +842,18 @@ class Logger():
 		self.fp.close()
 
 def smart_ignore(base_path, lexicon_id = 'L6', task_id = 'T1', debug = False):
+	'''
+	Description:
+		* Ignore the comamnds smartly based on reps.txt, task ID and lexicon ID
+	Input Arguments:
+		* base_path: path where 'commands.json', 'commands_T*.txt', 'L*_reps.txt' are present
+		* lexicon_id: lexicon id. For ex: L6
+		* task_id: task id. For ex: T1
+		* debug: True/False. If True, prints everything. 
+	Return:
+		* ign_cmd_list: list of command ids to ignore. 
+	'''
+	## Obtain all possible commands: by reading commands.json
 	all_cmds_path = os.path.join(base_path, 'commands.json')
 	with open(all_cmds_path) as fp:
 		all_cmds_dict = json.load(fp)
@@ -851,6 +863,7 @@ def smart_ignore(base_path, lexicon_id = 'L6', task_id = 'T1', debug = False):
 		print('All comamnds: ')
 		print(all_cmds, '\n')
 	
+	## Obtain all possible commands specific to a task: by reading commands_T*.txt
 	task_cmds_path = os.path.join(base_path, 'commands_' + task_id +'.json')
 	with open(task_cmds_path) as fp:
 		task_cmds_dict = json.load(fp)
@@ -860,6 +873,7 @@ def smart_ignore(base_path, lexicon_id = 'L6', task_id = 'T1', debug = False):
 		print('Task Commands: ')
 		print(task_cmds, '\n')
 
+	## Obtain all possible replications of a lexicon: by reading L*_reps.txt
 	reps_path = os.path.join(base_path, lexicon_id + '_reps.txt')
 	with open(reps_path, 'r') as fp:
 		lines = fp.readlines()
@@ -868,6 +882,8 @@ def smart_ignore(base_path, lexicon_id = 'L6', task_id = 'T1', debug = False):
 		print('Replications: ')
 		print(reps, '\n')
 
+	## List of commands to ignore. 
+	# Subset of commands obtained by remove the task commands from all possible commands.
 	ign_cmd_list = list(set(all_cmds).difference(set(task_cmds)))
 	ign_cmd_list = sorted(ign_cmd_list, cmp = class_str_cmp)
 	if(debug):
@@ -880,6 +896,8 @@ def smart_ignore(base_path, lexicon_id = 'L6', task_id = 'T1', debug = False):
 			if(elem) in lst_:f_idx = idx_
 		return f_idx
 
+	## Now we want to remove some commands from ign_cmd_list which are equivalent 
+	# to the other commands that are present in the task 
 	rem_list = []
 	for ign_cmd in ign_cmd_list:
 		idx_ = find_sublist_id(reps, ign_cmd)

@@ -21,7 +21,7 @@ from CustomSocket import Client
 ################################
 
 ## TCP/IP of Synapse Computer
-IP_SYNAPSE = '10.186.32.66' # IP of computer that is running Synapse  # Param for pilot
+IP_SYNAPSE = '172.24.36.116' # IP of computer that is running Synapse  # Param for pilot
 PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port  # Param for pilot
 
 ## TCP/IP of CPM Computer
@@ -29,35 +29,34 @@ IP_CPM = 'localhost'
 PORT_CPM = 3000
 
 ## Flags
-ENABLE_SYNAPSE_SOCKET = True 
-ENABLE_CPM_SOCKET = False  # Param for pilot
-# If True, write data to disk
-DATA_WRITE_FLAG = False
+ENABLE_SYNAPSE_SOCKET = False
+ENABLE_CPM_SOCKET = True  # Param for pilot
 DEBUG = False
 
 ## IMPORTANT
-LEXICON_ID = 'L6' # Param for pilot
-TASK_ID = 2 # Param for pilot
-SUBJECT_ID = 'S1'
+LEXICON_ID = 'L11' # Param for pilot
+TASK_ID = 'T2' # Param for pilot
+NSUBJECT_ID = 'S100'
 
 ## If a gesture has less than 20 frames ignore.
 MIN_FRAMES_IN_GESTURE = 20
+SUBJECT_ID = 'S2'
 
 ## DATA PATHS
 # path to trained *_data.pickle file.
 if(ENABLE_CPM_SOCKET):
 	# L*_T*_CPM_data.pickle
-	PKL_SUFFIX = '_'.join([LEXICON_ID, 'T'+str(TASK_ID), 'CPM', 'data.pickle'])
+	PKL_SUFFIX = '_'.join([LEXICON_ID, TASK_ID, 'CPM', 'data.pickle'])
 else:
 	# L*_T*_data.pickle
-	PKL_SUFFIX = '_'.join([LEXICON_ID, 'T'+str(TASK_ID), 'data.pickle'])
+	PKL_SUFFIX = '_'.join([LEXICON_ID, TASK_ID, 'data.pickle'])
 TRAINED_PKL_PATH = 'G:\\AHRQ\\Study_IV\\NewData2\\' + PKL_SUFFIX
 
 # Path to json file consiting of list of command ids and command names
 CMD_JSON_PATH  = 'commands.json'
 # Path where to write images so that CPM can read from this path.
 BASE_WRITE_DIR = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
-LOG_FILE_PATH = r'.\\Backup\\test\\' + LEXICON_ID + '_' + SUBJECT_ID + '.txt'
+LOG_FILE_PATH = r'.\\Backup\\test\\' + NSUBJECT_ID + '_' + LEXICON_ID + '_' + TASK_ID + '.txt'
 
 ###############################
 
@@ -74,10 +73,9 @@ def print_global_constants():
 		print('IP: {0}, PORT: {1}'.format(IP_CPM, PORT_CPM))
 	else: print('DISABLED')
 
-	print('\nWriting realtime data to {0}: --> {1}'.format(BASE_WRITE_DIR, DATA_WRITE_FLAG))
-
 	print('\nLEXICON ID: ', LEXICON_ID)
-	print('SUBJECT ID: ', SUBJECT_ID)
+	print('SUBJECT ID: ', NSUBJECT_ID)
+	print('TASK ID: ', TASK_ID)
 
 	print('\nMinimum size of gesture: ', MIN_FRAMES_IN_GESTURE)
 

@@ -14,16 +14,16 @@ from threading import Thread
 ##########################
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", "--lexicon_id",
-					default='L10',
+					default='L2',
 					help=("Lexicon ID. For example: L2"))
 parser.add_argument("-s", "--subject_id",
-					default='S3',
+					default='S7',
 					help=("Subject ID. For example: S2"))
 parser.add_argument("-p", "--data_path",
-					default=r'E:\AHRQ\Study_IV\NewData',
+					default=r'H:\AHRQ\Study_IV\NewData2',
 					help=("Data path to the folders containing L2/6/8..."))
 parser.add_argument("-wp", "--write_path",
-					default=r'E:\AHRQ\Study_IV\SurgeonData',
+					default=r'H:\AHRQ\Study_IV\SurgeonData',
 					help=("Data path to the folders containing L2/6/8..."))
 
 ### Arguments

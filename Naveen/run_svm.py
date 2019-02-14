@@ -18,13 +18,13 @@ plt.rcdefaults()
 ##########################
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", "--lexicon_id",
-					default = r'L6',
+					default = r'L3',
 					help=("Lexicon ID. Note that this is a string. For ex: L6"))
 parser.add_argument("-t", "--task_id",
-					default = r'T1',
+					default = r'T2',
 					help=("Task ID. Note that this is a string. For ex: T2"))
 parser.add_argument("-f", "--fingers",
-					default = 1, # 0 is false and 1 is true
+					default = 0, # 0 is false and 1 is true
 					help=("0 - False and 1 - True"))
 args = vars(parser.parse_args())
 LEXICON_ID = args['lexicon_id'] # Param for pilot
@@ -59,7 +59,8 @@ fingers_pkl_fname = os.path.basename(skel_folder_path) + pickle_file_suffix
 ## The command ids to ignore
 all_commands = json_to_dict(full_command_path).keys()
 task_commands = json_to_dict(task_command_path).keys()
-ignore_command_ids_list = smart_ignore(os.path.join(base_path, 'misc'), lexicon_id = LEXICON_ID, task_id = TASK_ID)
+ignore_command_ids_list = smart_ignore(os.path.join(base_path, 'misc'), \
+	lexicon_id = LEXICON_ID, task_id = TASK_ID)
 
 ## Annotations for skeleton files
 dirname = os.path.dirname(skel_folder_path)

@@ -51,8 +51,8 @@ class SynapseAction:
                 e in [self.width, self.height, self.scale])).replace(".", "-") + ".txt"
         print(self.calibrationPath)
         # Initialize the command desambiguation tool
-        self.finalCmd = SynapseCommand(lexicon, recordingPath)
         self.cmd_dict = json_to_dict(commandFile)
+        self.finalCmd = SynapseCommand(lexicon, recordingPath, self.cmd_dict)
 
         # open the file. If it exists, say that it exists and exit the program with an error.
         # Do not overrwite
@@ -507,15 +507,23 @@ class SynapseAction:
 
     def gestureCommands(self, sequence_list):
         # add the gesture timestamps and the 5 command options to the file recording
-        recording_line = sequence_list
-        print "RECEIVED: ", sequence_list
-        ack_init_t, ack_end_ts, sequence, more_cmd_bool = self.acklowledment(sequence_list[2:])
+        recording_line = sequence_list[:]
+        replaced_sequence = self.finalCmd.replace_task_sequence(sequence_list[2:])
+        recording_line += replaced_sequence
+        print "RECEIVED: ", replaced_sequence
+        replaced_sequence = self.finalCmd.get_command(replaced_sequence)
+        recording_line += replaced_sequence
+        print "FINAL SEQUENCE", replaced_sequence
+        ack_init_t, ack_end_ts, sequence, more_cmd_bool = self.acklowledment(replaced_sequence)
+
         print ("EXECUTING", sequence)
         (commandID, actionID) = (-1, -1)
-        commandAction, errorMsg = self.finalCmd.get_command(sequence)
+        if not sequence:
+            return False
+        commandAction, errorMsg = self.finalCmd.verify_error(sequence)
         # Show error window
         if not commandAction:
-            print "ENTERING NOT comMAND ACTION"
+            print "ENTERING NOT COMMAND ACTION"
             os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
             auto.PAUSE = 0.5
             self.root_window.deiconify()
@@ -541,7 +549,6 @@ class SynapseAction:
         # add the acknowlegment timestamps, the final comand and
         # the information about more commands usage to the file recording
         recording_line += [ack_init_t, ack_end_ts, sequence, more_cmd_bool]
-
         synapse_init_ts = time.time()
 
         ##################################################################
