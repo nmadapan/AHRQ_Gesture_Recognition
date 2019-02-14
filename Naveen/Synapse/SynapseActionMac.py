@@ -641,7 +641,7 @@ class SynapseAction:
             auto.click()
             scrollAmount = (5 if self.status["params"] == "" else int(self.status["params"]))
             auto.PAUSE = 0
-            for i in range(scrollAmount): auto.press("right" if action == "Up" else "left")
+            for i in range(scrollAmount): auto.press("left" if action == "Up" else "right")
             auto.PAUSE = 0.25
             auto.click()
 
@@ -747,7 +747,7 @@ class SynapseAction:
             if (len(splitParams) % 2 == 1 and self.status["params"] != ""):
                 level = (int(splitParams[0]) if action == "Left" or action == "Up" else -1 * int(splitParams[0]))
             else:
-                level = (20 if action == "Left" or action == "Up" else -20)
+                level = (-20 if action == "Left" or action == "Up" else 20)
             # Get the initial position of the pan according to the parameters
             if (len(splitParams) <= 1):
                 (moveToX, moveToY) = auto.position()
@@ -818,17 +818,19 @@ class SynapseAction:
             # if we are performing a zoom in or a zoom out
             if actionID != 0:
                 (oldLocationX, oldLocationY) = auto.position()
-                if (len(splitParams) == 1):
-                    if (splitParams[0] != ""):
-                        level = (-1 * int(splitParams[0]) if action == "Decrease" else int(splitParams[0]))
-                    else:
-                        level = (-10 if action == "Decrease" else 10)
-                else:
-                    print "For " + command + ", you must pass a maximum of one argument."
-                    synapse_end_ts = time.time()
-                    recording_line += [synapse_init_ts, synapse_init_ts]
-                    self.recording_file.writerow(recording_line)
-                    return False
+                # if (len(splitParams) == 1):
+                    # if (splitParams[0] != ""):
+                        # level = (-1 * int(splitParams[0]) if action == "Decrease" else int(splitParams[0]))
+                    # else:
+                level = (-10 if action == "Decrease" else 10)
+                # else:
+                    # print "For " + command + ", you must pass a maximum of one argument."
+                    # synapse_end_ts = time.time()
+                    # recording_line += [synapse_init_ts, synapse_init_ts]
+                    # self.recording_file.writerow(recording_line)
+                    # return False
+
+                auto.mouseDown()
                 auto.moveTo(oldLocationX, oldLocationY + level)
                 self.status["group1_command"] = command
 
