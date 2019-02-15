@@ -11,10 +11,10 @@ import argparse
 ##########################
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", "--lexicon_id",
-					default='L11',
+					default='L8',
 					help=("Lexicon ID. For example: L2"))
 parser.add_argument("-s", "--subject_id",
-					default='S3',
+					default='S2',
 					help=("Subject ID. For example: S2"))
 parser.add_argument("-p", "--data_path",
 					default=r'G:\AHRQ\Study_IV\NewData2',
