@@ -15,7 +15,7 @@ import argparse
 lexicon_id = 'L22'
 subject_id = 'S1'
 task_id = 'T1'
-base_write_folder = r'I:\AHRQ\Study_IV\RealData'
+base_write_folder = r'D:\AHRQ\Study_IV\RealData'
 
 ##########################
 #####   PARSING       ####
@@ -46,18 +46,17 @@ if(len(existing_files_path) != 0):
 
 if(not isdir(base_write_folder)): os.makedirs(base_write_folder)
 if(not isdir(lexicon_path)):
-	subject_id = 'S1'
+	if subject_id is None: subject_id = 'S1'
 else:
 	files_path = glob(join(lexicon_path, \
-	'_'.join(['S*', lexicon_id, 'T*']) + '*'))
+	'_'.join(['S*', lexicon_id, task_id]) + '*'))
 	existing_subject_ids = list(set([int(float(basename(file_path).split('_')[0][1:])) \
 		for file_path in files_path]))
 	print(existing_subject_ids)
 	if(len(existing_subject_ids) != 0):
 		if(int(float(subject_id[1:])) in existing_subject_ids):
 			subject_id = 'S' + str(max(existing_subject_ids)+1)
-	elif subject_id is None:
-		subject_id = 'S1'
+	elif subject_id is None: subject_id = 'S1'
 
 xef_file_name = 'A_A_' + str(subject_id) + '_' + lexicon_id + '_A_A'
 after_file_name = '_'.join([subject_id, lexicon_id, task_id])
