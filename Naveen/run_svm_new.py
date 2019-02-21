@@ -12,35 +12,57 @@ from sklearn.metrics import confusion_matrix
 from scipy import stats
 from DST import DST
 import matplotlib.pyplot as plt
+import argparse
 plt.rcdefaults()
 plt.ioff()
+
+##########################
+#####   PARSING       ####
+##########################
+parser = argparse.ArgumentParser()
+parser.add_argument("-l", "--lexicon_id",
+					default = r'L11',
+					help=("Lexicon ID. Note that this is a string. For ex: L6"))
+parser.add_argument("-t", "--task_id",
+					default = r'T2',
+					help=("Task ID. Note that this is a string. For ex: T2"))
+parser.add_argument("-f", "--fingers",
+					default = 1, # 0 is false and 1 is true
+					help=("0 - False and 1 - True"))
+parser.add_argument("-e", "--eliminate_subject_id",
+					default = r'S2', # 0 is false and 1 is true
+					help=("Subject ID. Ex: S1 or S2 .."))
+args = vars(parser.parse_args())
+LEXICON_ID = args['lexicon_id'] # Param for pilot
+TASK_ID = args['task_id'] # Param for pilot
+ENABLE_FINGERS = bool(int(args['fingers'])) # Param for pilot
+ELIMINATE_SUBJECT_ID = args['eliminate_subject_id'] # Param for pilot
 
 ####################
 ## Initialization ##
 ####################
-
-## Global constants
-ENABLE_FINGERS = True
 MULTIPLIER = 1 ## TODO: Verify with 8. top5 is less than top1.
 DISPLAY = False
 WRITE_FLAG = True
-LEXICON_ID = 'L8'
-TASK_ID = 2
 NUM_SUBJECTS = 12
 
 ## Paths and variables
-skel_folder_path = r'G:\AHRQ\Study_IV\NewData2\\' + LEXICON_ID
-pickle_base_path = r'H:\\AHRQ\\Study_IV\\Data\\Data_cpm_new\\fingers'
+base_path = r'G:\\AHRQ\\Study_IV\\NewData2\\'
+skel_folder_path = base_path + LEXICON_ID
+pickle_base_path = r'G:\\AHRQ\\Study_IV\\Data\\Data_cpm_new\\fingers'
 pickle_file_suffix = '_fingers_from_hand_base_equate_dim_subsample.pkl'
-out_filename_suffix = '_data.pickle'
-task_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\Commands\commands_t' + str(TASK_ID) + '.json'
+if(ENABLE_FINGERS):
+	out_filename_suffix = '_'.join([TASK_ID, 'CPM', 'data.pickle'])
+else:
+	out_filename_suffix = '_'.join([TASK_ID, 'data.pickle'])
+
+task_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\Commands\commands_' + str(TASK_ID) + '.json'
 full_command_path = r'F:\AHRQ\Study_IV\AHRQ_Gesture_Recognition\Naveen\commands.json'
 pickle_path = os.path.join(pickle_base_path,os.path.basename(skel_folder_path))
 fingers_pkl_fname = os.path.basename(skel_folder_path) + pickle_file_suffix
 
 ## Subject Variables
 all_subject_ids =  map(lambda x: 'S' + x, map(str, range(1, NUM_SUBJECTS + 1)))
-eliminate_subject_id = 'S6'
 #######################
 
 ############################
@@ -49,12 +71,13 @@ eliminate_subject_id = 'S6'
 ## The command ids to ignore
 all_commands = json_to_dict(full_command_path).keys()
 task_commands = json_to_dict(task_command_path).keys()
-ignore_command_ids_list = list(set(all_commands).difference(set(task_commands)))
+ignore_command_ids_list = smart_ignore(os.path.join(base_path, 'misc'), \
+	lexicon_id = LEXICON_ID, task_id = TASK_ID)
 
 ## Find out pickle filename
 dirname = os.path.dirname(skel_folder_path)
 fileprefix = os.path.basename(skel_folder_path)
-out_pkl_fname = os.path.join(dirname, fileprefix + out_filename_suffix)
+out_pkl_fname = os.path.join(dirname, '_'.join([fileprefix, out_filename_suffix]))
 
 ## Process Skeleton Data - Generate I/O
 annot_folder_path = os.path.join(skel_folder_path, 'Annotations')
@@ -119,7 +142,7 @@ if(DISPLAY): plot_class_hist(fe)
 
 ## Leave One Subject Out - Create IDs
 subject_name_order = np.array([fname.split('_')[2] for fname in skel_file_order])
-partial_train_subject_flags = (subject_name_order != eliminate_subject_id)
+partial_train_subject_flags = (subject_name_order != ELIMINATE_SUBJECT_ID)
 subject_flags = []
 for idx, dom_types_list in enumerate(dominant_types_order):
 	subject_flags += [partial_train_subject_flags[idx]]*len(dom_types_list)
@@ -162,29 +185,28 @@ if(ENABLE_FINGERS):
 	full_ret, full_pred_output, _ = train_test(combined_data_input, data_output, 'svm_clf_both', DISPLAY)
 	print('DONE !!! Storing variable in svm_clf_both')
 
-	print('\nJOINT Prediction ====> Predicted label is one ATLEAST one of the models')
-	joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
-
+	# print('\nJOINT Prediction ====> Predicted label is one ATLEAST one of the models')
+	# joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
 	# temp = np.sum(joint_predictions.T == true_test_output, axis = 0) > 0
 	# print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
 	# print('Note. True label is predicted correctly by one of the three classifiers. This is INCORRECT!!')
 
-	print('\nJOINT Prediction ====> ARG MODE is the final predicted label')
-	joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
-	temp = (stats.mode(joint_predictions, axis = 1)[0].flatten() == true_test_output)
-	print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
-	print('Note. Arg Mode is the final class lablel. This is CORRECT!!')
+	# print('\nJOINT Prediction ====> ARG MODE is the final predicted label')
+	# joint_predictions = np.concatenate((body_pred_output.reshape(1,-1), full_pred_output.reshape(1,-1), hand_pred_output.reshape(1,-1)), axis = 0).T ##
+	# temp = (stats.mode(joint_predictions, axis = 1)[0].flatten() == true_test_output)
+	# print('Top 1 - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+	# print('Note. Arg Mode is the final class lablel. This is CORRECT!!')
 
-	#### Using DST for predictions ####
-	print('\nDST =========> Prediction')
-	dst = DST(num_models = 3, num_classes = num_new_classes)
-	prob_mat = np.zeros((full_ret['prob'].shape[0], full_ret['prob'].shape[1], 3))
-	prob_mat[:,:,0] = full_ret['prob']
-	prob_mat[:,:,1] = body_ret['prob']
-	prob_mat[:,:,2] = hand_ret['prob']
-	pred_output = dst.batch_predict(prob_mat)
-	temp = (pred_output == true_test_output)
-	print('Top 1 - DST - Combined Acc of three classifiers - %.04f'%np.mean(temp))
+	# #### Using DST for predictions ####
+	# print('\nDST =========> Prediction')
+	# dst = DST(num_models = 3, num_classes = num_new_classes)
+	# prob_mat = np.zeros((full_ret['prob'].shape[0], full_ret['prob'].shape[1], 3))
+	# prob_mat[:,:,0] = full_ret['prob']
+	# prob_mat[:,:,1] = body_ret['prob']
+	# prob_mat[:,:,2] = hand_ret['prob']
+	# pred_output = dst.batch_predict(prob_mat)
+	# temp = (pred_output == true_test_output)
+	# print('Top 1 - DST - Combined Acc of three classifiers - %.04f'%np.mean(temp))
 
 if(WRITE_FLAG):
 	print('\nSaving in: ', out_pkl_fname)

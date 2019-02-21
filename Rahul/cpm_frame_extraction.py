@@ -6,22 +6,24 @@ from copy import copy, deepcopy
 from utils import *
 import glob
 
+LEXICON_ID = 'L11'
+
 left_hand_id = 7
 left_wrist_id = 6
 right_hand_id = 11
 right_wrist_id = 10
 blur_nondom_hand=False
 
-skip_existing_folder = True # set it to True if don't want to override existing folders
+skip_existing_folder = False # set it to True if don't want to override existing folders
 
 read_base_path = r"G:\AHRQ\Study_IV\NewData2"
-write_base_path = r"H:\AHRQ\Study_IV\Data\Data_cpm_new"
+write_base_path = r"G:\AHRQ\Study_IV\Data\Data_cpm_new"
 frames_folder="Frames"
 
 frames_dir=os.path.join(write_base_path,frames_folder)
 if not os.path.isdir(frames_dir): create_writefolder_dir(frames_dir)
-lexicons=glob.glob(os.path.join(read_base_path,"*"))
-
+lexicons = [os.path.join(read_base_path, LEXICON_ID)]
+# lexicons = glob.glob(os.path.join(read_base_path,"*"))
 
 def get_lhand_bbox(color_skel_pts, max_wh , \
                    des_size = 300):
@@ -104,7 +106,6 @@ def extract_frames_cpm(video_file,rgb_ts_file,skle_ts_file,rgb_skel_file,write_f
     # print(s_to_r)
     # sys.exit(0)
     skel_coo=readlines_txt(rgb_skel_file)
-
 
     cap = cv2.VideoCapture(video_file)
     success, frame = cap.read()

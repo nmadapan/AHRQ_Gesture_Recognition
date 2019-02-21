@@ -16,39 +16,47 @@ from KinectReader import kinect_reader
 from helpers import *
 from CustomSocket import Client
 
-###############################
-### CHANGE THESE PARAMETERS ###
-###############################
+################################
+#### CHANGE THESE PARAMETERS ###
+################################
 
 ## TCP/IP of Synapse Computer
-IP_SYNAPSE = '192.168.1.100' # IP of computer that is running Synapse
-PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port
+IP_SYNAPSE = '172.24.36.116' # IP of computer that is running Synapse  # Param for pilot
+PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port  # Param for pilot
 
 ## TCP/IP of CPM Computer
 IP_CPM = 'localhost'
 PORT_CPM = 3000
 
-## Flags
-ENABLE_SYNAPSE_SOCKET = False
-ENABLE_CPM_SOCKET = False
-# If True, write data to disk
-DATA_WRITE_FLAG = False
+## Flagsq
+ENABLE_SYNAPSE_SOCKET = True
+ENABLE_CPM_SOCKET = False # Param for pilot
 DEBUG = False
 
 ## IMPORTANT
-LEXICON_ID = 'L6'
-SUBJECT_ID = 'S1'
+NSUBJECT_ID = 'S13'
+LEXICON_ID = 'L10' # Param for pilot
+TASK_ID = 'T2' # Param for pilot
 
 ## If a gesture has less than 20 frames ignore.
 MIN_FRAMES_IN_GESTURE = 20
+SUBJECT_ID = 'S2'
 
 ## DATA PATHS
 # path to trained *_data.pickle file.
-TRAINED_PKL_PATH = 'G:\\AHRQ\\Study_IV\\NewData2\\' + LEXICON_ID + '_data.pickle'
+if(ENABLE_CPM_SOCKET):
+	# L*_T*_CPM_data.pickle
+	PKL_SUFFIX = '_'.join([LEXICON_ID, TASK_ID, 'CPM', 'data.pickle'])
+else:
+	# L*_T*_data.pickle
+	PKL_SUFFIX = '_'.join([LEXICON_ID, TASK_ID, 'data.pickle'])
+TRAINED_PKL_PATH = 'G:\\AHRQ\\Study_IV\\NewData2\\' + PKL_SUFFIX
+
 # Path to json file consiting of list of command ids and command names
 CMD_JSON_PATH  = 'commands.json'
 # Path where to write images so that CPM can read from this path.
 BASE_WRITE_DIR = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
+LOG_FILE_PATH = r'.\\Backup\\test\\' + NSUBJECT_ID + '_' + LEXICON_ID + '_' + TASK_ID + '.txt'
 
 ###############################
 
@@ -65,10 +73,9 @@ def print_global_constants():
 		print('IP: {0}, PORT: {1}'.format(IP_CPM, PORT_CPM))
 	else: print('DISABLED')
 
-	print('\nWriting realtime data to {0}: --> {1}'.format(BASE_WRITE_DIR, DATA_WRITE_FLAG))
-
 	print('\nLEXICON ID: ', LEXICON_ID)
-	print('SUBJECT ID: ', SUBJECT_ID)
+	print('SUBJECT ID: ', NSUBJECT_ID)
+	print('TASK ID: ', TASK_ID)
 
 	print('\nMinimum size of gesture: ', MIN_FRAMES_IN_GESTURE)
 
@@ -186,6 +193,11 @@ class Realtime:
 			self.client_cpm.init_socket()
 		#socket.setdefaulttimeout(2.0) ######### TODO: Need to be tuned depending on the delays.
 
+		#########################
+		##### DATA LOGGING ######
+		#########################
+		self.logger = Logger(LOG_FILE_PATH)
+
 		##################################
 		### INITIALIZE OTHER VARIABLES ###
 		##################################
@@ -205,7 +217,10 @@ class Realtime:
 		self.feat_ext.update_rt_params(subject_id = SUBJECT_ID, lexicon_id = LEXICON_ID) ## This will let us know which normalization parameters are used.
 
 		## Check if the no. of features in trained classifer and no. of features in realtime are same.
-		num_clf_features = self.feat_ext.svm_clf.support_vectors_.shape[1] ## No. of features in trained classifier
+		if(ENABLE_CPM_SOCKET):
+			num_clf_features = self.feat_ext.svm_clf_both.support_vectors_.shape[1] ## No. of features in trained classifier
+		else:
+			num_clf_features = self.feat_ext.svm_clf.support_vectors_.shape[1] ## No. of features in trained classifier
 		# No. of body skeleton features (No of finger length featuers.)
 		num_skel_features = len(self.feat_ext.feature_types) * self.feat_ext.num_joints * self.feat_ext.fixed_num_frames * self.feat_ext.dim_per_joint
 		if(num_clf_features != num_skel_features):
@@ -275,7 +290,7 @@ class Realtime:
 					# Update the skel buffer after gesture is started
 					if(self.fl_gest_started):
 						body_frame_count += 1
-						ts = int(time.time()*100)
+						ts = time.time()
 						# Update body skel buffers
 						self.buf_body_skel.append((ts, [right_status, left_status], skel_col_reduce(skel_pts)))
 						self.buf_body_skel.pop(0) # Buffer is of fixed length. Append an element at the end and pop the first element.
@@ -291,7 +306,7 @@ class Realtime:
 				with self.cond_rgb: # Producer. Consumers need to wait for producer's 'notify' call
 					if self.fl_gest_started:
 						rgb_frame_count += 1
-						ts = int(time.time()*100)
+						ts = time.time()
 						self.buf_rgb.append((ts, self.kr.color_image))
 						self.buf_rgb.pop(0)
 					self.cond_rgb.notify_all()
@@ -441,17 +456,22 @@ class Realtime:
 
 			# If command is ready: Do the following:
 			# Wait for five seconds for the delivery message.
-			command_executed = self.client_synapse.send_data(self.command_to_execute)
+			try:
+				command_executed = self.client_synapse.send_data(self.command_to_execute)
+			except Exception as exp:
+				self.fl_alive = False
+				print('Synapse execution failed !!')
+				continue
 			# print(self.client_synapse.sock.send(self.command_to_execute))
 			# data = self.client_synapse.sock_recv(display = False)
 
 			## Irrespective of whether synapse succeeded or failed, behave in the same way
 			# switch the same flags.
 
-			if(command_executed):
+			if(command_executed == 'True'):
 				print('SUCCESS: Comamnd executed: ', command_executed)
 			else:
-				print('Synapse execution failed !')
+				print('FAILURE: Comamnd executed: ', command_executed)
 
 			self.fl_cmd_ready = False
 			self.fl_synapse_running = False
@@ -553,13 +573,23 @@ class Realtime:
 				else: # Only skeleton
 					final_overall_inst = final_skel_inst
 
-				label, cname, top_three_labels_str = self.feat_ext.pred_output_realtime(final_overall_inst, K = 3, \
+				label, cname, top_k_labels_str = self.feat_ext.pred_output_realtime(final_overall_inst, K = 5, \
 					clf_flag = ENABLE_CPM_SOCKET)
 				# self.command_to_execute = label ## For only one label
-				self.command_to_execute = top_three_labels_str ## For three labels
-				print(self.command_to_execute)
+				# Appending time stamps of start and end skeleton frame
+				print(top_k_labels_str)
+				top_k_labels_str = ','.join(map(str, [skel_ts[0], skel_ts[-1], top_k_labels_str]))
+				self.command_to_execute = top_k_labels_str ## For three labels
 
 				print('Predicted: ', label, cname, '\n\n')
+
+				###############
+				### LOGGING ###
+				###############
+				self.logger.log(['No. skel frames: ', len(raw_skel_frames)])
+				self.logger.log(['Size of skel inst: ', final_skel_inst.size])
+				self.logger.log(['Dom. hand: ', dom_rhand])
+				self.logger.log([top_k_labels_str, label, cname], sep = ',', end = '\n\n')
 
 				self.fl_cmd_ready = True
 
@@ -567,6 +597,7 @@ class Realtime:
 				if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False
 
 		# If anything fails do the following
+		self.logger.close()
 		self.kr.close()
 		if(ENABLE_SYNAPSE_SOCKET):
 			self.client_synapse.close()

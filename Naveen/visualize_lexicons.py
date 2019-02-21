@@ -11,14 +11,20 @@ from copy import deepcopy
 ###
 
 ## Global Variables
+<<<<<<< HEAD
 
 lexicon_id = 'L11'
 lex_folders = [r'F:\AHRQ\Study_IV\NewData2'] # Where to write the files
+=======
+lexicon_id = 'L8'
+lex_folders = [r'D:\AHRQ\Study_IV\NewData2'] # Where to write the files
+
+>>>>>>> b5e43fe015c2200da954be242ebd63a52a331998
 enable_skeleton = False
 fps = 360
 default_width, default_height = 1920, 1080
 
-## Initialization
+## Initialization		
 cmd_dict = json_to_dict('commands.json')
 all_cmds = sorted(cmd_dict.keys(), cmp=class_str_cmp)
 cmds = deepcopy(all_cmds)
@@ -72,6 +78,10 @@ for cmd in all_cmds:
 	if(len(vids)==0) : cmds.remove(cmd); continue
 	class_dict[cmd] = len(list(set(vids)))
 
+print 'No. of commands: ', len(cmds)
+# print class_dict
+# print sorted(class_dict.keys(), cmp=class_str_cmp)
+
 try:
 	if(len(class_dict) == 0):
 		raise Exception('No Videos Present !!')
@@ -82,6 +92,7 @@ except Exception as exp:
 expect_num_inst = max(class_dict.values())
 M = int(np.ceil(np.sqrt(expect_num_inst)))
 N = M
+if(expect_num_inst == 12): M, N = 3, 4
 print M, ' X ', N, ' Window'
 
 des_w, des_h = default_width/(N+2), default_height/(M+2)
@@ -150,6 +161,8 @@ while(True):
 		if(key in [ord('q'), 27]): close_flag = True
 		if(key in [ord('n'), ord('N')]): counter = [0]*len(vcaps); cmd_idx += 1; break
 		if(key in [ord('p'), ord('P')]): counter = [0]*len(vcaps); cmd_idx -= 1; break
+		if(key in [ord('e'), ord('E')]): counter = [0]*len(vcaps); cmd_idx = len(cmds); break
+		if(key in [ord('h'), ord('H')]): counter = [0]*len(vcaps); cmd_idx = 0; break
 
 	if(cmd_idx<0): cmd_idx = 0
 	if(cmd_idx>=len(cmds)): cmd_idx = len(cmds) - 1
