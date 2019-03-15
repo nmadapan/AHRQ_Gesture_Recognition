@@ -84,33 +84,34 @@ $ python AHRQ_Gesture_Recognition/Naveen/ex_server.py
 
 ## Miscellaneous information
 Location of the surgeon data: G:\AHRQ\Study_IV\RealData
-File extensions:
-	There are supposed to be a total of ten extensions.
-	_color.txt
-		* Color pixel coordintates of the body joints. Each row has 50 elements (x, y) for 25 joints.
-	_depth.avi (Depth video from kinect)
-	_rgb.avi (Color video from kinect)
-	_depth.txt
-		* Depth pixel coordintates of the body joints. Each row has 50 elements (x, y) for 25 joints.
-	_rgbts.txt
-		* time stamps of each frame in the RGB video.
-	_skelts.txt
-		* time stamps of each frame in the skeleton data.
-	_skel.txt
-		* Skeleton data. Each row has 75 elements. (x, y, z in meters) of 25 joints.
-	_konelog.txt
-		* You are not going to use this.
-		* First kinect that is recognizing gestures. This file is recorded in GPU computer.
-		* Each instance looks like the following:
-			* ts,No. skel frames: _
-			* ts,Size of skel inst: _ (size of the feature vector)
-			* ts,Dom. hand: _ (If true, right hand is dominant. If False, left hand is dominant. )
-			* ts,start_ts_gesture,end_ts_gesture,2_1,6_3,10_3,1_1,5_0,2_1,command name
-	_ktwolog.txt
-		* This is the one that you are going to use.
-		* Explain the format here.
-		* Location of commands.json: *\AHRQ_Gesture_Recognition\Naveen\commands.json
-	_screen.mov
-		* Screen recording video file.
-	status.json:
-		* This is present in G:\AHRQ\Study_IV\RealData\status.json
+
+	File extensions:
+		There are supposed to be a total of ten extensions.
+		_color.txt
+			* Color pixel coordintates of the body joints. Each row has 50 elements (x, y) for 25 joints.
+		_depth.avi (Depth video from kinect)
+		_rgb.avi (Color video from kinect)
+		_depth.txt
+			* Depth pixel coordintates of the body joints. Each row has 50 elements (x, y) for 25 joints.
+		_rgbts.txt
+			* time stamps of each frame in the RGB video.
+		_skelts.txt
+			* time stamps of each frame in the skeleton data.
+		_skel.txt
+			* Skeleton data. Each row has 75 elements. (x, y, z in meters) of 25 joints.
+		_konelog.txt
+			* You are not going to use this.
+			* First kinect that is recognizing gestures. This file is recorded in GPU computer.
+			* Each instance looks like the following:
+				* ts,No. skel frames: _
+				* ts,Size of skel inst: _ (size of the feature vector)
+				* ts,Dom. hand: _ (If true, right hand is dominant. If False, left hand is dominant. )
+				* ts,start_ts_gesture,end_ts_gesture,2_1,6_3,10_3,1_1,5_0,2_1,command name
+		_ktwolog.txt
+			* This is the one that you are going to use.
+			* Explain the format here.
+			* Location of commands.json: *\AHRQ_Gesture_Recognition\Naveen\commands.json
+		_screen.mov
+			* Screen recording video file.
+		status.json:
+			* This is present in G:\AHRQ\Study_IV\RealData\status.json
