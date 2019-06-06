@@ -11,9 +11,15 @@ from copy import deepcopy
 ###
 
 ## Global Variables
+<<<<<<< HEAD
+
+lexicon_id = 'L11'
+lex_folders = [r'F:\AHRQ\Study_IV\NewData2'] # Where to write the files
+=======
 lexicon_id = 'L8'
 lex_folders = [r'D:\AHRQ\Study_IV\NewData2'] # Where to write the files
 
+>>>>>>> b5e43fe015c2200da954be242ebd63a52a331998
 enable_skeleton = False
 fps = 360
 default_width, default_height = 1920, 1080

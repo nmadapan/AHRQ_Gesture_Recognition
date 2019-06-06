@@ -541,7 +541,7 @@ class Realtime:
 						self.fl_cmd_ready = False
 						self.fl_skel_ready = False
 						if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False
-						continue										
+						continue
 					# Detuple CPM frames int right and left
 					right_cpm, left_cpm = zip(*raw_cpm_frames)
 					if(DEBUG):
