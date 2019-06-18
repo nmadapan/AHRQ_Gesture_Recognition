@@ -1,0 +1,459 @@
+{
+	"subject_params":
+	{
+		"L2":
+			{
+				"S1":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S2":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S3":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S4":
+				{
+					"name": "JuanAndres",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S5":
+				{
+					"name": "JuanAntonio",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S6":
+				{
+					"name": "Hose",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S7":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S8":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S9":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S10":
+				{
+					"name": "JuanAndres",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S11":
+				{
+					"name": "JuanAntonio",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S12":
+				{
+					"name": "Hose",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				}
+
+			},
+
+		"L3":
+			{
+				"S1":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S2":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S3":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S4":
+				{
+					"name": "Jackie",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S5":
+				{
+					"name": "Natalia",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S6":
+				{
+					"name": "Ting",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S7":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S8":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S9":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S10":
+				{
+					"name": "JuanAndres",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S11":
+				{
+					"name": "JuanAntonio",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S12":
+				{
+					"name": "Hose",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				}
+			},	
+		"L6":
+			{
+				"S1":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S2":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S3":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S4":
+				{
+					"name": "Mandira",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S5":
+				{
+					"name": "Aayush",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S6":
+				{
+					"name": "Won",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S7":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S8":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S9":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S10":
+				{
+					"name": "JuanAndres",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S11":
+				{
+					"name": "JuanAntonio",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S12":
+				{
+					"name": "Hose",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				}
+			},	
+		"L8":
+			{
+				"S1":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S2":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S3":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S4":
+				{
+					"name": "Edgar",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S5":
+				{
+					"name": "Aayush",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S6":
+				{
+					"name": "Xiayu",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S7":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S8":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S9":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S10":
+				{
+					"name": "JuanAndres",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S11":
+				{
+					"name": "JuanAntonio",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S12":
+				{
+					"name": "Hose",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				}
+			},
+		"L10":
+			{
+				"S1":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S2":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S3":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S4":
+				{
+					"name": "JuanAndres",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S5":
+				{
+					"name": "JuanAntonio",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S6":
+				{
+					"name": "Hose",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S7":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S8":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S9":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S10":
+				{
+					"name": "JuanAndres",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S11":
+				{
+					"name": "JuanAntonio",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S12":
+				{
+					"name": "Hose",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				}
+
+			},
+		"L11":
+			{
+				"S1":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S2":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S3":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S4":
+				{
+					"name": "JuanAndres",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S5":
+				{
+					"name": "JuanAntonio",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S6":
+				{
+					"name": "Hose",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S7":
+				{
+					"name": "Rahul",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S8":
+				{
+					"name": "Naveen",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S9":
+				{
+					"name": "Glebys",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S10":
+				{
+					"name": "JuanAndres",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S11":
+				{
+					"name": "JuanAntonio",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				},
+				"S12":
+				{
+					"name": "Hose",
+					"arm_length": 0.7000,
+					"finger_length": 300
+				}
+
+			}			
+	}		
+}

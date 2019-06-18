@@ -1,0 +1,30 @@
+{
+	"commands_filepath": "commands.json",
+	"subject_param_path": "subject_params_same.json",
+	"kinect_joint_names_path": "kinect_joint_names.json",
+
+	"gesture_thresh_level": 0.2,
+
+	"all_feature_types": false,
+	"feature_types": ["left", "right"],
+
+	"num_joints": 1,
+
+	"dominant_first": true,
+	"dominant_first_thresh": 0.01,
+
+	"max_r": 0.75,
+	"max_dr": 0.03,
+	"max_th": 3.14,
+	"max_dth": 3.14,
+
+	"dim_per_joint": 3,
+	"randomize": false,
+
+	"equate_dim": true,
+
+	"fixed_num_frames": 40,
+
+	"cpm_downsample_rate": 8,
+	"num_fingers": 7
+}

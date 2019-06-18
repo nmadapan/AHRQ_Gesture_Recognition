@@ -28,15 +28,15 @@ PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port  
 IP_CPM = 'localhost'
 PORT_CPM = 3000
 
-## Flags
-ENABLE_SYNAPSE_SOCKET = False
-ENABLE_CPM_SOCKET = True  # Param for pilot
+## Flagsq
+ENABLE_SYNAPSE_SOCKET = True
+ENABLE_CPM_SOCKET = False # Param for pilot
 DEBUG = False
 
 ## IMPORTANT
-LEXICON_ID = 'L11' # Param for pilot
+NSUBJECT_ID = 'S13'
+LEXICON_ID = 'L10' # Param for pilot
 TASK_ID = 'T2' # Param for pilot
-NSUBJECT_ID = 'S100'
 
 ## If a gesture has less than 20 frames ignore.
 MIN_FRAMES_IN_GESTURE = 20
@@ -541,7 +541,7 @@ class Realtime:
 						self.fl_cmd_ready = False
 						self.fl_skel_ready = False
 						if(ENABLE_CPM_SOCKET): self.fl_cpm_ready = False
-						continue										
+						continue
 					# Detuple CPM frames int right and left
 					right_cpm, left_cpm = zip(*raw_cpm_frames)
 					if(DEBUG):
