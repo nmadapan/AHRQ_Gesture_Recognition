@@ -352,7 +352,11 @@ class SynapseAction:
             f = open(self.calibrationPath, "w")
             f.write(json.dumps(self.status, indent=4, separators=(',', ': ')))
             f.close()
-
+    # Receives the 5 final commands in sequence list and displays
+    # the ack GUI, lets the user interact with the pad and records
+    # all the timestamps and steps taken.
+    # this function returns the init and end timestamps for the ack, the
+    # command and if the more commands was used
     def acklowledment(self, sequence_list):
         ack_init_ts = time.time()
         # bring the python window to the  front
@@ -363,6 +367,7 @@ class SynapseAction:
         y_pressed = False
         # Init colors
         first_row = True
+        # Making the ack box
         for btn_index in range(len(self.btn_list)-1):
             print "dictionary check:", sequence_list[btn_index]
             if sequence_list[btn_index] in self.cmd_dict:
@@ -385,7 +390,9 @@ class SynapseAction:
 
         option = 0
         option_number = len(sequence_list)+1
+        # detect keys and change gui accordingly
         while True:
+            # if "down key is pressed"
             if keyboard.is_pressed('3') and not pressed:
                 pressed= True
                 highlight_index = option % option_number
@@ -516,6 +523,13 @@ class SynapseAction:
         print "FINAL SEQUENCE", replaced_sequence
         ack_init_t, ack_end_ts, sequence, more_cmd_bool = self.acklowledment(replaced_sequence)
 
+        if commandAction is None:
+            synapse_end_ts = time.time()
+            recording_line += [synapse_init_ts, synapse_init_ts]
+            self.recording_file.writerow(recording_line)
+            print "RETURNING IN HERE"
+            return False
+
         print ("EXECUTING", sequence)
         (commandID, actionID) = (-1, -1)
         if not sequence:
@@ -554,12 +568,6 @@ class SynapseAction:
         ##################################################################
         ############# CHECK THAT THE COMMAND IS VALID ####################
         ##################################################################
-        if commandAction is None:
-            synapse_end_ts = time.time()
-            recording_line += [synapse_init_ts, synapse_init_ts]
-            self.recording_file.writerow(recording_line)
-            print "RETURNING IN HERE"
-            return False
         if (sequence.find(" ") != -1):
             commandAction = sequence[:sequence.find(" ")]
             self.status["params"] = sequence[sequence.find(" ") + 1:]
@@ -641,7 +649,7 @@ class SynapseAction:
             auto.click()
             scrollAmount = (5 if self.status["params"] == "" else int(self.status["params"]))
             auto.PAUSE = 0
-            for i in range(scrollAmount): auto.press("right" if action == "Up" else "left")
+            for i in range(scrollAmount): auto.press("left" if action == "Up" else "right")
             auto.PAUSE = 0.25
             auto.click()
 
@@ -747,7 +755,7 @@ class SynapseAction:
             if (len(splitParams) % 2 == 1 and self.status["params"] != ""):
                 level = (int(splitParams[0]) if action == "Left" or action == "Up" else -1 * int(splitParams[0]))
             else:
-                level = (20 if action == "Left" or action == "Up" else -20)
+                level = (-20 if action == "Left" or action == "Up" else 20)
             # Get the initial position of the pan according to the parameters
             if (len(splitParams) <= 1):
                 (moveToX, moveToY) = auto.position()
@@ -818,17 +826,19 @@ class SynapseAction:
             # if we are performing a zoom in or a zoom out
             if actionID != 0:
                 (oldLocationX, oldLocationY) = auto.position()
-                if (len(splitParams) == 1):
-                    if (splitParams[0] != ""):
-                        level = (-1 * int(splitParams[0]) if action == "Decrease" else int(splitParams[0]))
-                    else:
-                        level = (-10 if action == "Decrease" else 10)
-                else:
-                    print "For " + command + ", you must pass a maximum of one argument."
-                    synapse_end_ts = time.time()
-                    recording_line += [synapse_init_ts, synapse_init_ts]
-                    self.recording_file.writerow(recording_line)
-                    return False
+                # if (len(splitParams) == 1):
+                    # if (splitParams[0] != ""):
+                        # level = (-1 * int(splitParams[0]) if action == "Decrease" else int(splitParams[0]))
+                    # else:
+                level = (-10 if action == "Decrease" else 10)
+                # else:
+                    # print "For " + command + ", you must pass a maximum of one argument."
+                    # synapse_end_ts = time.time()
+                    # recording_line += [synapse_init_ts, synapse_init_ts]
+                    # self.recording_file.writerow(recording_line)
+                    # return False
+
+                auto.mouseDown()
                 auto.moveTo(oldLocationX, oldLocationY + level)
                 self.status["group1_command"] = command
 
@@ -849,10 +859,10 @@ class SynapseAction:
             auto.moveTo(auto.position()[0], 0)
             time.sleep(2)
             # Look for the image of the layout
-            layoutPath = os.path.join(self.imageFolder, "Layout", "layout.png")
+            # layoutPath = os.path.join(self.imageFolder, "Layout", "layout.png")
             # get the center of the image
-            (center_x, center_y) = auto.locateCenterOnScreen(layoutPath)
-            auto.click(center_x/2,center_y/2)
+            # (center_x, center_y) = auto.locateCenterOnScreen(layoutPath)
+            auto.click(428,77)
             # wait for the image to appear
             time.sleep(4)
             # Get the image name depending on the action:
