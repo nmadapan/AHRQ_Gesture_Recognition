@@ -12,7 +12,7 @@ import socket
 
 ## Speech Recognition
 from fuzzywuzzy import fuzz
-import speech_recognition as sr 
+import speech_recognition as sr
 
 ## Custom
 from helpers import *
@@ -31,22 +31,19 @@ IP_KB = IP_SYNAPSE
 PORT_KB = 6000
 
 ## Flags
-ENABLE_SYNAPSE_SOCKET = True
-ENABLE_KB_SOCKET = True
+ENABLE_SYNAPSE_SOCKET = False
+ENABLE_KB_SOCKET = False
 DEBUG = False
 
 ## IMPORTANT
 NSUBJECT_ID = 'S13'
-LEXICON_ID = 'L6' # Param for pilot # Set LEXICON_ID to 24 for speech. 
+LEXICON_ID = 'L6' # Param for pilot # Set LEXICON_ID to 24 for speech.
 TASK_ID = 'T2' # Param for pilot
 
 ## Speech Recognition
 MIC_NAME = u'Speakers (Realtek High Definiti' #Define your microphone
 SAMPLE_RATE = 48000
 CHUNK_SIZE = 2048
-DEVICE_ID = get_device_id(MIC_NAME)
-if(DEVICE_ID is None):
-	sys.exit('Error!! Check the MIC_NAME variable. Device NOT FOUND !!')
 
 ## DATA PATHS
 # Path to json file consiting of list of command ids and command names
@@ -58,11 +55,11 @@ LOG_FILE_PATH = r'.\\Backup\\test\\' + NSUBJECT_ID + '_' + LEXICON_ID + '_' + TA
 
 def get_device_id(mic_name):
 	device_id = None
-	mic_list = sr.Microphone.list_microphone_names() 
+	mic_list = sr.Microphone.list_microphone_names()
 	print('Available MICs: ', end = '')
-	for idx, microphone_name in enumerate(mic_list): 
+	for idx, microphone_name in enumerate(mic_list):
 		print(microphone_name, end = ', ')
-		if microphone_name == mic_name: 
+		if microphone_name == mic_name:
 			device_id = idx
 	print()
 	return device_id
@@ -94,6 +91,12 @@ if not print_global_constants():
 	print('ERROR! One or more files DOES NOT exist !!!')
 	sys.exit()
 
+DEVICE_ID = 1 #get_device_id(MIC_NAME)
+if(DEVICE_ID is None):
+	sys.exit('Error!! Check the MIC_NAME variable. Device NOT FOUND !!')
+
+print('Init is ending')
+
 '''
 Key Assumptions:
 	1. In realtime: body skeleton, RGB skeleton and RGB images are synchronized in time.
@@ -116,7 +119,7 @@ class Realtime:
 		### DATA PATHS ####
 		###################
 		# Full list of commands
-		self.cmd_dict = json_to_dict(CMD_JSON_PATH)	
+		self.cmd_dict = json_to_dict(CMD_JSON_PATH)
 
 		## Commands/words used in speech
 		self.cmdid_to_words_dict = json_to_dict(SPEECH_CMD_JSON_PATH)
@@ -144,13 +147,13 @@ class Realtime:
 		## CPM Socket initialization
 		# CPM Initialization takes up to one minute. Dont initialize any socket
 		#	(by calling init_socket) before creating object of CPM Client.
-		if(ENABLE_KB):
+		if(ENABLE_KB_SOCKET):
 			self.client_kb = Client(IP_KB, PORT_KB)
 		## Call Synapse init socket
 		if(ENABLE_SYNAPSE_SOCKET):
 			self.client_synapse.init_socket()
 		## Call kb init socket
-		if(ENABLE_KB):
+		if(ENABLE_KB_SOCKET):
 			self.client_kb.init_socket()
 		#socket.setdefaulttimeout(2.0) ######### TODO: Need to be tuned depending on the delays.
 
@@ -162,7 +165,7 @@ class Realtime:
 		#########################
 		######## SPEECH #########
 		#########################
-		self.sr_obj = sr.Recognizer() 
+		self.sr_obj = sr.Recognizer()
 
 		##################################
 		### INITIALIZE OTHER VARIABLES ###
@@ -174,7 +177,7 @@ class Realtime:
 		for word in self.list_of_words:
 			ratios.append(fuzz.partial_ratio(pred_word.lower(), word.lower()))
 		top_match_ids = np.argsort(ratios)[-1*top:]
-		top_match_ids = np.flip(top_match_ids, axis = 0) # So that largest one comes first. 
+		top_match_ids = np.flip(top_match_ids, axis = 0) # So that largest one comes first.
 
 		top_match_words = np.array(self.list_of_words)[top_match_ids] # In numpy string format
 		top_match_words = top_match_words.tolist()
@@ -186,21 +189,23 @@ class Realtime:
 	def recognize_speech(self):
 		timestamps = [None, None]
 		timestamps[0] = time.time()
-		with sr.Microphone(device_index = DEVICE_ID, sample_rate = SAMPLE_RATE,  
-							chunk_size = CHUNK_SIZE) as source: 
-			self.sr_obj.adjust_for_ambient_noise(source) 
+		print('device id: ', DEVICE_ID)
+		with sr.Microphone(device_index = DEVICE_ID, sample_rate = SAMPLE_RATE,
+							chunk_size = CHUNK_SIZE) as source:
+			self.sr_obj.adjust_for_ambient_noise(source)
 			print("Say your command:")
-			audio = self.sr_obj.listen(source) 
-			print('listened')
-			## TODO: Figure out what do when exceptions happen. 
-			## TODO: Figure out what timestamps to send. 
-			try: 
-				pred_word = r.recognize_google(audio)
-			except sr.UnknownValueError: 
-				print("Google Speech Recognition could not understand audio") 
-			except sr.RequestError as e: 
-				print("Could not request results from Google speech Recognition service; {0}".format(e)) 
-		
+			audio = self.sr_obj.listen(source)
+			print('listened: ', end = '')
+			## TODO: Figure out what do when exceptions happen.
+			## TODO: Figure out what timestamps to send.
+			try:
+				pred_word = self.sr_obj.recognize_google(audio)
+				print(pred_word)
+			except sr.UnknownValueError:
+				print("Google Speech Recognition could not understand audio")
+			except sr.RequestError as e:
+				print("Could not request results from Google speech Recognition service; {0}".format(e))
+
 		timestamps[1] = time.time()
 		top_k_labels, top_match_words = self.match_word(pred_word)
 
@@ -213,7 +218,6 @@ class Realtime:
 		while(self.fl_alive):
 			if(not self.fl_cmd_ready): continue
 			self.fl_synapse_running = True
-
 
 			# If command is ready: Do the following:
 			# Wait for five seconds for the delivery message.
@@ -285,4 +289,5 @@ class Realtime:
 
 if(__name__ == '__main__'):
 	rt = Realtime()
-	rt.run()
+	# rt.run()
+	print(rt.recognize_speech())

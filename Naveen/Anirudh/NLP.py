@@ -5,7 +5,7 @@
 
 
 from fuzzywuzzy import fuzz
-import speech_recognition as sr 
+import speech_recognition as sr
 from IPython.display import clear_output
 import pandas as pd
 
@@ -14,34 +14,34 @@ import pandas as pd
 
 
 def spch():
-	
-	mic_name = "Microphone (Realtek High Defini" #Define your microphone
+
+	mic_name = "Speakers (Realtek High Definiti" #Define your microphone
 
 	sample_rate = 48000
 
 	chunk_size = 2048
 
-	r = sr.Recognizer() 
+	r = sr.Recognizer()
 
-	mic_list = sr.Microphone.list_microphone_names() 
-
-
-	for i, microphone_name in enumerate(mic_list): 
-		if microphone_name == mic_name: 
-			device_id = i     
-	
-	with sr.Microphone(device_index = device_id, sample_rate = sample_rate,  
-							chunk_size = chunk_size) as source: 
+	mic_list = sr.Microphone.list_microphone_names()
 
 
-		r.adjust_for_ambient_noise(source) 
+	for i, microphone_name in enumerate(mic_list):
+		if microphone_name == mic_name:
+			device_id = i
+
+	with sr.Microphone(device_index = device_id, sample_rate = sample_rate,
+							chunk_size = chunk_size) as source:
+
+
+		r.adjust_for_ambient_noise(source)
 		print("Say your command:")
-	 
-		audio = r.listen(source) 
+
+		audio = r.listen(source)
 		print('listened')
 
-		try: 
-			text = r.recognize_google(audio) 
+		try:
+			text = r.recognize_google(audio)
 
 			#print("you said: ")
 			#print(text)
@@ -49,58 +49,58 @@ def spch():
 
 
 
-		except sr.UnknownValueError: 
-			print("Google Speech Recognition could not understand audio") 
+		except sr.UnknownValueError:
+			print("Google Speech Recognition could not understand audio")
 
-		except sr.RequestError as e: 
-			print("Could not request results from Google speech Recognition service; {0}".format(e)) 
+		except sr.RequestError as e:
+			print("Could not request results from Google speech Recognition service; {0}".format(e))
 
 
 # In[19]:
 
 
 def mod_spch():
-	mic_name = "Microphone (Realtek High Defini"
+	mic_name = "Speakers (Realtek High Definiti"
 
 	sample_rate = 48000
 
 	chunk_size = 2048
 
-	r = sr.Recognizer() 
+	r = sr.Recognizer()
 
-	mic_list = sr.Microphone.list_microphone_names() 
-
-
-	for i, microphone_name in enumerate(mic_list): 
-		if microphone_name == mic_name: 
-			device_id = i 
-			
-			
-	with sr.Microphone(device_index = device_id, sample_rate = sample_rate,  
-							chunk_size = chunk_size) as source: 
+	mic_list = sr.Microphone.list_microphone_names()
 
 
-		r.adjust_for_ambient_noise(source) 
+	for i, microphone_name in enumerate(mic_list):
+		if microphone_name == mic_name:
+			device_id = i
+
+
+	with sr.Microphone(device_index = device_id, sample_rate = sample_rate,
+							chunk_size = chunk_size) as source:
+
+
+		r.adjust_for_ambient_noise(source)
 		print("Say your command:")
-	 
-		audio = r.listen(source) 
+
+		audio = r.listen(source)
 		print('listened')
 
-		try: 
-			text = r.recognize_google(audio) 
-			
+		try:
+			text = r.recognize_google(audio)
+
 			return text.lower()
 
 
-			
 
 
 
-		except sr.UnknownValueError: 
-			print("Google Speech Recognition could not understand audio") 
 
-		except sr.RequestError as e: 
-			print("Could not request results from Google speech Recognition service; {0}".format(e)) 
+		except sr.UnknownValueError:
+			print("Google Speech Recognition could not understand audio")
+
+		except sr.RequestError as e:
+			print("Could not request results from Google speech Recognition service; {0}".format(e))
 
 
 # In[20]:
@@ -126,7 +126,7 @@ def nlp_check(a):
 			mod(j)
 		else:
 			print("your command not recognized")
-			
+
 
 
 # In[21]:
@@ -159,7 +159,7 @@ def scrl():
 			print("Your Command:")
 			print(cmds[r.index(m)])
 		else:
-			print("your command not recognized")    
+			print("your command not recognized")
 
 def flip():
 	print('horizontal or vertical')
@@ -180,9 +180,9 @@ def flip():
 			print(cmds[r.index(m)])
 		else:
 			print("your command not recognized")
-			
 
-			
+
+
 def rotate():
 	print('clockwise or counterclockwise')
 	t = mod_spch()
@@ -201,9 +201,9 @@ def rotate():
 			print("Your Command:")
 			print(cmds[r.index(m)])
 		else:
-			print("your command not recognized")  
-			
-			
+			print("your command not recognized")
+
+
 def zoom():
 	print('inside or outside')
 	t = mod_spch()
@@ -223,8 +223,8 @@ def zoom():
 			print(cmds[r.index(m)])
 		else:
 			print("your command not recognized")
-			
-			
+
+
 def switch():
 	print('Left or Right')
 	t = mod_spch()
@@ -245,7 +245,7 @@ def switch():
 		else:
 			print("your command not recognized")
 
-			
+
 def pan():
 	print('Left / Right / Upside / Downside')
 	t = mod_spch()
@@ -266,7 +266,7 @@ def pan():
 		else:
 			print("your command not recognized")
 
-			
+
 def mctr():
 	print('increase or decrease')
 	t = mod_spch()
@@ -286,7 +286,7 @@ def mctr():
 			print(cmds[r.index(m)])
 		else:
 			print("your command not recognized")
-			
+
 
 def lyt():
 	print('2 panels or 3 panels')
@@ -307,9 +307,9 @@ def lyt():
 			print(cmds[r.index(m)])
 		else:
 			print("your command not recognized")
-			
-			
-			
+
+
+
 def cprst():
 	print('first or second')
 	t = mod_spch()
@@ -329,10 +329,10 @@ def cprst():
 			print(cmds[r.index(m)])
 		else:
 			print("your command not recognized")
-			
-			 
-			
-			
+
+
+
+
 
 
 # 1. Scroll
@@ -364,20 +364,20 @@ def test():
 	while itr < 5 and ans == 'y':
 		spch()
 		s = int(input("1-Pass 0-Fail 2-Skip"))
-		
+
 		if s == 1:
 			c+=1
 			itr+=1
 		elif s ==0:
 			itr+=1
-		
+
 		ans = input("Do you want to continue (y/n)?")
 		print(itr)
 		clear_output()
-		
+
 	acc = c / itr
 	return acc
-			
+
 
 
 # In[32]:
@@ -462,7 +462,7 @@ test_z()
 test_mc()
 
 
-# Move Screen 
+# Move Screen
 
 # In[82]:
 
@@ -537,7 +537,7 @@ def t1():
 	cd = ['scroll','flip','rotate','zoom','switch','move screen','manual contrast','layout','contrast preset','clockwise','two panels','left','right']
 	for i in range(0,3):
 		print("Round:"+str(i+1))
-	   
+
 		j =0
 		c='y'
 		while j < 13 and c =='y':
@@ -552,46 +552,46 @@ def t1():
 			elif s==0:
 				r_t1[j]+=0
 				j+=1
-			
+
 			c = input("Do you want to continue (y/n)?")
 			clear_output()
 
-			
+
 def nlp_t1(a):
 	cmds = ['scroll','flip','rotate','zoom','switch','move screen','manual contrast','layout','contrast preset','clockwise','two panels','left','right']
 	r=[]
 	if a in cmds:
 		print("Your Command:")
 		print(a)
-	   
+
 	else:
 		for w in cmds:
 			ratio = fuzz.partial_ratio(a,w)
 			r.append(ratio)
 		m = max(r)
-	   
+
 		if m > 59:
 			print("Your Command:")
 			j = cmds[r.index(m)]
 			print(j)
-		   
+
 		else:
 			print("your command not recognized")
-	
 
-	
+
+
 def t2():
 #     r_t1 = [0]*12
 	cd = ['upside','downside','horizontal','vertical','counterclockwise','inside','outside','increase','decrease','three panels','first','second']
 	for i in range(0,3):
 		print("Round:"+str(i+1))
-		
+
 		j =0
 		c='y'
 		while j < 12 and c =='y':
 			print(str(j+1)+". " + cd[j])
 			t = mod_spch()
-			
+
 			nlp_t2(t)
 
 			s = int(input("1-Pass 0-Fail 2-repeat"))
@@ -601,33 +601,33 @@ def t2():
 			elif s==0:
 				r_t2[j]+=0
 				j+=1
-			
+
 			c = input("Do you want to continue (y/n)?")
 			clear_output()
 
-			
+
 def nlp_t2(a):
 	cmds = ['upside','downside','horizontal','vertical','counterclockwise','inside','outside','increase','decrease','three panels','first','second']
 	r=[]
 	if a in cmds:
 		print("Your Command:")
 		print(a)
-	   
+
 	else:
 		for w in cmds:
 			ratio = fuzz.partial_ratio(a,w)
 			r.append(ratio)
 		m = max(r)
-	   
+
 		if m > 65:
 			print("Your Command:")
 			j = cmds[r.index(m)]
 			print(j)
-		   
+
 		else:
 			print("your command not recognized")
-	
-		
+
+
 
 
 # In[51]:
