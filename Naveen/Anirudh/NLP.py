@@ -12,10 +12,11 @@ import pandas as pd
 
 # In[18]:
 
+mic_name = "Speakers (Realtek High Definiti" #Define your microphone
 
 def spch():
 
-	mic_name = "Speakers (Realtek High Definiti" #Define your microphone
+	global mic_name
 
 	sample_rate = 48000
 
@@ -24,6 +25,7 @@ def spch():
 	r = sr.Recognizer()
 
 	mic_list = sr.Microphone.list_microphone_names()
+	print(mic_list)
 
 
 	for i, microphone_name in enumerate(mic_list):
@@ -60,7 +62,7 @@ def spch():
 
 
 def mod_spch():
-	mic_name = "Speakers (Realtek High Definiti"
+	global mic_name
 
 	sample_rate = 48000
 

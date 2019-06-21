@@ -91,7 +91,7 @@ if not print_global_constants():
 	print('ERROR! One or more files DOES NOT exist !!!')
 	sys.exit()
 
-DEVICE_ID = 1 #get_device_id(MIC_NAME)
+DEVICE_ID = get_device_id(MIC_NAME)
 if(DEVICE_ID is None):
 	sys.exit('Error!! Check the MIC_NAME variable. Device NOT FOUND !!')
 
