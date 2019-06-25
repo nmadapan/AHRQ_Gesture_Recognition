@@ -17,7 +17,8 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
 class ProcessKinectLog:
-	def __init__(self, lex_paths, scores_npz_path, best_lex_names, worst_lex_names, cmds_path = 'commands.json', normalize = True):
+	def __init__(self, lex_paths, scores_npz_path, best_lex_names, \
+				worst_lex_names, cmds_path = 'commands.json', normalize = True):
 		self.lex_paths = sorted(lex_paths, lex_path_cmp)
 		self.vac_path = scores_npz_path
 		self.best_lex_names = best_lex_names
@@ -26,7 +27,8 @@ class ProcessKinectLog:
 		self.cmd_names = sorted(self.cmds_dict.keys(), cmp = class_str_cmp)
 		self.normalize = normalize
 
-		## TODO: Initialize all command times to 0. Use all commands. If it doesnt exist use the one that is from the same group.
+		## TODO: Initialize all command times to 0. Use all commands. 
+		## If it doesnt exist use the one that is from the same group.
 
 		## Verify if the paths are authentic.
 		try:
@@ -43,7 +45,8 @@ class ProcessKinectLog:
 		# print('Lexicon IDs: ', self.lex_ids)
 
 		## Create dictionary representation
-		self.av_keys = ['gest_time', 'init_cmds', 'fin_cmds', 'ack_time', 'selected_cmd', 'is_more_cmds', 'syn_time']
+		self.av_keys = ['gest_time', 'init_cmds', 'fin_cmds', 'ack_time', \
+						'selected_cmd', 'is_more_cmds', 'syn_time']
 		self.av_ids = [(0, 1), (2, 2+5), (12, 12+5), (17, 18), 19, 20, (21, 22)]
 		self.gest_time_key = 'gest_time'
 		self.init_cmds_key = 'init_cmds'
@@ -63,9 +66,10 @@ class ProcessKinectLog:
 		# print(npz_dict.keys())
 		# print(npz_dict['reduced_cmd_ids'])
 
-		## Updated by the call to process
+		## Updated by the call to process()
 		self.raw_data = None
-		self.raw_dict = None
+		# keys are row indices, values are dict with keys as av_keys
+		self.raw_dict = None 
 
 		# avg_time_dict, std_time_dict, freq_dict = self.compute_avg_time()
 		# final_dict = self.combine_con_mod(avg_time_dict)
@@ -85,13 +89,14 @@ class ProcessKinectLog:
 
 			## Transform raw data into dictionary with the keys present in self.av_keys
 			raw_dict = self.create_dict(raw_data)
-			## Compute average time for each gesture in that lexicon
+			## Compute average time for each gesture id in that lexicon
+			# Gesture IDs are keys in the dict
 			avg_time_dict, std_time_dict, freq_dict = self.compute_avg_time(raw_dict)
 			# print(lex_name, len(raw_dict))
 			## Combine context and modifiers
 			final_dict = self.combine_con_mod(avg_time_dict)
 			# print('Before Len: ', len(final_dict))
-			final_dict = self.complete_missing_keys(final_dict)
+			final_dict = self.complete_missing_keys(final_dict, remove_keys = ['10_1'])
 			# print('After Len: ', len(final_dict))
 
 			# print(lex_name, len(final_dict))
@@ -191,7 +196,7 @@ class ProcessKinectLog:
 				print('Missing ', key)
 				key_prefix = key.split('_')[0]
 				for _key in ex_dict.keys():
-					if key_prefix in _key:
+					if key_prefix == _key.split('_')[0]:
 						print('Replacing with ' + _key)
 						ex_dict2[key] = ex_dict[_key]
 						break
@@ -230,7 +235,7 @@ if(__name__ == '__main__'):
 	npz_path = r'scores.npz'
 	pobj = ProcessKinectLog(lex_paths, npz_path, \
 		best_lex_names = best_lex_names, worst_lex_names = worst_lex_names,\
-		cmds_path = 'commands.json')
+		cmds_path = 'reduced_commands.json')
 
 	temp = np.load('scores.npz')
 	print(temp.keys())
