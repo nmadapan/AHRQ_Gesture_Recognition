@@ -41,7 +41,7 @@ LEXICON_ID = 'L6' # Param for pilot # Set LEXICON_ID to 24 for speech.
 TASK_ID = 'T2' # Param for pilot
 
 ## Speech Recognition
-MIC_NAME = u'Speakers (Realtek High Definiti' #Define your microphone
+MIC_NAME = u'Microphone (Logitech Wireless H'
 SAMPLE_RATE = 48000
 CHUNK_SIZE = 2048
 
@@ -290,4 +290,6 @@ class Realtime:
 if(__name__ == '__main__'):
 	rt = Realtime()
 	# rt.run()
-	print(rt.recognize_speech())
+	while True:
+		print(rt.recognize_speech())
+		time.sleep(1)

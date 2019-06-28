@@ -232,6 +232,9 @@ if(__name__ == '__main__'):
 	base_path = r'G:\AHRQ\Study_IV\RealData'
 	lex_names = ['L2', 'L6', 'L8', 'L3']
 	lex_paths = [join(base_path, lex_name) for lex_name in lex_names]
+
+	## scores.npz file has 'scores_reduced' key consisting of VAC data
+	# for only 20 commands present in the reduced_commands.json file. 
 	npz_path = r'scores.npz'
 	pobj = ProcessKinectLog(lex_paths, npz_path, \
 		best_lex_names = best_lex_names, worst_lex_names = worst_lex_names,\
