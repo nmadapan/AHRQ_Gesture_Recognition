@@ -17,7 +17,7 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
 class ProcessKinectLog:
-	def __init__(self, lex_paths, scores_npz_path, best_lex_names, worst_lex_names, cmds_path = 'commands.json', normalize = True):
+	def __init__(self, lex_paths, scores_npz_path, best_lex_names, worst_lex_names, cmds_path = 'redcued_commands.json', normalize = True):
 		self.lex_paths = sorted(lex_paths, lex_path_cmp)
 		self.vac_path = scores_npz_path
 		self.best_lex_names = best_lex_names
@@ -230,7 +230,7 @@ if(__name__ == '__main__'):
 	npz_path = r'scores.npz'
 	pobj = ProcessKinectLog(lex_paths, npz_path, \
 		best_lex_names = best_lex_names, worst_lex_names = worst_lex_names,\
-		cmds_path = 'commands.json')
+		cmds_path = 'reduced_commands.json')
 
 	temp = np.load('scores.npz')
 	print(temp.keys())

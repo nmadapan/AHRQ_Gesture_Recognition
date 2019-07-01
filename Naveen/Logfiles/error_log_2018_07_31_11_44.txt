@@ -1,9 +1,0 @@
-2018-07-31 11:44:10.703000
-
-7_1_S5_L3_X_Measure.xef :  [num_images: -1, video_time: -1, FPS: -1]
-10_1_S3_L2_X_OnePanel.xef :  [num_images: -1, video_time: -1, FPS: -1]
-1_1_S3_L8_Scroll_Up.xef :  [num_images: 1657, video_time: 110.260999826, FPS: 15]
-5_2_S3_L8_SwitchPanel_Right.xef :  [num_images: -1, video_time: -1, FPS: -1]
-5_3_S3_L8_SwitchPanel_Up.xef :  [num_images: -1, video_time: -1, FPS: -1]
-6_3_S3_L8_Pan_Up.xef :  [num_images: -1, video_time: -1, FPS: -1]
-8_2_S3_L8_PIW_Close.xef :  [num_images: -1, video_time: -1, FPS: -1]

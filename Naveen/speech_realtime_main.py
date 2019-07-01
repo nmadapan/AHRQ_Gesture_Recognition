@@ -41,7 +41,7 @@ LEXICON_ID = 'L6' # Param for pilot # Set LEXICON_ID to 24 for speech.
 TASK_ID = 'T2' # Param for pilot
 
 ## Speech Recognition
-MIC_NAME = u'Speakers (Realtek High Definiti' #Define your microphone
+MIC_NAME = u'Microphone (Realtek High Defini' #Define your microphone
 SAMPLE_RATE = 48000
 CHUNK_SIZE = 2048
 
@@ -188,8 +188,9 @@ class Realtime:
 
 	def recognize_speech(self):
 		timestamps = [None, None]
+		success = True
 		timestamps[0] = time.time()
-		print('device id: ', DEVICE_ID)
+
 		with sr.Microphone(device_index = DEVICE_ID, sample_rate = SAMPLE_RATE,
 							chunk_size = CHUNK_SIZE) as source:
 			self.sr_obj.adjust_for_ambient_noise(source)
@@ -203,15 +204,22 @@ class Realtime:
 				print(pred_word)
 			except sr.UnknownValueError:
 				print("Google Speech Recognition could not understand audio")
+				success = False
 			except sr.RequestError as e:
 				print("Could not request results from Google speech Recognition service; {0}".format(e))
+				success = False
 
-		timestamps[1] = time.time()
-		top_k_labels, top_match_words = self.match_word(pred_word)
+		if(success):
+			timestamps[1] = time.time()
+			top_k_labels, top_match_words = self.match_word(pred_word)
+			top_k_labels_str = ','.join(top_k_labels)
+			return top_k_labels[0], top_match_words[0], top_k_labels_str, timestamps
+		else:
+			return None, None, '', [None, None]
 
-		top_k_labels_str = ','.join(top_k_labels)
-
-		return top_k_labels[0], top_match_words[0], top_k_labels_str, timestamps
+	def play(self, text):
+		# Play the text here. 
+		pass
 
 	def th_synapse(self):
 		#
@@ -262,6 +270,10 @@ class Realtime:
 			# Perform the speech recognition
 			label, cname, top_k_labels_str, timestamps = self.recognize_speech()
 
+			if(label is None):
+				self.play('Please repeat the word again')
+				continue
+
 			# Appending time stamps of start and end skeleton frame
 			print(top_k_labels_str)
 			top_k_labels_str = ','.join(map(str, [timestamps[0], timestamps[-1], top_k_labels_str]))
@@ -291,3 +303,4 @@ if(__name__ == '__main__'):
 	rt = Realtime()
 	# rt.run()
 	print(rt.recognize_speech())
+	# print(rt.match_word('2 panels'))
