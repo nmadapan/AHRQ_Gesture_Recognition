@@ -24,7 +24,7 @@ class SynapseCommand():
 
         # Gesture desambiguation lists
         data_folder = os.path.join('..',"Data")
-	print "WORKING WITH " + lexicon
+        print "WORKING WITH " + lexicon
         # Context commands
         self.context_list = file_to_list(os.path.join(data_folder,lexicon+"_context.txt"))
         # Flatten the list
