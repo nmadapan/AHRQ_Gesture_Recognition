@@ -6,8 +6,8 @@ from CustomSocket import Client
 
 #### Variables #######
 # tcp_ip = '10.186.42.155'
-tcp_ip = 'localhost'
-tcp_port = 9000
+tcp_ip = '10.186.44.185'
+tcp_port = 6000
 
 ###### Initialize client socket ######
 client = Client(tcp_ip, tcp_port, buffer_size = 1000000)
