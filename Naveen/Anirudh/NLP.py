@@ -11,8 +11,7 @@ import pandas as pd
 
 
 # In[18]:
-
-mic_name = "Microphone (Realtek High Defini" #Define your microphone
+mic_name = u'Microphone (Logitech Wireless H' #Define your microphone
 
 def spch():
 
@@ -606,7 +605,7 @@ def t2():
 				r_t2[j]+=0
 				j+=1
 
-			c = input("Do you want to continue (y/n)?")
+			# c = input("Do you want to continue (y/n)?")
 			clear_output()
 
 

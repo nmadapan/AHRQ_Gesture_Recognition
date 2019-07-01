@@ -25,8 +25,7 @@ class ProcessKinectLog:
 		self.cmds_dict = json_to_dict(cmds_path)
 		self.cmd_names = sorted(self.cmds_dict.keys(), cmp = class_str_cmp)
 		self.normalize = normalize
-
-		## TODO: Initialize all command times to 0. Use all commands. If it doesnt exist use the one that is from the same group.
+		self.debug = debug
 
 		## Verify if the paths are authentic.
 		try:
@@ -40,10 +39,11 @@ class ProcessKinectLog:
 		## Derived variables
 		self.lex_names = [basename(lex_path) for lex_path in self.lex_paths]
 		self.lex_ids = [int(basename(lex_path)[1:]) for lex_path in self.lex_paths]
-		# print('Lexicon IDs: ', self.lex_ids)
+		if(self.debug): print('Lexicon IDs: ', self.lex_ids)
 
 		## Create dictionary representation
-		self.av_keys = ['gest_time', 'init_cmds', 'fin_cmds', 'ack_time', 'selected_cmd', 'is_more_cmds', 'syn_time']
+		self.av_keys = ['gest_time', 'init_cmds', 'fin_cmds', 'ack_time', \
+						'selected_cmd', 'is_more_cmds', 'syn_time']
 		self.av_ids = [(0, 1), (2, 2+5), (12, 12+5), (17, 18), 19, 20, (21, 22)]
 		self.gest_time_key = 'gest_time'
 		self.init_cmds_key = 'init_cmds'
@@ -60,105 +60,57 @@ class ProcessKinectLog:
 		for lex_id, lex_name in zip(self.lex_ids, self.lex_names):
 			self.vac_scores_dict[lex_name] = npz_dict['scores_reduced'][:, lex_id, :]
 		self.vac_names = npz_dict['vacs']
-		# print(npz_dict.keys())
-		# print(npz_dict['reduced_cmd_ids'])
+		if(self.debug): 
+			print('Information related to npz dict')
+			print('Keys: ', npz_dict.keys())
+			print('Reduced command IDs: ', npz_dict['reduced_cmd_ids'])
 
-		## Updated by the call to process
-		self.raw_data = None
-		self.raw_dict = None
+		self.process(ext = '*_kthreelog.txt')
+		self.process2(ext = '*_annotfs*.txt')
+		self.process2(ext = '*_annote*.txt')
 
-		# avg_time_dict, std_time_dict, freq_dict = self.compute_avg_time()
-		# final_dict = self.combine_con_mod(avg_time_dict)
+	def custom_normalize(self, usa_dict):
+		usa_dict = deepcopy(usa_dict)
+		for cmd_idx, cmd_name in enumerate(self.cmd_names):
+			cmd_arr = np.array([usa_dict[lex_name][cmd_idx] for lex_name in self.lex_names])
+			cmd_arr = (cmd_arr - np.min(cmd_arr))/(np.max(cmd_arr) - np.min(cmd_arr))
+			for _idx, lex_name in enumerate(self.lex_names): usa_dict[lex_name][cmd_idx] = cmd_arr[_idx]
+		return usa_dict
 
-		self.process()
-
-	def process(self):
-		usa_time_dict = {} # Dictionary containing the time taken for each command
-		for lex_name, lex_path in zip(self.lex_names, self.lex_paths):
-			txt_files = glob(join(lex_path, '*_ktwolog.txt'))
-
-			## Read data from the *_ktwolog.txt files
-			raw_data = []
-			for txt_file in txt_files:
-				with open(txt_file, 'r') as fp:
-					raw_data += [line.strip().split(',') for line in fp.readlines()]
-
-			## Transform raw data into dictionary with the keys present in self.av_keys
-			raw_dict = self.create_dict(raw_data)
-			## Compute average time for each gesture in that lexicon
-			avg_time_dict, std_time_dict, freq_dict = self.compute_avg_time(raw_dict)
-			# print(lex_name, len(raw_dict))
-			## Combine context and modifiers
-			final_dict = self.combine_con_mod(avg_time_dict)
-			# print('Before Len: ', len(final_dict))
-			final_dict = self.complete_missing_keys(final_dict)
-			# print('After Len: ', len(final_dict))
-
-			# print(lex_name, len(final_dict))
-
-			## Sort the keys based on commands ids
-			keys = final_dict.keys()
-			cmds = sorted(keys, cmp = class_str_cmp)
-			cmds_time = []
-			# print(lex_name, cmds)
-			for key in cmds:
-				cmds_time.append(final_dict[key])
-
-			## This dictionary contains a key for lexicon id
-			usa_time_dict[lex_name] = np.array(cmds_time)
-
-		if(self.normalize):
-			for cmd_idx, cmd_name in enumerate(self.cmd_names):
-				cmd_times = np.array([usa_time_dict[lex_name][cmd_idx] for lex_name in self.lex_names])
-				cmd_times = (cmd_times - np.min(cmd_times))/(np.max(cmd_times) - np.min(cmd_times))
-				for _idx, lex_name in enumerate(self.lex_names): usa_time_dict[lex_name][cmd_idx] = cmd_times[_idx]
-
-		for idx, lex_name in enumerate(self.lex_names):
-			print(lex_name)
-			print(usa_time_dict[lex_name].shape)
-			print(self.vac_scores_dict[lex_name].shape)
-
-		vac_data, usa_data = self.combine_lexs(self.vac_scores_dict, usa_time_dict)
-
-		results_ols = sm.OLS(usa_data, vac_data).fit()
+	def regress(self, X1, X2):
+		## TODO: This function works only when X1 is one dimensional and X2 can be 2D. 
+		results_ols = sm.OLS(X1, X2).fit()
+		print('OLS Results: ')
 		print(results_ols.summary())
-
-		rlm_model = sm.RLM(usa_data, vac_data, M=sm.robust.norms.HuberT())
+		rlm_model = sm.RLM(X1, X2, M=sm.robust.norms.HuberT())
 		rlm_results = rlm_model.fit()
+		print('RLM Results: ')
 		print(rlm_results.summary())
 
-		# vac_idx = 5
-		# cmd_idx = -1
-		# markers = ['<', '>', 's', 'p']
-		# colors = ['red', 'red', 'green', 'green']
-		# plt.figure()
-		# for idx, lex_name in enumerate(self.lex_names):
-		# 	print(usa_time_dict[lex_name].shape, self.vac_scores_dict[lex_name][:, vac_idx].shape)
-		# 	if(cmd_idx != -1):
-		# 		plt.scatter(usa_time_dict[lex_name][cmd_idx], self.vac_scores_dict[lex_name][cmd_idx, vac_idx], marker = markers[idx], c = colors[idx])
-		# 	else:
-		# 		plt.scatter(usa_time_dict[lex_name][:], self.vac_scores_dict[lex_name][:, vac_idx], marker = markers[idx], c = colors[idx])
-		# plt.legend(self.lex_names)
-		# plt.xlabel('Time taken in seconds')
-		# plt.ylabel('VAC ' + self.vac_names[vac_idx] + ' values')
-		# plt.show()
-
-	def combine_lexs(self, vac_dict, usa_dict):
-		vac_data, usa_data = [], []
+	def combine_lexs(self, data_dict):
+		data = []
 		for lex_idx, lex_name in enumerate(self.lex_names):
-			vac_data += vac_dict[lex_name].tolist()
-			usa_data += usa_dict[lex_name].tolist()
-		vac_data = np.array(vac_data)
-		usa_data = np.array(usa_data)
-		return np.array(vac_data), np.array(usa_data)
+			data += data_dict[lex_name].tolist()
+		data = np.array(data)
+		return data
 
-	def create_dict(self, raw_data):
+	def create_fslog_dict(self, raw_data):
+		raw_dict = {}
+		for line in raw_data:
+			if line[0] not in raw_dict: raw_dict[line[0]] = []
+			raw_dict[line[0]] += [line[1] == 'Yes']
+		return raw_dict
+
+	def create_kstarlog_dict(self, raw_data):
 		raw_dict = {}
 		for idx, line in enumerate(raw_data):
 			raw_dict[idx] = {}
 			for av_key, av_ids in zip(self.av_keys, self.av_ids):
 				if(av_key in [self.gest_time_key, self.ack_time_key, self.syn_time_key]):
-					raw_dict[idx][av_key] = float(line[av_ids[1]]) - float(line[av_ids[0]])
+					if(line[av_ids[0]] == 'None' or line[av_ids[1]] == 'None'):
+						raw_dict[idx][av_key] = -1
+					else:
+						raw_dict[idx][av_key] = float(line[av_ids[1]]) - float(line[av_ids[0]])
 				elif(av_key in [self.init_cmds_key, self.fin_cmds_key]):
 					raw_dict[idx][av_key] = line[av_ids[0]:av_ids[1]]
 				elif(av_key == self.selected_cmd_key):
@@ -168,6 +120,16 @@ class ProcessKinectLog:
 				else:
 					assert False, 'Error ! Invalid key ' + av_key
 		return raw_dict
+
+	def compute_fs(self, raw_dict):
+		avg_fs_dict = {}
+		std_fs_dict = {}
+		freq_dict = {}
+		for key, value in raw_dict.items():
+			avg_fs_dict[key] = np.mean(value)
+			std_fs_dict[key] = np.std(value)
+			freq_dict[key] = len(value)
+		return avg_fs_dict, std_fs_dict, freq_dict
 
 	def compute_avg_time(self, raw_dict):
 		avg_time_dict = {}
@@ -184,15 +146,15 @@ class ProcessKinectLog:
 		return avg_time_dict, std_time_dict, freq_dict
 
 	def complete_missing_keys(self, ex_dict, remove_keys = ['10_1']):
-		print(ex_dict.keys())
+		# print(ex_dict.keys())
 		ex_dict2 = deepcopy(ex_dict)
 		for key in self.cmd_names:
 			if key not in ex_dict:
-				print('Missing ', key)
+				if(self.debug): print('Missing ', key)
 				key_prefix = key.split('_')[0]
 				for _key in ex_dict.keys():
-					if key_prefix in _key:
-						print('Replacing with ' + _key)
+					if key_prefix == _key.split('_')[0]:
+						if(self.debug): print('Replacing with ' + _key)
 						ex_dict2[key] = ex_dict[_key]
 						break
 
@@ -221,16 +183,147 @@ class ProcessKinectLog:
 
 		return modifier_dict
 
+	def process(self, ext = '*_ktwolog.txt'):
+		usa_dict = {} # Dictionary containing the time taken for each command
+		for lex_name, lex_path in zip(self.lex_names, self.lex_paths):
+			txt_files = glob(join(lex_path, ext))
+
+			## Read data from the *_ktwolog.txt files
+			raw_data = []
+			for txt_file in txt_files:
+				with open(txt_file, 'r') as fp:
+					raw_data += [line.strip().split(',') for line in fp.readlines()]
+
+			## Transform raw data into dictionary with the keys present in self.av_keys
+			raw_dict = self.create_kstarlog_dict(raw_data)
+			## Compute average time for each gesture id in that lexicon
+			# Gesture IDs are keys in the dict
+			avg_dict, std_dict, freq_dict = self.compute_avg_time(raw_dict)
+			# print(lex_name, len(raw_dict))
+			## Combine context and modifiers
+			final_dict = self.combine_con_mod(avg_dict)
+			# print('Before Len: ', len(final_dict))
+			final_dict = self.complete_missing_keys(final_dict, remove_keys = ['10_1'])
+			# print('After Len: ', len(final_dict))
+
+			## Sort the keys based on commands ids
+			keys = final_dict.keys()
+			cmds = sorted(keys, cmp = class_str_cmp)
+			cmds_arr = []
+			# print(lex_name, cmds)
+			for key in cmds:
+				cmds_arr.append(final_dict[key])
+
+			## This dictionary contains a key for lexicon id
+			usa_dict[lex_name] = np.array(cmds_arr)
+
+		if(self.normalize): usa_dict = self.custom_normalize(usa_dict)
+
+		# for idx, lex_name in enumerate(self.lex_names):
+		# 	print(lex_name)
+		# 	print(usa_dict[lex_name].shape)
+		# 	print(self.vac_scores_dict[lex_name].shape)
+
+		vac_data = self.combine_lexs(self.vac_scores_dict)
+		usa_data = self.combine_lexs(usa_dict)
+
+		self.regress(usa_data, vac_data)
+
+		# vac_idx = 5
+		# cmd_idx = -1
+		# markers = ['<', '>', 's', 'p']
+		# colors = ['red', 'red', 'green', 'green']
+		# plt.figure()
+		# for idx, lex_name in enumerate(self.lex_names):
+		# 	print(usa_dict[lex_name].shape, self.vac_scores_dict[lex_name][:, vac_idx].shape)
+		# 	if(cmd_idx != -1):
+		# 		plt.scatter(usa_dict[lex_name][cmd_idx], self.vac_scores_dict[lex_name][cmd_idx, vac_idx], marker = markers[idx], c = colors[idx])
+		# 	else:
+		# 		plt.scatter(usa_dict[lex_name][:], self.vac_scores_dict[lex_name][:, vac_idx], marker = markers[idx], c = colors[idx])
+		# plt.legend(self.lex_names)
+		# plt.xlabel('Time taken in seconds')
+		# plt.ylabel('VAC ' + self.vac_names[vac_idx] + ' values')
+		# plt.show()
+
+		return usa_data, vac_data
+
+	def process2(self, ext = '*_annotfs*.txt'):
+		usa_dict = {} # Dictionary containing the time taken for each command
+		for lex_name, lex_path in zip(self.lex_names, self.lex_paths):
+			txt_files = glob(join(lex_path, ext))
+
+			## Read data from the *_annotfs*.txt files
+			raw_data = []
+			for txt_file in txt_files:
+				with open(txt_file, 'r') as fp:
+					raw_data += [line.strip().split(',') for line in fp.readlines()]
+
+			## Transform raw data into dictionary with the keys present in self.av_keys
+			raw_dict = self.create_fslog_dict(raw_data)
+			## Compute average time for each gesture id in that lexicon
+			# Gesture IDs are keys in the dict
+			avg_dict, std_dict, freq_dict = self.compute_fs(raw_dict)
+			## Combine context and modifiers
+			final_dict = self.combine_con_mod(avg_dict)
+			# print('Before Len: ', len(final_dict))
+			final_dict = self.complete_missing_keys(final_dict, remove_keys = ['10_1'])
+			# print('After Len: ', len(final_dict))
+
+			## Sort the keys based on commands ids
+			keys = final_dict.keys()
+			cmds = sorted(keys, cmp = class_str_cmp)
+			cmds_arr = []
+			# print(lex_name, cmds)
+			for key in cmds:
+				cmds_arr.append(final_dict[key])
+
+			## This dictionary contains a key for lexicon id
+			usa_dict[lex_name] = np.array(cmds_arr)
+
+		if(self.normalize): usa_dict = self.custom_normalize(usa_dict)
+
+		vac_data = self.combine_lexs(self.vac_scores_dict)
+		usa_data = self.combine_lexs(usa_dict)
+
+		self.regress(usa_data, vac_data)
+
+		return usa_data, vac_data
+
+	def annotation_statistics(self):
+		fs_exts = ['*annotfsa.txt', '*annotfsd.txt', '*annotfsn.txt']
+		e_exts = ['*annotea.txt', '*annoted.txt', '*annoten.txt']
+		names = ['Anirudh', 'Daniela', 'Naveen']
+		for lex_name, lex_path in zip(self.lex_names, self.lex_paths):
+			print(lex_name, ': ')
+			for pname, fs_ext, e_ext in zip(names, fs_exts, e_exts):
+				print('\t', pname)
+				print('\t\tScreen:', len(glob(join(lex_path, '*screen.mov'))))
+				print('\t\tFS:', len(glob(join(lex_path, fs_ext))))
+				print('\t\tER:', len(glob(join(lex_path, e_ext))))
+
 if(__name__ == '__main__'):
 	best_lex_names = ['L6', 'L8']
 	worst_lex_names = ['L2', 'L3']
 	base_path = r'G:\AHRQ\Study_IV\RealData'
 	lex_names = ['L2', 'L6', 'L8', 'L3']
 	lex_paths = [join(base_path, lex_name) for lex_name in lex_names]
+
+	## scores.npz file has 'scores_reduced' key consisting of VAC data
+	# for only 20 commands present in the reduced_commands.json file. 
 	npz_path = r'scores.npz'
 	pobj = ProcessKinectLog(lex_paths, npz_path, \
 		best_lex_names = best_lex_names, worst_lex_names = worst_lex_names,\
 		cmds_path = 'reduced_commands.json')
+<<<<<<< HEAD
+=======
 
-	temp = np.load('scores.npz')
-	print(temp.keys())
+	## Combining THREE usability metrics
+	time_data, vac_data = pobj.process(ext = '*_kthreelog.txt')
+	fs_data, _ = pobj.process2(ext = '*_annotfs*.txt')
+	e_data, _ = pobj.process2(ext = '*_annote*.txt')
+
+	## Total usability data
+	usa_data = np.array([time_data, fs_data, e_data]).T
+>>>>>>> e6cd4a78a173c971260d4e034c4f1cd852f8e799
+
+	pobj.annotation_statistics()

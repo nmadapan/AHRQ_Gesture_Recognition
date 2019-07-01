@@ -41,7 +41,7 @@ LEXICON_ID = 'L6' # Param for pilot # Set LEXICON_ID to 24 for speech.
 TASK_ID = 'T2' # Param for pilot
 
 ## Speech Recognition
-MIC_NAME = u'Microphone (Realtek High Defini' #Define your microphone
+MIC_NAME = u'Microphone (Logitech Wireless H'
 SAMPLE_RATE = 48000
 CHUNK_SIZE = 2048
 
@@ -186,7 +186,7 @@ class Realtime:
 
 		return top_k_labels, top_match_words
 
-	def recognize_speech(self):
+	def recognize_speech(self, timeout = 3):
 		timestamps = [None, None]
 		success = True
 		timestamps[0] = time.time()
@@ -195,7 +195,7 @@ class Realtime:
 							chunk_size = CHUNK_SIZE) as source:
 			self.sr_obj.adjust_for_ambient_noise(source)
 			print("Say your command:")
-			audio = self.sr_obj.listen(source)
+			audio = self.sr_obj.listen(source, phrase_time_limit = timeout)
 			print('listened: ', end = '')
 			## TODO: Figure out what do when exceptions happen.
 			## TODO: Figure out what timestamps to send.
@@ -204,10 +204,17 @@ class Realtime:
 				print(pred_word)
 			except sr.UnknownValueError:
 				print("Google Speech Recognition could not understand audio")
+<<<<<<< HEAD
 				success = False
 			except sr.RequestError as e:
 				print("Could not request results from Google speech Recognition service; {0}".format(e))
 				success = False
+=======
+				return '1_1', 'Upward', '1_1,1_2,4_1,4_2,5_1'
+			except sr.RequestError as e:
+				print("Could not request results from Google speech Recognition service; {0}".format(e))
+				return '1_1', 'Upward', '1_1,1_2,4_1,4_2,5_1'
+>>>>>>> e6cd4a78a173c971260d4e034c4f1cd852f8e799
 
 		if(success):
 			timestamps[1] = time.time()
@@ -302,5 +309,11 @@ class Realtime:
 if(__name__ == '__main__'):
 	rt = Realtime()
 	# rt.run()
+<<<<<<< HEAD
 	print(rt.recognize_speech())
 	# print(rt.match_word('2 panels'))
+=======
+	while True:
+		print(rt.recognize_speech())
+		time.sleep(1)
+>>>>>>> e6cd4a78a173c971260d4e034c4f1cd852f8e799
