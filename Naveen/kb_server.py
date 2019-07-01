@@ -69,9 +69,11 @@ if __name__ == '__main__':
 	#### Variables #######
 	tcp_ip = socket.gethostbyname(socket.gethostname())
 	# tcp_ip='192.168.0.100'
-	tcp_ip = 'localhost'
+	# tcp_ip = 'localhost'
 	# print(tcp_ip)
-	tcp_port = 9000
+	tcp_port = 6000
+	print(tcp_ip, tcp_port)
+	
 	server = KBServer(tcp_ip, tcp_port, buffer_size = 1000000)
 
 	keyboard.hook(server.keyboard_callback)
