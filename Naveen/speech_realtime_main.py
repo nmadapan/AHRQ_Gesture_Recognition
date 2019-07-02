@@ -186,6 +186,30 @@ class Realtime:
 
 		return top_k_labels, top_match_words
 
+	def recognize(self, audio):
+		'''
+			Recognizes the audio first using google and then using sphinx if google API fails. 
+		'''
+		pred_word = None
+		flag = False
+		try:
+			pred_word = self.sr_obj.recognize_google(audio)
+			flag = True
+		except sr.UnknownValueError:
+			print("Google Speech Recognition could not understand audio")
+		except sr.RequestError as e:
+			print("Could not request results from Google speech Recognition service; {0}".format(e))
+
+		if(flag): return pred_word
+
+		try:
+			pred_word = self.sr_obj.recognize_sphinx(audio)
+			flag = True
+		except sr.UnknownValueError:
+			print("Sphinx could not understand audio")
+
+		return pred_word
+
 	def recognize_speech(self, timeout = 3):
 		timestamps = [None, None]
 		timestamps[0] = time.time()
@@ -198,14 +222,8 @@ class Realtime:
 			print('listened: ', end = '')
 			## TODO: Figure out what do when exceptions happen.
 			## TODO: Figure out what timestamps to send.
-			try:
-				pred_word = self.sr_obj.recognize_google(audio)
-				print(pred_word)
-			except sr.UnknownValueError:
-				print("Google Speech Recognition could not understand audio")
-				return '1_1', 'Upward', '1_1,1_2,4_1,4_2,5_1'
-			except sr.RequestError as e:
-				print("Could not request results from Google speech Recognition service; {0}".format(e))
+			pred_word = self.sr_obj.recognize(audio)
+			if(pred_word is None):
 				return '1_1', 'Upward', '1_1,1_2,4_1,4_2,5_1'
 
 		timestamps[1] = time.time()

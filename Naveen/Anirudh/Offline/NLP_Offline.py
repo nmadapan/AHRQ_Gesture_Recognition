@@ -12,7 +12,7 @@ import speech_recognition as sr
 
 def spch():
     
-    mic_name = "Microphone (Realtek High Defini" #Define your microphone
+    mic_name = u'Microphone (Logitech Wireless H' #Define your microphone
 
     sample_rate = 48000
 
@@ -21,6 +21,7 @@ def spch():
     r = sr.Recognizer() 
 
     mic_list = sr.Microphone.list_microphone_names() 
+    print mic_list
 
 
     for i, microphone_name in enumerate(mic_list): 

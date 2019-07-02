@@ -12,5 +12,17 @@ import numpy as np
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
-data = sm.datasets.spector.load()
-print type(data.exog)
+# ##################
+# ### scores.npz ###
+# ##################
+# vac_scores = np.load('scores.npz')
+
+# for key, value in vac_scores.items():
+# 	print key, ': ', 
+# 	print value.shape
+
+# print vac_scores['vacs']
+
+# # We will work with vac_scores['scores_reduced'] - 20 (redcued list of commands) x 9 (lexicons) x 6 (vacs)
+
+print np.random.uniform(0, 1, (80, 6))

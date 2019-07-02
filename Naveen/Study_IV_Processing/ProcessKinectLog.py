@@ -18,14 +18,16 @@ import statsmodels.formula.api as smf
 
 class ProcessKinectLog:
 	def __init__(self, lex_paths, scores_npz_path, best_lex_names, \
-				worst_lex_names, cmds_path = 'commands.json', normalize = True, debug = False):
+				worst_lex_names, cmds_path = 'reduced_commands.json', normalize = True, debug = False):
 		self.lex_paths = sorted(lex_paths, lex_path_cmp)
 		self.vac_path = scores_npz_path
 		self.best_lex_names = best_lex_names
 		self.worst_lex_names = worst_lex_names
 		self.cmds_dict = json_to_dict(cmds_path)
 		self.cmd_names = sorted(self.cmds_dict.keys(), cmp = class_str_cmp)
+		# If True, then the usability scores are normalized w.r.t each command. 
 		self.normalize = normalize
+		# If True, there will be a lot of printing. 
 		self.debug = debug
 
 		## Verify if the paths are authentic.
@@ -35,7 +37,7 @@ class ProcessKinectLog:
 			assert isfile(self.vac_path), self.vac_path + ' File not found'
 		except Exception as exp:
 			print(exp)
-			sys.exit('Error !! Exiting. ')
+			sys.exit('\nError !! Exiting. ')
 
 		## Derived variables
 		self.lex_names = [basename(lex_path) for lex_path in self.lex_paths]
@@ -45,6 +47,7 @@ class ProcessKinectLog:
 		## Create dictionary representation
 		self.av_keys = ['gest_time', 'init_cmds', 'fin_cmds', 'ack_time', \
 						'selected_cmd', 'is_more_cmds', 'syn_time']
+		## HARD CODED !!!
 		self.av_ids = [(0, 1), (2, 2+5), (12, 12+5), (17, 18), 19, 20, (21, 22)]
 		self.gest_time_key = 'gest_time'
 		self.init_cmds_key = 'init_cmds'
@@ -59,18 +62,26 @@ class ProcessKinectLog:
 		npz_dict = np.load(self.vac_path)
 		self.vac_scores_dict = {}
 		for lex_id, lex_name in zip(self.lex_ids, self.lex_names):
-			self.vac_scores_dict[lex_name] = npz_dict['scores_reduced'][:, lex_id, :]
+			# lex_id starts from one. so substracting one. 
+			self.vac_scores_dict[lex_name] = npz_dict['scores_reduced'][:, lex_id-1, :]
 		self.vac_names = npz_dict['vacs']
 		if(self.debug): 
 			print('Information related to npz dict')
 			print('Keys: ', npz_dict.keys())
 			print('Reduced command IDs: ', npz_dict['reduced_cmd_ids'])
 
-		self.process(ext = '*_kthreelog.txt')
-		self.process2(ext = '*_annotfs*.txt')
-		self.process2(ext = '*_annote*.txt')
+		# self.process(ext = '*_kthreelog.txt')
+		# self.process2(ext = '*_annotfs*.txt')
+		# self.process2(ext = '*_annote*.txt')
 
 	def custom_normalize(self, usa_dict):
+		'''
+		Description:
+			Normalize w.r.t the command. 
+		Input arguments:
+			usa_dict - dictionary
+			{'L2': [1D np.array of 20 values], 'L3': [list of 20 values], ...}
+		'''
 		usa_dict = deepcopy(usa_dict)
 		for cmd_idx, cmd_name in enumerate(self.cmd_names):
 			cmd_arr = np.array([usa_dict[lex_name][cmd_idx] for lex_name in self.lex_names])
@@ -78,17 +89,27 @@ class ProcessKinectLog:
 			for _idx, lex_name in enumerate(self.lex_names): usa_dict[lex_name][cmd_idx] = cmd_arr[_idx]
 		return usa_dict
 
-	def regress(self, X1, X2):
-		## TODO: This function works only when X1 is one dimensional and X2 can be 2D. 
-		results_ols = sm.OLS(X1, X2).fit()
-		print('OLS Results: ')
-		print(results_ols.summary())
-		rlm_model = sm.RLM(X1, X2, M=sm.robust.norms.HuberT())
-		rlm_results = rlm_model.fit()
-		print('RLM Results: ')
-		print(rlm_results.summary())
+	def regress(self, X1, X2, method = 'ols'):
+		## TODO: This function works only when X1 is one dimensional and X2 can be 2D.
+		if(method == 'ols'):
+			results_ols = sm.OLS(X1, X2).fit()
+			print('OLS Results: ')
+			print(results_ols.summary())
+		elif(method == 'rlm'):
+			rlm_model = sm.RLM(X1, X2, M=sm.robust.norms.HuberT())
+			rlm_results = rlm_model.fit()
+			print('RLM Results: ')
+			print(rlm_results.summary())
 
 	def combine_lexs(self, data_dict):
+		'''
+		Description:
+		Input arguments:
+			data_dict - dictionary
+			{'L2': [1D np.array of 20 values], 'L3': [list of 20 values], ...}
+		Return: 
+			Concatenating those 1D np.array s together. Returns a list of 80 values. 
+		'''		
 		data = []
 		for lex_idx, lex_name in enumerate(self.lex_names):
 			data += data_dict[lex_name].tolist()
@@ -96,6 +117,13 @@ class ProcessKinectLog:
 		return data
 
 	def create_fslog_dict(self, raw_data):
+		'''
+		Input arguments: raw_data
+			list of sublists. Each sublist contains the values present in each row of _annotfs*.txt or _annote*.txt
+		Return: dictionary
+			{gesture_id: [True, False, ...], gesture_id: [True, False, ...]}
+			True indicates the focus shift and False otherwise. 
+		'''		
 		raw_dict = {}
 		for line in raw_data:
 			if line[0] not in raw_dict: raw_dict[line[0]] = []
@@ -103,6 +131,12 @@ class ProcessKinectLog:
 		return raw_dict
 
 	def create_kstarlog_dict(self, raw_data):
+		'''
+		Input arguments: raw_data
+			list of sublists. Each sublist contains the values present in each row of *_k*log.txt
+		Return: dictionary
+			{0: {av_key: value, av_key: value, ...}, 1: {av_key: value, av_key: value, ...}, ...}
+		'''
 		raw_dict = {}
 		for idx, line in enumerate(raw_data):
 			raw_dict[idx] = {}
@@ -125,7 +159,7 @@ class ProcessKinectLog:
 	def compute_fs(self, raw_dict):
 		avg_fs_dict = {}
 		std_fs_dict = {}
-		freq_dict = {}
+		freq_dict = {} # No. of times the gesture is used
 		for key, value in raw_dict.items():
 			avg_fs_dict[key] = np.mean(value)
 			std_fs_dict[key] = np.std(value)
@@ -167,6 +201,7 @@ class ProcessKinectLog:
 		return ex_dict2
 
 	def combine_con_mod(self, avg_time_dict):
+		## Combine the context and mofidier usability indices.
 		context_dict = {}
 		modifier_dict = {}
 		for key in avg_time_dict.keys():
@@ -184,7 +219,7 @@ class ProcessKinectLog:
 
 		return modifier_dict
 
-	def process(self, ext = '*_ktwolog.txt'):
+	def process(self, ext = '*_ktwolog.txt', flag = True):
 		usa_dict = {} # Dictionary containing the time taken for each command
 		for lex_name, lex_path in zip(self.lex_names, self.lex_paths):
 			txt_files = glob(join(lex_path, ext))
@@ -196,10 +231,16 @@ class ProcessKinectLog:
 					raw_data += [line.strip().split(',') for line in fp.readlines()]
 
 			## Transform raw data into dictionary with the keys present in self.av_keys
-			raw_dict = self.create_kstarlog_dict(raw_data)
+			if('log' in ext):
+				raw_dict = self.create_kstarlog_dict(raw_data)
+			elif('annot' in ext):
+				raw_dict = self.create_fslog_dict(raw_data)
 			## Compute average time for each gesture id in that lexicon
 			# Gesture IDs are keys in the dict
-			avg_dict, std_dict, freq_dict = self.compute_avg_time(raw_dict)
+			if('log' in ext):
+				avg_dict, std_dict, freq_dict = self.compute_avg_time(raw_dict)
+			elif('annot' in ext):
+				avg_dict, std_dict, freq_dict = self.compute_fs(raw_dict)
 			# print(lex_name, len(raw_dict))
 			## Combine context and modifiers
 			final_dict = self.combine_con_mod(avg_dict)
@@ -228,9 +269,14 @@ class ProcessKinectLog:
 		vac_data = self.combine_lexs(self.vac_scores_dict)
 		usa_data = self.combine_lexs(usa_dict)
 
+		if(flag and self.normalize): usa_data -= 1
+
+		# regress(y, X) # y is 1D np.ndarray. X is 2D np.ndarray
+		# vac_data = np.random.uniform(0, 1, (80, 6))
+		# usa_data = np.random.uniform(0, 1, (80, ))
 		self.regress(usa_data, vac_data)
 
-		# vac_idx = 5
+		# vac_idx = 0
 		# cmd_idx = -1
 		# markers = ['<', '>', 's', 'p']
 		# colors = ['red', 'red', 'green', 'green']
@@ -248,47 +294,12 @@ class ProcessKinectLog:
 
 		return usa_data, vac_data
 
-	def process2(self, ext = '*_annotfs*.txt'):
-		usa_dict = {} # Dictionary containing the time taken for each command
-		for lex_name, lex_path in zip(self.lex_names, self.lex_paths):
-			txt_files = glob(join(lex_path, ext))
-
-			## Read data from the *_annotfs*.txt files
-			raw_data = []
-			for txt_file in txt_files:
-				with open(txt_file, 'r') as fp:
-					raw_data += [line.strip().split(',') for line in fp.readlines()]
-
-			## Transform raw data into dictionary with the keys present in self.av_keys
-			raw_dict = self.create_fslog_dict(raw_data)
-			## Compute average time for each gesture id in that lexicon
-			# Gesture IDs are keys in the dict
-			avg_dict, std_dict, freq_dict = self.compute_fs(raw_dict)
-			## Combine context and modifiers
-			final_dict = self.combine_con_mod(avg_dict)
-			# print('Before Len: ', len(final_dict))
-			final_dict = self.complete_missing_keys(final_dict, remove_keys = ['10_1'])
-			# print('After Len: ', len(final_dict))
-
-			## Sort the keys based on commands ids
-			keys = final_dict.keys()
-			cmds = sorted(keys, cmp = class_str_cmp)
-			cmds_arr = []
-			# print(lex_name, cmds)
-			for key in cmds:
-				cmds_arr.append(final_dict[key])
-
-			## This dictionary contains a key for lexicon id
-			usa_dict[lex_name] = np.array(cmds_arr)
-
-		if(self.normalize): usa_dict = self.custom_normalize(usa_dict)
-
-		vac_data = self.combine_lexs(self.vac_scores_dict)
-		usa_data = self.combine_lexs(usa_dict)
-
+	def random_test(self):
+		vac_data = np.random.uniform(0, 1, (8000, ))
+		usa_data = np.random.uniform(0, 1, (8000, ))
+		# plt.scatter(usa_data, vac_data)
+		# plt.show()
 		self.regress(usa_data, vac_data)
-
-		return usa_data, vac_data
 
 	def annotation_statistics(self):
 		fs_exts = ['*annotfsa.txt', '*annotfsd.txt', '*annotfsn.txt']
@@ -314,14 +325,27 @@ if(__name__ == '__main__'):
 	npz_path = r'scores.npz'
 	pobj = ProcessKinectLog(lex_paths, npz_path, \
 		best_lex_names = best_lex_names, worst_lex_names = worst_lex_names,\
-		cmds_path = 'reduced_commands.json')
+		cmds_path = 'reduced_commands.json', normalize = True)
+
+	print('Random test')
+	pobj.random_test()
 
 	## Combining THREE usability metrics
+	print('Acutal Usability Metrics')
 	time_data, vac_data = pobj.process(ext = '*_kthreelog.txt')
-	fs_data, _ = pobj.process2(ext = '*_annotfs*.txt')
-	e_data, _ = pobj.process2(ext = '*_annote*.txt')
+	fs_data, _ = pobj.process(ext = '*_annotfs*.txt')
+	e_data, _ = pobj.process(ext = '*_annote*.txt')
 
-	## Total usability data
-	usa_data = np.array([time_data, fs_data, e_data]).T
+	# print(time_data.shape, vac_data.shape)
+	# print(fs_data.shape)
+	# print(e_data.shape)
 
-	pobj.annotation_statistics()
+	# ## Total usability data
+	# # This would give 80 x 3 np.ndarray
+	# usa_data = np.array([time_data, fs_data, e_data]).T
+	# pobj.regress(usa_data, vac_data)
+
+	# pobj.annotation_statistics()
+
+	## Things that are worrying: 
+	# 1. For these two settings (2,3,6,8) and (1,2,5,7), the R^2 is pretty good. 
