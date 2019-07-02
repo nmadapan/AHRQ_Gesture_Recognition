@@ -1,7 +1,0 @@
-2018-07-30 15:05:32.716000
-
-6_0_S1_L2_Pan_X.xef :  [num_images: 1661, video_time: 89.1850000648, FPS: 18]
-10_0_S4_L2_Layout_X.xef :  [num_images: 2307, video_time: 150.397000164, FPS: 15]
-10_1_S4_L2_X_OnePanel.xef :  [num_images: 2541, video_time: 151.162000185, FPS: 16]
-10_2_S4_L2_X_TwoPanels.xef :  [num_images: 2641, video_time: 151.891000128, FPS: 17]
-10_3_S4_L2_X_ThreePanels.xef : 

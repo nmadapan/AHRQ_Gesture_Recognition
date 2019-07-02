@@ -212,8 +212,9 @@ class Realtime:
 
 	def recognize_speech(self, timeout = 3):
 		timestamps = [None, None]
+		success = True
 		timestamps[0] = time.time()
-		print('device id: ', DEVICE_ID)
+
 		with sr.Microphone(device_index = DEVICE_ID, sample_rate = SAMPLE_RATE,
 							chunk_size = CHUNK_SIZE) as source:
 			self.sr_obj.adjust_for_ambient_noise(source)
@@ -222,16 +223,39 @@ class Realtime:
 			print('listened: ', end = '')
 			## TODO: Figure out what do when exceptions happen.
 			## TODO: Figure out what timestamps to send.
+<<<<<<< HEAD
 			pred_word = self.sr_obj.recognize(audio)
 			if(pred_word is None):
+=======
+			try:
+				pred_word = self.sr_obj.recognize_google(audio)
+				print(pred_word)
+			except sr.UnknownValueError:
+				print("Google Speech Recognition could not understand audio")
+<<<<<<< HEAD
+				success = False
+			except sr.RequestError as e:
+				print("Could not request results from Google speech Recognition service; {0}".format(e))
+				success = False
+=======
 				return '1_1', 'Upward', '1_1,1_2,4_1,4_2,5_1'
+			except sr.RequestError as e:
+				print("Could not request results from Google speech Recognition service; {0}".format(e))
+>>>>>>> 381e7225ffd031d1dfaeb25d3464f9e9a1b59cca
+				return '1_1', 'Upward', '1_1,1_2,4_1,4_2,5_1'
+>>>>>>> e6cd4a78a173c971260d4e034c4f1cd852f8e799
 
-		timestamps[1] = time.time()
-		top_k_labels, top_match_words = self.match_word(pred_word)
+		if(success):
+			timestamps[1] = time.time()
+			top_k_labels, top_match_words = self.match_word(pred_word)
+			top_k_labels_str = ','.join(top_k_labels)
+			return top_k_labels[0], top_match_words[0], top_k_labels_str, timestamps
+		else:
+			return None, None, '', [None, None]
 
-		top_k_labels_str = ','.join(top_k_labels)
-
-		return top_k_labels[0], top_match_words[0], top_k_labels_str, timestamps
+	def play(self, text):
+		# Play the text here. 
+		pass
 
 	def th_synapse(self):
 		#
@@ -282,6 +306,10 @@ class Realtime:
 			# Perform the speech recognition
 			label, cname, top_k_labels_str, timestamps = self.recognize_speech()
 
+			if(label is None):
+				self.play('Please repeat the word again')
+				continue
+
 			# Appending time stamps of start and end skeleton frame
 			print(top_k_labels_str)
 			top_k_labels_str = ','.join(map(str, [timestamps[0], timestamps[-1], top_k_labels_str]))
@@ -310,6 +338,11 @@ class Realtime:
 if(__name__ == '__main__'):
 	rt = Realtime()
 	# rt.run()
+<<<<<<< HEAD
+	print(rt.recognize_speech())
+	# print(rt.match_word('2 panels'))
+=======
 	while True:
 		print(rt.recognize_speech())
 		time.sleep(1)
+>>>>>>> e6cd4a78a173c971260d4e034c4f1cd852f8e799

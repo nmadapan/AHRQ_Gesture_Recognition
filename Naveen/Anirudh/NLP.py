@@ -11,7 +11,6 @@ import pandas as pd
 
 
 # In[18]:
-
 mic_name = u'Microphone (Logitech Wireless H' #Define your microphone
 
 def spch():
@@ -31,6 +30,8 @@ def spch():
 	for i, microphone_name in enumerate(mic_list):
 		if microphone_name == mic_name:
 			device_id = i
+
+	print('Device ID: ', device_id)
 
 	with sr.Microphone(device_index = device_id, sample_rate = sample_rate,
 							chunk_size = chunk_size) as source:
