@@ -223,27 +223,8 @@ class Realtime:
 			print('listened: ', end = '')
 			## TODO: Figure out what do when exceptions happen.
 			## TODO: Figure out what timestamps to send.
-<<<<<<< HEAD
-			pred_word = self.sr_obj.recognize(audio)
-			if(pred_word is None):
-=======
-			try:
-				pred_word = self.sr_obj.recognize_google(audio)
-				print(pred_word)
-			except sr.UnknownValueError:
-				print("Google Speech Recognition could not understand audio")
-<<<<<<< HEAD
-				success = False
-			except sr.RequestError as e:
-				print("Could not request results from Google speech Recognition service; {0}".format(e))
-				success = False
-=======
-				return '1_1', 'Upward', '1_1,1_2,4_1,4_2,5_1'
-			except sr.RequestError as e:
-				print("Could not request results from Google speech Recognition service; {0}".format(e))
->>>>>>> 381e7225ffd031d1dfaeb25d3464f9e9a1b59cca
-				return '1_1', 'Upward', '1_1,1_2,4_1,4_2,5_1'
->>>>>>> e6cd4a78a173c971260d4e034c4f1cd852f8e799
+			pred_word = self.recognize(audio)
+			if(pred_word is None): success = False
 
 		if(success):
 			timestamps[1] = time.time()
@@ -337,12 +318,9 @@ class Realtime:
 
 if(__name__ == '__main__'):
 	rt = Realtime()
-	# rt.run()
-<<<<<<< HEAD
-	print(rt.recognize_speech())
-	# print(rt.match_word('2 panels'))
-=======
-	while True:
-		print(rt.recognize_speech())
-		time.sleep(1)
->>>>>>> e6cd4a78a173c971260d4e034c4f1cd852f8e799
+	rt.run()
+	# print(rt.recognize_speech())
+	# # print(rt.match_word('2 panels'))
+	# while True:
+	# 	print(rt.recognize_speech())
+	# 	time.sleep(1)

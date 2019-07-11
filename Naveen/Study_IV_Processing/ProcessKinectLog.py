@@ -16,6 +16,8 @@ from helpers import *
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
+from scipy.stats import linregress
+
 class ProcessKinectLog:
 	def __init__(self, lex_paths, scores_npz_path, best_lex_names, \
 				worst_lex_names, cmds_path = 'reduced_commands.json', normalize = True, debug = False):
@@ -100,6 +102,11 @@ class ProcessKinectLog:
 			rlm_results = rlm_model.fit()
 			print('RLM Results: ')
 			print(rlm_results.summary())
+		elif(method == 'scipy'):
+			print(X1.shape, X2.shape)
+			for idx in range(X2.shape[1]):
+				slope, intercept, r_value, p_value, std_err = linregress(X1, X2[:, idx].flatten())
+				print('R^2 = ', r_value**2, ' p-value = ', p_value)
 
 	def combine_lexs(self, data_dict):
 		'''
@@ -219,7 +226,7 @@ class ProcessKinectLog:
 
 		return modifier_dict
 
-	def process(self, ext = '*_ktwolog.txt', flag = True):
+	def process(self, ext = '*_ktwolog.txt', flag = True, method = 'scipy'):
 		usa_dict = {} # Dictionary containing the time taken for each command
 		for lex_name, lex_path in zip(self.lex_names, self.lex_paths):
 			txt_files = glob(join(lex_path, ext))
@@ -259,7 +266,10 @@ class ProcessKinectLog:
 			## This dictionary contains a key for lexicon id
 			usa_dict[lex_name] = np.array(cmds_arr)
 
-		if(self.normalize): usa_dict = self.custom_normalize(usa_dict)
+		if(self.normalize): 
+			usa_dict = self.custom_normalize(usa_dict)
+			## VAC Normalization is not making any difference.
+			# self.vac_scores_dict = self.custom_normalize(self.vac_scores_dict)
 
 		# for idx, lex_name in enumerate(self.lex_names):
 		# 	print(lex_name)
@@ -274,7 +284,7 @@ class ProcessKinectLog:
 		# regress(y, X) # y is 1D np.ndarray. X is 2D np.ndarray
 		# vac_data = np.random.uniform(0, 1, (80, 6))
 		# usa_data = np.random.uniform(0, 1, (80, ))
-		self.regress(usa_data, vac_data)
+		self.regress(usa_data, vac_data, method = method)
 
 		# vac_idx = 0
 		# cmd_idx = -1
@@ -332,8 +342,11 @@ if(__name__ == '__main__'):
 
 	## Combining THREE usability metrics
 	print('Acutal Usability Metrics')
+	print('Gesture Time')
 	time_data, vac_data = pobj.process(ext = '*_kthreelog.txt')
+	print('\n\nFocus Shifts')
 	fs_data, _ = pobj.process(ext = '*_annotfs*.txt')
+	print('\n\nErrors')	
 	e_data, _ = pobj.process(ext = '*_annote*.txt')
 
 	# print(time_data.shape, vac_data.shape)
