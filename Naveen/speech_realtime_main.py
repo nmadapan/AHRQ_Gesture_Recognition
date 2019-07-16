@@ -23,7 +23,7 @@ from CustomSocket import Client
 ################################
 
 ## TCP/IP of Mac Computer - Synapse
-IP_SYNAPSE = '172.24.36.116' # IP of computer that is running Synapse  # Param for pilot
+IP_SYNAPSE = '128.46.125.212' # IP of computer that is running Synapse  # Param for pilot
 PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port  # Param for pilot
 
 ## TCP/IP of Mac Computer - Keyboard
@@ -31,8 +31,8 @@ IP_KB = IP_SYNAPSE
 PORT_KB = 6000
 
 ## Flags
-ENABLE_SYNAPSE_SOCKET = False
-ENABLE_KB_SOCKET = False
+ENABLE_SYNAPSE_SOCKET = True
+ENABLE_KB_SOCKET = True
 DEBUG = False
 
 ## IMPORTANT
