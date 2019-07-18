@@ -23,7 +23,7 @@ from CustomSocket import Client
 ################################
 
 ## TCP/IP of Mac Computer - Synapse
-IP_SYNAPSE = '128.46.125.212' # IP of computer that is running Synapse  # Param for pilot
+IP_SYNAPSE = '10.186.44.70' # IP of computer that is running Synapse  # Param for pilot
 PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port  # Param for pilot
 
 ## TCP/IP of Mac Computer - Keyboard
@@ -36,9 +36,9 @@ ENABLE_KB_SOCKET = True
 DEBUG = False
 
 ## IMPORTANT
-NSUBJECT_ID = 'S13'
-LEXICON_ID = 'L6' # Param for pilot # Set LEXICON_ID to 24 for speech.
-TASK_ID = 'T2' # Param for pilot
+NSUBJECT_ID = 'S9992'
+LEXICON_ID = 'L24' # Param for pilot # Set LEXICON_ID to 24 for speech.
+TASK_ID = 'T1' # Param for pilot
 
 ## Speech Recognition
 MIC_NAME = u'Microphone (Logitech Wireless H'
@@ -47,9 +47,9 @@ CHUNK_SIZE = 2048
 
 ## DATA PATHS
 # Path to json file consiting of list of command ids and command names
-CMD_JSON_PATH  = 'commands.json'
 SPEECH_CMD_JSON_PATH = 'speech_commands.json'
-LOG_FILE_PATH = r'.\\Backup\\test\\' + NSUBJECT_ID + '_' + LEXICON_ID + '_' + TASK_ID + '.txt'
+TASK_CMD_JSON_PATH = os.path.join('Commands', 'commands_' + TASK_ID + '.json')
+LOG_FILE_PATH = r'.\\Backup\\test\\' + NSUBJECT_ID + '_' + LEXICON_ID + '_' + TASK_ID + '_konelog.txt'
 
 ###############################
 
@@ -81,8 +81,8 @@ def print_global_constants():
 	print('SUBJECT ID: ', NSUBJECT_ID)
 	print('TASK ID: ', TASK_ID)
 
-	print('\nPath to commands json file: ', CMD_JSON_PATH, end = ' --> ')
-	cmd_flag = os.path.isfile(CMD_JSON_PATH)
+	print('\nPath to commands json file: ', SPEECH_CMD_JSON_PATH, end = ' --> ')
+	cmd_flag = os.path.isfile(SPEECH_CMD_JSON_PATH)
 	print(cmd_flag)
 
 	return cmd_flag
@@ -119,10 +119,16 @@ class Realtime:
 		### DATA PATHS ####
 		###################
 		# Full list of commands
-		self.cmd_dict = json_to_dict(CMD_JSON_PATH)
+		self.speech_cmd_dict = json_to_dict(SPEECH_CMD_JSON_PATH)
 
 		## Commands/words used in speech
-		self.cmdid_to_words_dict = json_to_dict(SPEECH_CMD_JSON_PATH)
+		task_cmd_dict = json_to_dict(TASK_CMD_JSON_PATH)
+		final_dict = {}
+		for key in task_cmd_dict: 
+			if key in self.speech_cmd_dict:
+				final_dict[key] = self.speech_cmd_dict[key]
+
+		self.cmdid_to_words_dict = final_dict
 		self.words_to_cmdid_dict = {val: key for key, val in self.cmdid_to_words_dict.items()}
 		self.list_of_words = self.words_to_cmdid_dict.keys()
 
@@ -218,13 +224,14 @@ class Realtime:
 		with sr.Microphone(device_index = DEVICE_ID, sample_rate = SAMPLE_RATE,
 							chunk_size = CHUNK_SIZE) as source:
 			self.sr_obj.adjust_for_ambient_noise(source)
-			print("Say your command:")
+			print("Say your command")
 			audio = self.sr_obj.listen(source, phrase_time_limit = timeout)
 			print('listened: ', end = '')
 			## TODO: Figure out what do when exceptions happen.
 			## TODO: Figure out what timestamps to send.
 			pred_word = self.recognize(audio)
 			if(pred_word is None): success = False
+			print(pred_word)
 
 		if(success):
 			timestamps[1] = time.time()
@@ -253,7 +260,7 @@ class Realtime:
 				print('Synapse execution failed !!')
 				continue
 			# print(self.client_synapse.sock.send(self.command_to_execute))
-			# data = self.client_synapse.sock_recv(display = False)
+			# data = self.client_synapse.sock_recv(disy = False)
 
 			## Irrespective of whether synapse succeeded or failed, behave in the same way
 			# switch the same flags.
@@ -281,8 +288,9 @@ class Realtime:
 			if(self.fl_synapse_running): continue
 
 			## Communicate KB Server
-			flag = client_kb.send_data('data')
-			if(not flag): continue
+			flag = self.client_kb.send_data('data')
+			print('Obtained: ', flag)
+			if(flag == 'False'): continue
 
 			# Perform the speech recognition
 			label, cname, top_k_labels_str, timestamps = self.recognize_speech()
@@ -319,6 +327,7 @@ class Realtime:
 if(__name__ == '__main__'):
 	rt = Realtime()
 	rt.run()
+
 	# print(rt.recognize_speech())
 	# # print(rt.match_word('2 panels'))
 	# while True:

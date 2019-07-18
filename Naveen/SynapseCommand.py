@@ -80,7 +80,7 @@ class SynapseCommand():
 
     def verify_error(self, rcv_command):
         # Handling the case of an empty command
-        if rcv_command is None: return None
+        if rcv_command is None: return None, None
         #####################
         # Get the current synapse command based on the
         # context and the modifier.
