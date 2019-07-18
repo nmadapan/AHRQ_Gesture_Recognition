@@ -17,6 +17,9 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
 from scipy.stats import linregress
+from sklearn.svm import SVR
+from sklearn.metrics import r2_score
+from sklearn.tree import DecisionTreeRegressor
 
 class ProcessKinectLog:
 	def __init__(self, lex_paths, scores_npz_path, best_lex_names, \
@@ -31,6 +34,8 @@ class ProcessKinectLog:
 		self.normalize = normalize
 		# If True, there will be a lot of printing. 
 		self.debug = debug
+		self.method = None # Updated by the call to process()
+		self.model = None # Updated by the call to regress()
 
 		## Verify if the paths are authentic.
 		try:
@@ -62,10 +67,11 @@ class ProcessKinectLog:
 
 		## Reading the npz file
 		npz_dict = np.load(self.vac_path)
+		self.all_vac_scores = npz_dict['scores_reduced']
 		self.vac_scores_dict = {}
 		for lex_id, lex_name in zip(self.lex_ids, self.lex_names):
 			# lex_id starts from one. so substracting one. 
-			self.vac_scores_dict[lex_name] = npz_dict['scores_reduced'][:, lex_id-1, :]
+			self.vac_scores_dict[lex_name] = self.all_vac_scores[:, lex_id-1, :]
 		self.vac_names = npz_dict['vacs']
 		if(self.debug): 
 			print('Information related to npz dict')
@@ -91,22 +97,73 @@ class ProcessKinectLog:
 			for _idx, lex_name in enumerate(self.lex_names): usa_dict[lex_name][cmd_idx] = cmd_arr[_idx]
 		return usa_dict
 
-	def regress(self, X1, X2, method = 'ols'):
-		## TODO: This function works only when X1 is one dimensional and X2 can be 2D.
-		if(method == 'ols'):
-			results_ols = sm.OLS(X1, X2).fit()
-			print('OLS Results: ')
-			print(results_ols.summary())
-		elif(method == 'rlm'):
-			rlm_model = sm.RLM(X1, X2, M=sm.robust.norms.HuberT())
-			rlm_results = rlm_model.fit()
-			print('RLM Results: ')
-			print(rlm_results.summary())
-		elif(method == 'scipy'):
-			print(X1.shape, X2.shape)
-			for idx in range(X2.shape[1]):
-				slope, intercept, r_value, p_value, std_err = linregress(X1, X2[:, idx].flatten())
-				print('R^2 = ', r_value**2, ' p-value = ', p_value)
+	def regress(self, X1, X2, method = 'ols', train_per = 0.8):
+		'''
+			Description:
+				regress(y, X)
+		'''
+		## Update class variables
+		self.method = method
+
+		## Randomization
+		perm = np.random.permutation(X1.size)
+		K = int(train_per * X1.size)
+		tr_x, tr_y = X2[:K,:], X1[:K]
+		ts_x, ts_y = X2[K:,:], X1[K:]
+
+		self.train(tr_x, tr_y)
+		pred_tr_y = self.predict(tr_x)
+		tr_r2, _ = self.get_reg_scores(tr_y, pred_tr_y)
+		pred_ts_y = self.predict(ts_x)
+		r2, adj_r2 = self.get_reg_scores(ts_y, pred_ts_y)
+
+		print('Train R2 =', tr_r2, 'Test R2 =', r2, 'Test Adj R2 =', adj_r2)
+
+	def train(self, X, y):
+		if(self.method == 'ols'):
+			res = sm.OLS(y, X).fit()
+			self.model = res
+		elif(self.method == 'rlm'):
+			res = sm.RLM(y, X, M=sm.robust.norms.HuberT()).fit()
+			self.model = res			
+		elif(self.method == 'lstsq'):
+			W = np.linalg.lstsq(X, y, rcond = None)[0]
+			self.model = W
+		elif(self.method == 'svr'):
+			model = SVR(kernel = 'linear', C = 100) # , gamma = 0.1, epsilon = 0.1
+			model = model.fit(X, y)
+			self.model = model
+		elif(self.method == 'dt'):
+			model = DecisionTreeRegressor(max_depth = 4)
+			model.fit(X, y)
+			self.model = model
+		else:
+			sys.exit('Error! Wrong model name')
+
+	def predict(self, X):
+		if(self.method in ['ols', 'rlm']):
+			return np.dot(X, self.model.params)
+		elif(self.method == 'lstsq'):
+			return np.dot(X, self.model)
+		elif(self.method in ['svr', 'dt']):
+			return self.model.predict(X)
+		else:
+			sys.exit('Error! Wrong model name')
+
+	def find_best_lexicon(self):
+		res = []
+		for lex_id in range(self.all_vac_scores.shape[1]):
+			X = self.all_vac_scores[:,lex_id,:]
+			res.append(self.predict(X))
+		res = np.array(res).T
+		print(res)
+		print(1 + np.argmin(res, axis = 1))
+
+	def get_reg_scores(self, y_true, y_pred, dof = 6):
+		r2 = r2_score(y_true, y_pred)
+		N = y_true.size
+		adj_r2 = 1 - (1 - r2) * ((N-1)/(N-dof-1))
+		return np.round(r2, 2), np.round(adj_r2, 2)
 
 	def combine_lexs(self, data_dict):
 		'''
@@ -285,6 +342,7 @@ class ProcessKinectLog:
 		# vac_data = np.random.uniform(0, 1, (80, 6))
 		# usa_data = np.random.uniform(0, 1, (80, ))
 		self.regress(usa_data, vac_data, method = method)
+		self.find_best_lexicon()
 
 		# vac_idx = 0
 		# cmd_idx = -1
@@ -304,13 +362,6 @@ class ProcessKinectLog:
 
 		return usa_data, vac_data
 
-	def random_test(self):
-		vac_data = np.random.uniform(0, 1, (8000, ))
-		usa_data = np.random.uniform(0, 1, (8000, ))
-		# plt.scatter(usa_data, vac_data)
-		# plt.show()
-		self.regress(usa_data, vac_data)
-
 	def annotation_statistics(self):
 		fs_exts = ['*annotfsa.txt', '*annotfsd.txt', '*annotfsn.txt']
 		e_exts = ['*annotea.txt', '*annoted.txt', '*annoten.txt']
@@ -329,6 +380,7 @@ if(__name__ == '__main__'):
 	base_path = r'G:\AHRQ\Study_IV\RealData'
 	lex_names = ['L2', 'L6', 'L8', 'L3']
 	lex_paths = [join(base_path, lex_name) for lex_name in lex_names]
+	method = 'svr'
 
 	## scores.npz file has 'scores_reduced' key consisting of VAC data
 	# for only 20 commands present in the reduced_commands.json file. 
@@ -338,16 +390,18 @@ if(__name__ == '__main__'):
 		cmds_path = 'reduced_commands.json', normalize = True)
 
 	print('Random test')
-	pobj.random_test()
+	tr_x = np.random.rand(80, 6)
+	tr_y = np.random.rand(80)
+	pobj.regress(tr_y, tr_x, method = method)
 
 	## Combining THREE usability metrics
 	print('Acutal Usability Metrics')
 	print('Gesture Time')
-	time_data, vac_data = pobj.process(ext = '*_kthreelog.txt')
-	print('\n\nFocus Shifts')
-	fs_data, _ = pobj.process(ext = '*_annotfs*.txt')
-	print('\n\nErrors')	
-	e_data, _ = pobj.process(ext = '*_annote*.txt')
+	time_data, vac_data = pobj.process(ext = '*_kthreelog.txt', method = method)
+	print('Focus Shifts')
+	fs_data, _ = pobj.process(ext = '*_annotfs*.txt', method = method)
+	print('Errors')	
+	e_data, _ = pobj.process(ext = '*_annote*.txt', method = method)
 
 	# print(time_data.shape, vac_data.shape)
 	# print(fs_data.shape)
