@@ -23,7 +23,7 @@ from CustomSocket import Client
 ################################
 
 ## TCP/IP of Mac Computer - Synapse
-IP_SYNAPSE = '172.24.36.116' # IP of computer that is running Synapse  # Param for pilot
+IP_SYNAPSE = '10.186.44.70' # IP of computer that is running Synapse  # Param for pilot
 PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port  # Param for pilot
 
 ## TCP/IP of Mac Computer - Keyboard
@@ -31,14 +31,14 @@ IP_KB = IP_SYNAPSE
 PORT_KB = 6000
 
 ## Flags
-ENABLE_SYNAPSE_SOCKET = False
-ENABLE_KB_SOCKET = False
+ENABLE_SYNAPSE_SOCKET = True
+ENABLE_KB_SOCKET = True
 DEBUG = False
 
 ## IMPORTANT
-NSUBJECT_ID = 'S13'
-LEXICON_ID = 'L6' # Param for pilot # Set LEXICON_ID to 24 for speech.
-TASK_ID = 'T2' # Param for pilot
+NSUBJECT_ID = 'S9992'
+LEXICON_ID = 'L24' # Param for pilot # Set LEXICON_ID to 24 for speech.
+TASK_ID = 'T1' # Param for pilot
 
 ## Speech Recognition
 MIC_NAME = u'Microphone (Logitech Wireless H'
@@ -47,9 +47,9 @@ CHUNK_SIZE = 2048
 
 ## DATA PATHS
 # Path to json file consiting of list of command ids and command names
-CMD_JSON_PATH  = 'commands.json'
 SPEECH_CMD_JSON_PATH = 'speech_commands.json'
-LOG_FILE_PATH = r'.\\Backup\\test\\' + NSUBJECT_ID + '_' + LEXICON_ID + '_' + TASK_ID + '.txt'
+TASK_CMD_JSON_PATH = os.path.join('Commands', 'commands_' + TASK_ID + '.json')
+LOG_FILE_PATH = r'.\\Backup\\test\\' + NSUBJECT_ID + '_' + LEXICON_ID + '_' + TASK_ID + '_konelog.txt'
 
 ###############################
 
@@ -81,8 +81,8 @@ def print_global_constants():
 	print('SUBJECT ID: ', NSUBJECT_ID)
 	print('TASK ID: ', TASK_ID)
 
-	print('\nPath to commands json file: ', CMD_JSON_PATH, end = ' --> ')
-	cmd_flag = os.path.isfile(CMD_JSON_PATH)
+	print('\nPath to commands json file: ', SPEECH_CMD_JSON_PATH, end = ' --> ')
+	cmd_flag = os.path.isfile(SPEECH_CMD_JSON_PATH)
 	print(cmd_flag)
 
 	return cmd_flag
@@ -119,10 +119,16 @@ class Realtime:
 		### DATA PATHS ####
 		###################
 		# Full list of commands
-		self.cmd_dict = json_to_dict(CMD_JSON_PATH)
+		self.speech_cmd_dict = json_to_dict(SPEECH_CMD_JSON_PATH)
 
 		## Commands/words used in speech
-		self.cmdid_to_words_dict = json_to_dict(SPEECH_CMD_JSON_PATH)
+		task_cmd_dict = json_to_dict(TASK_CMD_JSON_PATH)
+		final_dict = {}
+		for key in task_cmd_dict: 
+			if key in self.speech_cmd_dict:
+				final_dict[key] = self.speech_cmd_dict[key]
+
+		self.cmdid_to_words_dict = final_dict
 		self.words_to_cmdid_dict = {val: key for key, val in self.cmdid_to_words_dict.items()}
 		self.list_of_words = self.words_to_cmdid_dict.keys()
 
@@ -186,34 +192,58 @@ class Realtime:
 
 		return top_k_labels, top_match_words
 
+	def recognize(self, audio):
+		'''
+			Recognizes the audio first using google and then using sphinx if google API fails. 
+		'''
+		pred_word = None
+		flag = False
+		try:
+			pred_word = self.sr_obj.recognize_google(audio)
+			flag = True
+		except sr.UnknownValueError:
+			print("Google Speech Recognition could not understand audio")
+		except sr.RequestError as e:
+			print("Could not request results from Google speech Recognition service; {0}".format(e))
+
+		if(flag): return pred_word
+
+		try:
+			pred_word = self.sr_obj.recognize_sphinx(audio)
+			flag = True
+		except sr.UnknownValueError:
+			print("Sphinx could not understand audio")
+
+		return pred_word
+
 	def recognize_speech(self, timeout = 3):
 		timestamps = [None, None]
+		success = True
 		timestamps[0] = time.time()
-		print('device id: ', DEVICE_ID)
+
 		with sr.Microphone(device_index = DEVICE_ID, sample_rate = SAMPLE_RATE,
 							chunk_size = CHUNK_SIZE) as source:
 			self.sr_obj.adjust_for_ambient_noise(source)
-			print("Say your command:")
+			print("Say your command")
 			audio = self.sr_obj.listen(source, phrase_time_limit = timeout)
 			print('listened: ', end = '')
 			## TODO: Figure out what do when exceptions happen.
 			## TODO: Figure out what timestamps to send.
-			try:
-				pred_word = self.sr_obj.recognize_google(audio)
-				print(pred_word)
-			except sr.UnknownValueError:
-				print("Google Speech Recognition could not understand audio")
-				return '1_1', 'Upward', '1_1,1_2,4_1,4_2,5_1'
-			except sr.RequestError as e:
-				print("Could not request results from Google speech Recognition service; {0}".format(e))
-				return '1_1', 'Upward', '1_1,1_2,4_1,4_2,5_1'
+			pred_word = self.recognize(audio)
+			if(pred_word is None): success = False
+			print(pred_word)
 
-		timestamps[1] = time.time()
-		top_k_labels, top_match_words = self.match_word(pred_word)
+		if(success):
+			timestamps[1] = time.time()
+			top_k_labels, top_match_words = self.match_word(pred_word)
+			top_k_labels_str = ','.join(top_k_labels)
+			return top_k_labels[0], top_match_words[0], top_k_labels_str, timestamps
+		else:
+			return None, None, '', [None, None]
 
-		top_k_labels_str = ','.join(top_k_labels)
-
-		return top_k_labels[0], top_match_words[0], top_k_labels_str, timestamps
+	def play(self, text):
+		# Play the text here. 
+		pass
 
 	def th_synapse(self):
 		#
@@ -258,11 +288,16 @@ class Realtime:
 			if(self.fl_synapse_running): continue
 
 			## Communicate KB Server
-			flag = client_kb.send_data('data')
-			if(not flag): continue
+			flag = self.client_kb.send_data('data')
+			print('Obtained: ', flag)
+			if(flag == 'False'): continue
 
 			# Perform the speech recognition
 			label, cname, top_k_labels_str, timestamps = self.recognize_speech()
+
+			if(label is None):
+				self.play('Please repeat the word again')
+				continue
 
 			# Appending time stamps of start and end skeleton frame
 			print(top_k_labels_str)
@@ -291,7 +326,10 @@ class Realtime:
 
 if(__name__ == '__main__'):
 	rt = Realtime()
-	# rt.run()
-	while True:
-		print(rt.recognize_speech())
-		time.sleep(1)
+	rt.run()
+
+	# print(rt.recognize_speech())
+	# # print(rt.match_word('2 panels'))
+	# while True:
+	# 	print(rt.recognize_speech())
+	# 	time.sleep(1)

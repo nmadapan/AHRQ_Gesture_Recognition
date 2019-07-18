@@ -43,6 +43,13 @@ class SynapseServer(Server):
 					break
 
 if __name__ == '__main__':
+	################
+	## HOW TO RUN ##
+	################
+	# IF RUNNING IN MAC
+	# ``workon synapse_python2``
+	# ``sudo su``
+	# ``python -l L6 -f \Logfile\S1_L2_T2_ktwolog.txt -c Commands\commands_t1.json``
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-l', action="store", dest="lexicon",
 			help="Lexicon number. eg= L3, L6", default='L3')

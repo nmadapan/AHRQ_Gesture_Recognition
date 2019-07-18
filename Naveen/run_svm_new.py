@@ -21,7 +21,7 @@ plt.ioff()
 ##########################
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", "--lexicon_id",
-					default = r'L11',
+					default = r'L2',
 					help=("Lexicon ID. Note that this is a string. For ex: L6"))
 parser.add_argument("-t", "--task_id",
 					default = r'T2',

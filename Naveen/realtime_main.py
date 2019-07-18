@@ -21,7 +21,7 @@ from CustomSocket import Client
 ################################
 
 ## TCP/IP of Synapse Computer
-IP_SYNAPSE = '172.24.36.116' # IP of computer that is running Synapse  # Param for pilot
+IP_SYNAPSE = '10.186.44.70' # IP of computer that is running Synapse  # Param for pilot
 PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port  # Param for pilot
 
 ## TCP/IP of CPM Computer
@@ -34,9 +34,9 @@ ENABLE_CPM_SOCKET = False # Param for pilot
 DEBUG = False
 
 ## IMPORTANT
-NSUBJECT_ID = 'S13'
-LEXICON_ID = 'L10' # Param for pilot
-TASK_ID = 'T2' # Param for pilot
+NSUBJECT_ID = 'S9991'
+LEXICON_ID = 'L6' # Param for pilot
+TASK_ID = 'T1' # Param for pilot
 
 ## If a gesture has less than 20 frames ignore.
 MIN_FRAMES_IN_GESTURE = 20
@@ -56,7 +56,7 @@ TRAINED_PKL_PATH = 'G:\\AHRQ\\Study_IV\\NewData2\\' + PKL_SUFFIX
 CMD_JSON_PATH  = 'commands.json'
 # Path where to write images so that CPM can read from this path.
 BASE_WRITE_DIR = r'C:\Users\Rahul\convolutional-pose-machines-tensorflow-master\test_imgs'
-LOG_FILE_PATH = r'.\\Backup\\test\\' + NSUBJECT_ID + '_' + LEXICON_ID + '_' + TASK_ID + '.txt'
+LOG_FILE_PATH = r'.\\Backup\\test\\' + NSUBJECT_ID + '_' + LEXICON_ID + '_' + TASK_ID + '_konelog.txt'
 
 ###############################
 
