@@ -32,7 +32,7 @@ class KBServer(Server):
 		
 		# Keys present on the acknowledgement pad. Each button the pad is mapped
 		# to a key stroke using software known as "Enjoy" on Mac. 
-		self.ack_keys = ['1', '2', '3', '4', 'x', 'y']
+		self.ack_keys = ['y']
 
 		# If True, foot is on the pad.
 		self.kb_status = False
@@ -68,7 +68,7 @@ class KBServer(Server):
 if __name__ == '__main__':
 	#### Variables #######
 	tcp_ip = socket.gethostbyname(socket.gethostname())
-	# tcp_ip='192.168.0.100'
+        tcp_ip='10.186.44.70'
 	# tcp_ip = 'localhost'
 	# print(tcp_ip)
 	tcp_port = 6000
