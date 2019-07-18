@@ -48,19 +48,21 @@ if __name__ == '__main__':
 			help="Lexicon number. eg= L3, L6", default='L3')
 	parser.add_argument('-f', action="store", dest="filepath",
 			help="path of file where you want the data of\
-			the user stored", default='test')
+			the user stored", default='test.txt')
 	parser.add_argument('-s', action="store", dest="syn_path",
 			help="Path to the SCA synapse folder",
 			default=DEFAULT_PATH)
-	parser.add_argument('-c', action="store", dest="command_file",
-			help="command file", required=True)
+	parser.add_argument('-t', action="store", dest="task_id",
+			help="task id. eg: t1 or t2", required=True)
 	# parser.add_argument('-t',action="store", dest="use_thread",
 			# type=bool, default=True)
 	args = parser.parse_args()
 
+	command_file = os.path.join('Commands', 'commands_'+args.task_id+'.json')
+
 	#### Variables #######
 	tcp_ip = socket.gethostbyname(socket.gethostname())
-	tcp_ip='192.168.0.100'
+	tcp_ip='10.186.44.70'
 	# tcp_ip = 'localhost'
 	# print(tcp_ip)
 	tcp_port = 9000
@@ -75,4 +77,4 @@ if __name__ == '__main__':
 		# server_thread.start()
 	# else:
 		# print "HERE"
-	server.run(lexicon=args.lexicon, commandFile=args.command_file, filename=args.filepath, syn_path=args.syn_path)
+	server.run(lexicon=args.lexicon, commandFile=command_file, filename=args.filepath, syn_path=args.syn_path)

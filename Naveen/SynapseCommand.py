@@ -24,7 +24,7 @@ class SynapseCommand():
 
         # Gesture desambiguation lists
         data_folder = os.path.join('..',"Data")
-	print "WORKING WITH " + lexicon
+        print "WORKING WITH " + lexicon
         # Context commands
         self.context_list = file_to_list(os.path.join(data_folder,lexicon+"_context.txt"))
         # Flatten the list
@@ -80,7 +80,7 @@ class SynapseCommand():
 
     def verify_error(self, rcv_command):
         # Handling the case of an empty command
-        if rcv_command is None: return None
+        if rcv_command is None: return None, None
         #####################
         # Get the current synapse command based on the
         # context and the modifier.

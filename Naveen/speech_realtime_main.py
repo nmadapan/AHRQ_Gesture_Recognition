@@ -230,7 +230,7 @@ class Realtime:
 				print('Synapse execution failed !!')
 				continue
 			# print(self.client_synapse.sock.send(self.command_to_execute))
-			# data = self.client_synapse.sock_recv(display = False)
+			# data = self.client_synapse.sock_recv(disy = False)
 
 			## Irrespective of whether synapse succeeded or failed, behave in the same way
 			# switch the same flags.
