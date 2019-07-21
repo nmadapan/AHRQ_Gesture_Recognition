@@ -13,6 +13,7 @@ import socket
 ## Speech Recognition
 from fuzzywuzzy import fuzz
 import speech_recognition as sr
+import win32com.client as wincl
 
 ## Custom
 from helpers import *
@@ -32,11 +33,11 @@ PORT_KB = 6000
 
 ## Flags
 ENABLE_SYNAPSE_SOCKET = True
-ENABLE_KB_SOCKET = True
+ENABLE_KB_SOCKET = ENABLE_SYNAPSE_SOCKET
 DEBUG = False
 
 ## IMPORTANT
-NSUBJECT_ID = 'S9992'
+NSUBJECT_ID = 'S91'
 LEXICON_ID = 'L24' # Param for pilot # Set LEXICON_ID to 24 for speech.
 TASK_ID = 'T1' # Param for pilot
 
@@ -129,7 +130,7 @@ class Realtime:
 				final_dict[key] = self.speech_cmd_dict[key]
 
 		self.cmdid_to_words_dict = final_dict
-		self.words_to_cmdid_dict = {val: key for key, val in self.cmdid_to_words_dict.items()}
+		self.words_to_cmdid_dict = {val: key for key, values in self.cmdid_to_words_dict.items() for val in values}
 		self.list_of_words = self.words_to_cmdid_dict.keys()
 
 		##################
@@ -225,6 +226,7 @@ class Realtime:
 							chunk_size = CHUNK_SIZE) as source:
 			self.sr_obj.adjust_for_ambient_noise(source)
 			print("Say your command")
+			# self.play('Say command')
 			audio = self.sr_obj.listen(source, phrase_time_limit = timeout)
 			print('listened: ', end = '')
 			## TODO: Figure out what do when exceptions happen.
@@ -237,13 +239,13 @@ class Realtime:
 			timestamps[1] = time.time()
 			top_k_labels, top_match_words = self.match_word(pred_word)
 			top_k_labels_str = ','.join(top_k_labels)
-			return top_k_labels[0], top_match_words[0], top_k_labels_str, timestamps
+			return pred_word, top_k_labels[0], top_match_words[0], top_k_labels_str, timestamps
 		else:
-			return None, None, '', [None, None]
+			return None, None, None, '', [None, None]
 
 	def play(self, text):
-		# Play the text here. 
-		pass
+		speak = wincl.Dispatch("SAPI.SpVoice")
+		speak.Speak(text)
 
 	def th_synapse(self):
 		#
@@ -289,18 +291,18 @@ class Realtime:
 
 			## Communicate KB Server
 			flag = self.client_kb.send_data('data')
-			print('Obtained: ', flag)
 			if(flag == 'False'): continue
 
 			# Perform the speech recognition
-			label, cname, top_k_labels_str, timestamps = self.recognize_speech()
+			pred_word, label, cname, top_k_labels_str, timestamps = self.recognize_speech()
 
 			if(label is None):
-				self.play('Please repeat the word again')
+				self.play('Please repeat command')
 				continue
 
 			# Appending time stamps of start and end skeleton frame
 			print(top_k_labels_str)
+			## TODO: Work with glebys to add pred_word in ktwolog file
 			top_k_labels_str = ','.join(map(str, [timestamps[0], timestamps[-1], top_k_labels_str]))
 			self.command_to_execute = top_k_labels_str ## For three labels
 
@@ -309,7 +311,7 @@ class Realtime:
 			###############
 			### LOGGING ###
 			###############
-			self.logger.log([top_k_labels_str, label, cname], sep = ',', end = '\n\n')
+			self.logger.log([pred_word, top_k_labels_str, label, cname], sep = ',', end = '\n\n')
 
 			self.fl_cmd_ready = True
 

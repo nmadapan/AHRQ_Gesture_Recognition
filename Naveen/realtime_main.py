@@ -34,8 +34,8 @@ ENABLE_CPM_SOCKET = False # Param for pilot
 DEBUG = False
 
 ## IMPORTANT
-NSUBJECT_ID = 'S9991'
-LEXICON_ID = 'L6' # Param for pilot
+NSUBJECT_ID = 'S91'
+LEXICON_ID = 'L24' # Param for pilot
 TASK_ID = 'T1' # Param for pilot
 
 ## If a gesture has less than 20 frames ignore.
