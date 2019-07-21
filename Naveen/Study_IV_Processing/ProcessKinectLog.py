@@ -113,11 +113,11 @@ class ProcessKinectLog:
 
 		self.train(tr_x, tr_y)
 		pred_tr_y = self.predict(tr_x)
-		tr_r2, _ = self.get_reg_scores(tr_y, pred_tr_y)
+		tr_mse, tr_r2, _ = self.get_reg_scores(tr_y, pred_tr_y)
 		pred_ts_y = self.predict(ts_x)
-		r2, adj_r2 = self.get_reg_scores(ts_y, pred_ts_y)
+		ts_mse, r2, adj_r2 = self.get_reg_scores(ts_y, pred_ts_y)
 
-		print('Train R2 =', tr_r2, 'Test R2 =', r2, 'Test Adj R2 =', adj_r2)
+		print('Train R2 =', tr_r2, 'Train MSE = ', tr_mse, 'Test MSE =', ts_mse)
 
 	def train(self, X, y):
 		if(self.method == 'ols'):
@@ -134,7 +134,7 @@ class ProcessKinectLog:
 			model = model.fit(X, y)
 			self.model = model
 		elif(self.method == 'dt'):
-			model = DecisionTreeRegressor(max_depth = 4)
+			model = DecisionTreeRegressor(max_depth = 2)
 			model.fit(X, y)
 			self.model = model
 		else:
@@ -156,14 +156,15 @@ class ProcessKinectLog:
 			X = self.all_vac_scores[:,lex_id,:]
 			res.append(self.predict(X))
 		res = np.array(res).T
-		print(res)
+		# print(res)
 		print(1 + np.argmin(res, axis = 1))
 
 	def get_reg_scores(self, y_true, y_pred, dof = 6):
 		r2 = r2_score(y_true, y_pred)
 		N = y_true.size
 		adj_r2 = 1 - (1 - r2) * ((N-1)/(N-dof-1))
-		return np.round(r2, 2), np.round(adj_r2, 2)
+		mse = np.mean((y_true - y_pred)**2)
+		return np.round(mse, 4), np.round(r2, 2), np.round(adj_r2, 2)
 
 	def combine_lexs(self, data_dict):
 		'''
@@ -380,7 +381,7 @@ if(__name__ == '__main__'):
 	base_path = r'G:\AHRQ\Study_IV\RealData'
 	lex_names = ['L2', 'L6', 'L8', 'L3']
 	lex_paths = [join(base_path, lex_name) for lex_name in lex_names]
-	method = 'svr'
+	method = 'dt'
 
 	## scores.npz file has 'scores_reduced' key consisting of VAC data
 	# for only 20 commands present in the reduced_commands.json file. 
