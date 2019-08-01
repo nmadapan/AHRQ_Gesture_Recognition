@@ -12,10 +12,10 @@ import argparse
 ######################################
 ########## INITIALIZATION ############
 ######################################
-lexicon_id = 'L22'
-subject_id = 'S1'
+lexicon_id = 'L6'
+subject_id = 'S22'
 task_id = 'T1'
-base_write_folder = r'D:\AHRQ\Study_IV\RealData'
+base_write_folder = r'D:\AHRQ\Study_V\Study_V_Data'
 
 ##########################
 #####   PARSING       ####
