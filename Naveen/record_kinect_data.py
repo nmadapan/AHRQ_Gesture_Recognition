@@ -15,7 +15,7 @@ import argparse
 lexicon_id = 'L22'
 subject_id = 'S1'
 task_id = 'T1'
-base_write_folder = r'D:\AHRQ\Study_IV\RealData'
+base_write_folder = r'G:\AHRQ\Study_IV\Study_V_Data'
 
 ##########################
 #####   PARSING       ####
