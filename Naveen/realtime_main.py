@@ -21,7 +21,7 @@ from CustomSocket import Client
 ################################
 
 ## TCP/IP of Synapse Computer
-IP_SYNAPSE = '10.186.44.70' # IP of computer that is running Synapse  # Param for pilot
+IP_SYNAPSE = '192.168.1.6' # IP of computer that is running Synapse  # Param for pilot
 PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port  # Param for pilot
 
 ## TCP/IP of CPM Computer
@@ -34,8 +34,8 @@ ENABLE_CPM_SOCKET = False # Param for pilot
 DEBUG = False
 
 ## IMPORTANT
-NSUBJECT_ID = 'S91'
-LEXICON_ID = 'L24' # Param for pilot
+NSUBJECT_ID = 'S92'
+LEXICON_ID = 'L6' # Param for pilot
 TASK_ID = 'T1' # Param for pilot
 
 ## If a gesture has less than 20 frames ignore.

@@ -23,8 +23,11 @@ from CustomSocket import Client
 #### CHANGE THESE PARAMETERS ###
 ################################
 
+## Speech recognition
+GOOGLE_FIRST = False
+
 ## TCP/IP of Mac Computer - Synapse
-IP_SYNAPSE = '10.186.44.70' # IP of computer that is running Synapse  # Param for pilot
+IP_SYNAPSE = '192.168.1.6' # IP of computer that is running Synapse  # Param for pilot
 PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port  # Param for pilot
 
 ## TCP/IP of Mac Computer - Keyboard
@@ -32,9 +35,9 @@ IP_KB = IP_SYNAPSE
 PORT_KB = 6000
 
 ## Flags
-ENABLE_SYNAPSE_SOCKET = True
+ENABLE_SYNAPSE_SOCKET = False
 ENABLE_KB_SOCKET = ENABLE_SYNAPSE_SOCKET
-DEBUG = False
+DEBUG = True
 
 ## IMPORTANT
 NSUBJECT_ID = 'S91'
@@ -96,7 +99,7 @@ DEVICE_ID = get_device_id(MIC_NAME)
 if(DEVICE_ID is None):
 	sys.exit('Error!! Check the MIC_NAME variable. Device NOT FOUND !!')
 
-print('Init is ending')
+# print('Init is ending')
 
 '''
 Key Assumptions:
@@ -182,7 +185,7 @@ class Realtime:
 	def match_word(self, pred_word, top = 5):
 		ratios = []
 		for word in self.list_of_words:
-			ratios.append(fuzz.partial_ratio(pred_word.lower(), word.lower()))
+			ratios.append(fuzz.token_sort_ratio(pred_word.lower(), word.lower()))
 		top_match_ids = np.argsort(ratios)[-1*top:]
 		top_match_ids = np.flip(top_match_ids, axis = 0) # So that largest one comes first.
 
@@ -200,7 +203,8 @@ class Realtime:
 		pred_word = None
 		flag = False
 		try:
-			pred_word = self.sr_obj.recognize_google(audio)
+			if(GOOGLE_FIRST): pred_word = self.sr_obj.recognize_google(audio)
+			else: pred_word = self.sr_obj.recognize_sphinx(audio)
 			flag = True
 		except sr.UnknownValueError:
 			print("Google Speech Recognition could not understand audio")
@@ -210,7 +214,8 @@ class Realtime:
 		if(flag): return pred_word
 
 		try:
-			pred_word = self.sr_obj.recognize_sphinx(audio)
+			if(not GOOGLE_FIRST): pred_word = self.sr_obj.recognize_google(audio)
+			else: pred_word = self.sr_obj.recognize_sphinx(audio)
 			flag = True
 		except sr.UnknownValueError:
 			print("Sphinx could not understand audio")
@@ -225,13 +230,17 @@ class Realtime:
 		with sr.Microphone(device_index = DEVICE_ID, sample_rate = SAMPLE_RATE,
 							chunk_size = CHUNK_SIZE) as source:
 			self.sr_obj.adjust_for_ambient_noise(source)
-			print("Say your command")
-			# self.play('Say command')
+			self.play('Go')
+			# print("Say your command")
+			# start = time.time()
 			audio = self.sr_obj.listen(source, phrase_time_limit = timeout)
-			print('listened: ', end = '')
+			# print('Time taken say command: ')
+			# print('listened: %.02f seconds '%(time.time()-start), end = '')
 			## TODO: Figure out what do when exceptions happen.
 			## TODO: Figure out what timestamps to send.
+			# start = time.time()
 			pred_word = self.recognize(audio)
+			# print('\nrecognize: %.02f seconds '%(time.time()-start))			
 			if(pred_word is None): success = False
 			print(pred_word)
 
@@ -328,10 +337,12 @@ class Realtime:
 
 if(__name__ == '__main__'):
 	rt = Realtime()
-	rt.run()
 
-	# print(rt.recognize_speech())
-	# # print(rt.match_word('2 panels'))
-	# while True:
-	# 	print(rt.recognize_speech())
-	# 	time.sleep(1)
+	if(not DEBUG):
+		rt.run()
+	else:
+		# print(rt.recognize_speech())
+		# # print(rt.match_word('2 panels'))
+			while True:
+				print(rt.recognize_speech())
+				time.sleep(1)

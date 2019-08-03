@@ -14,7 +14,7 @@
 	"5_0": ["Switch Panel"],
 	"5_1": ["Left"],
 	"5_2": ["Right"],
-	"6_0": ["Move", "Pan"],
+	"6_0": ["Move"],
 	"9_0": ["Manual Contrast"],
 	"9_1": ["Increase"],
 	"9_2": ["Decrease"],

@@ -63,13 +63,14 @@ class Parser(object):
 		self.image_counter = 0
 
 		# File Pointers
-		self.skel_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_skel.txt'), 'w')
-		self.skel_timestamp_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_skelts.txt'), 'w')
-		self.color_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_color.txt'), 'w')
-		self.depth_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_depth.txt'), 'w')
-		self.rgb_vid_addr = os.path.join(os.path.join(self.write_folder, self.xef_file_name+'_rgb.avi'))
-		self.rgb_timestamp_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_rgbts.txt'), 'w')
-		self.depth_vid_addr = os.path.join(os.path.join(self.write_folder, self.xef_file_name+'_depth.avi'))
+		cur_time = str(int(time.time()))
+		self.skel_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_skel_'+cur_time+'.txt'), 'w')
+		self.skel_timestamp_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_skelts_'+cur_time+'.txt'), 'w')
+		self.color_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_color_'+cur_time+'.txt'), 'w')
+		self.depth_pts_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_depth_'+cur_time+'.txt'), 'w')
+		self.rgb_vid_addr = os.path.join(os.path.join(self.write_folder, self.xef_file_name+'_rgb_'+cur_time+'.avi'))
+		self.rgb_timestamp_file_id = open(os.path.join(self.write_folder, self.xef_file_name+'_rgbts_'+cur_time+'.txt'), 'w')
+		self.depth_vid_addr = os.path.join(os.path.join(self.write_folder, self.xef_file_name+'_depth_'+cur_time+'.avi'))
 
 		# Initialize Kinect
 		if(kr is None):
@@ -216,7 +217,14 @@ class Parser(object):
 		depth_clip.write_videofile(self.depth_vid_addr[:-4]+'.webm', audio=False)
 		os.remove(self.depth_vid_addr)
 
+def main():
+	parser = Parser(r'S2_L6_woo_hoo',\
+		base_write_folder = '..\\Data', compress_flag = False, \
+		thresh_empty_cycles = 200, in_format_flag = False)
+	parser.parse()
+
+if __name__ == "__main__":
+	main()
 # __main__ = "Annotate Files"
 # parser = Parser('S2_L6_woo_hoo')
 # parser.parse()
-
