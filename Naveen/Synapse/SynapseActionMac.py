@@ -19,7 +19,7 @@ from SynapseCommand import SynapseCommand
 from Tkinter import *
 import tkFont
 import keyboard
-from helpers import file_to_list, json_to_dict, turn_int
+from helpers import file_to_list, json_to_dict, turn_int, hide_top_window
 import ntplib
 import time
 import csv
@@ -358,13 +358,13 @@ class SynapseAction:
         # bring the python window to the  front
         # SOLVE IN HERE
         os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
-        auto.PAUSE = 0.0
-        auto.keyDown('command')
-        auto.keyDown('tab')
-        auto.keyUp('tab')
-        auto.keyUp('command')
-        auto.PAUSE = 0.5
-        self.root_window.deiconify()
+        # self.root_window.deiconify()
+        # if self.first_time:
+            # # go back in the tabs
+            # change_tab(0.5, True)
+            # self.first_time = False
+        # # else:
+        # change_tab(0.5)
         pressed = False
         y_pressed = False
         # Init colors
@@ -479,25 +479,28 @@ class SynapseAction:
                             col_num = column_option % len(option_matrix[highlight_row])
                             key_index = row_num*len(option_matrix[0]) + col_num
                             window.destroy()
-                            self.root_window.withdraw()
+                            # self.root_window.withdraw()
                             self.openWindow(self.viewer)
-                            auto.PAUSE = 1
+                            # change_tab(0.5)
                             ack_end_ts = time.time()
                             return ack_init_ts, ack_end_ts, cmd_keys[key_index], True
 
                         self.root_window.update_idletasks()
                         self.root_window.update()
-                else:
-                    self.root_window.withdraw()
-                    self.openWindow(self.viewer)
-                    auto.PAUSE = 1
+                # else:
+                    # hide_top_window()
+                    # time.sleep(0.5)
+                    # self.root_window.withdraw()
+                    # self.openWindow(self.viewer)
+                    # change_tab(0.5)
                 ack_end_ts = time.time()
                 return ack_init_ts, ack_end_ts, sequence_list[text_index], False
 
             elif keyboard.is_pressed('x') and not pressed:
-                self.root_window.withdraw()
                 self.openWindow(self.viewer)
-                auto.PAUSE = 1
+                # hide_top_window()
+                # change_tab(0.5)
+                # self.root_window.withdraw()
                 ack_end_ts = time.time()
                 return ack_init_ts, ack_end_ts, None, False
 
@@ -534,13 +537,8 @@ class SynapseAction:
             print "ENTERING NOT COMMAND ACTION"
             # SOLVE IN HERE
             os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
-            auto.PAUSE = 0.0
-            auto.keyDown('command')
-            auto.keyDown('tab')
-            auto.keyUp('tab')
-            auto.keyUp('command')
-            auto.PAUSE = 0.5
-            self.root_window.deiconify()
+            # self.root_window.deiconify()
+            # change_tab(0.5)
             sub_win_w = 800
             sub_win_h = 70
             error_window = Toplevel(self.root_window,width=sub_win_w,height=sub_win_h)
@@ -557,7 +555,8 @@ class SynapseAction:
                 continue
             print("GOT HERE")
             error_window.destroy()
-            self.root_window.withdraw()
+            # self.root_window.withdraw()
+            self.openWindow(self.viewer)
 
         # commandAction = sequence
         # add the acknowlegment timestamps, the final comand and

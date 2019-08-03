@@ -11,6 +11,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
 from copy import deepcopy
+import pyautogui as auto
 
 ###########
 ## PATHS ##
@@ -914,3 +915,23 @@ def smart_ignore(base_path, lexicon_id = 'L6', task_id = 'T1', debug = False):
 		ign_cmd_list.remove(cmd)
 
 	return ign_cmd_list
+
+###################
+### auto gui ######
+###################
+
+def change_tab(previous_pause, back=False):
+    auto.PAUSE = 0.1
+    auto.keyDown('command')
+    auto.press('tab')
+    if back:
+        auto.press('left')
+        # auto.press('left')
+    auto.keyUp('command')
+    auto.PAUSE = previous_pause
+
+def hide_top_window():
+    auto.PAUSE = 0.1
+    auto.keyDown('command')
+    auto.press('h')
+    auto.keyUp('command')
