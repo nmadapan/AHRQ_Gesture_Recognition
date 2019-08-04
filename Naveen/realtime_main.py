@@ -20,23 +20,26 @@ from CustomSocket import Client
 #### CHANGE THESE PARAMETERS ###
 ################################
 
+IP_SYNAPSE = '10.186.125.77' # IP of computer that is running Synapse  # Param for pilot
+ENABLE_SYNAPSE_SOCKET = True # False if you do not want image manipulation. 
+NSUBJECT_ID = 'S111'
+TASK_ID = 'T1' # Param for pilot
+
+####################################
+
 ## TCP/IP of Synapse Computer
-IP_SYNAPSE = '192.168.1.6' # IP of computer that is running Synapse  # Param for pilot
 PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port  # Param for pilot
 
 ## TCP/IP of CPM Computer
 IP_CPM = 'localhost'
 PORT_CPM = 3000
 
-## Flagsq
-ENABLE_SYNAPSE_SOCKET = True
-ENABLE_CPM_SOCKET = False # Param for pilot
+## Flags
+ENABLE_CPM_SOCKET = False # 
 DEBUG = False
 
 ## IMPORTANT
-NSUBJECT_ID = 'S92'
 LEXICON_ID = 'L6' # Param for pilot
-TASK_ID = 'T1' # Param for pilot
 
 ## If a gesture has less than 20 frames ignore.
 MIN_FRAMES_IN_GESTURE = 20
