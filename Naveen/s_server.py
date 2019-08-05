@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
 	#### Variables #######
 	tcp_ip = socket.gethostbyname(socket.gethostname())
-	tcp_ip='10.186.125.77'
+	tcp_ip='10.51.109.203'
 	# tcp_ip = 'localhost'
 	# print(tcp_ip)
 	tcp_port = 9000

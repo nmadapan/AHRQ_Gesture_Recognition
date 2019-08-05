@@ -1,25 +1,27 @@
 from __future__ import print_function
 import os
-import os.path
+from os.path import join
 from os import rename
 import time
 
-fname = 'delete.mp4'
-dirname = os.getcwd()
+fname = 'screen.mp4'
+dirname = '/Users/gonza337/Desktop/study_v_screen_recordings'
 
 while True:
 	try:
 		print('. ', end = '')
 		files = os.listdir(dirname)
 		if fname in files:
-			new_name = fname.split('.')[0] + '_' + str(int(os.path.getctime(fname))) + '.mp4'
-			os.rename(fname, new_name)
-		print('\nRenamed: ', fname, new_name)
-		time.sleep(10)
+			ts = str(int(os.path.getctime(join(dirname,fname))))
+			new_name = fname.split('.')[0] + '_' + ts + '.mp4'
+			os.rename(join(dirname, fname), join(dirname,new_name))
+			print('\nRenamed: ', fname, new_name)
+		time.sleep(4)
 	except KeyboardInterrupt:
 		print('Exiting !!')
 		break
 	except Exception as exp:
-		time.sleep(10)
+		print(exp)
+		time.sleep(4)
 		pass
 		
