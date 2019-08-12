@@ -12,6 +12,10 @@ import numpy as np
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
+a = np.random.randint(0, 10, (10,))
+print(a)
+print(a[:,np.newaxis])
+
 # ##################
 # ### scores.npz ###
 # ##################
@@ -26,4 +30,4 @@ import statsmodels.formula.api as smf
 # # We will work with vac_scores['scores_reduced'] - 20 (redcued list of commands) x 9 (lexicons) x 6 (vacs)
 
 # print np.random.uniform(0, 1, (80, 6))
-print np.random.permutation(5)
+# print np.random.permutation(5)

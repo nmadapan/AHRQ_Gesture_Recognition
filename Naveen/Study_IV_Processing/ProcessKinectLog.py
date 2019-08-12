@@ -13,6 +13,9 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import r2_score
 from helpers import *
 
+import warnings
+warnings.filterwarnings("ignore", category = Warning)
+
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
@@ -20,6 +23,7 @@ from scipy.stats import linregress
 from sklearn.svm import SVR
 from sklearn.metrics import r2_score
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import KFold, GridSearchCV
 
 class ProcessKinectLog:
 	def __init__(self, lex_paths, scores_npz_path, best_lex_names, \
@@ -78,10 +82,6 @@ class ProcessKinectLog:
 			print('Keys: ', npz_dict.keys())
 			print('Reduced command IDs: ', npz_dict['reduced_cmd_ids'])
 
-		# self.process(ext = '*_kthreelog.txt')
-		# self.process2(ext = '*_annotfs*.txt')
-		# self.process2(ext = '*_annote*.txt')
-
 	def custom_normalize(self, usa_dict):
 		'''
 		Description:
@@ -114,29 +114,61 @@ class ProcessKinectLog:
 		self.train(tr_x, tr_y)
 		pred_tr_y = self.predict(tr_x)
 		tr_mse, tr_r2, _ = self.get_reg_scores(tr_y, pred_tr_y)
+		pred_wh_y = self.predict(X2)
+		wh_mse, wh_r2, _ = self.get_reg_scores(X1, pred_wh_y)
 		pred_ts_y = self.predict(ts_x)
 		ts_mse, r2, adj_r2 = self.get_reg_scores(ts_y, pred_ts_y)
 
-		print('Train R2 =', tr_r2, 'Train MSE = ', tr_mse, 'Test MSE =', ts_mse)
+		print('Whole R2 =', wh_r2, 'Whole MSE = ', wh_mse, 'Test MSE =', ts_mse)
+
+	def train_ols_rlm_lstsq(self, X, y, num_folds = 5):
+		kf = KFold(n_splits = num_folds, shuffle = True)
+		mse_list = []
+		model_list = []
+		for train_idx, valid_idx in kf.split(X):
+			tr_x, tr_y = X[train_idx], y[train_idx]
+			va_x, va_y = X[valid_idx], y[valid_idx]
+			if(self.method == 'ols'):
+				res = sm.OLS(tr_y, tr_x).fit()
+				pred_va_y = np.dot(va_x, res.params)
+			elif(self.method == 'rlm'):
+				res = sm.RLM(tr_y, tr_x, M = sm.robust.norms.HuberT()).fit()
+				pred_va_y = np.dot(va_x, res.params)
+			elif(self.method == 'lstsq'):
+				res = np.linalg.lstsq(tr_x, tr_y, rcond = None)[0]
+				pred_va_y = np.dot(va_x, res)
+			va_mse, va_r2, _ = self.get_reg_scores(va_y, pred_va_y)
+			mse_list.append(va_mse)
+			model_list.append(res)
+		print('MSE: ', mse_list)
+		min_idx = np.argmin(mse_list)
+		self.model = model_list[min_idx]
+
+	def train_svr(self, X, y, num_folds = 5):
+		## SVR hyperparameters
+		parameters = {'C': (1, 10, 100, 1000), \
+				'degree': (1, 2, 3, 4, 5)}
+		svr = SVR(kernel = 'poly', gamma = 'scale')
+		clf = GridSearchCV(svr, parameters, cv = num_folds, refit = True)
+		clf.fit(X, y)
+		print(clf.best_params_)
+		self.model = clf
+
+	def train_dt(self, X, y, num_folds = 5):
+		parameters = {'max_depth': (2, 3, 4, 5)}
+		dtr = DecisionTreeRegressor()
+		clf = GridSearchCV(dtr, parameters, cv = num_folds, refit = True)
+		clf.fit(X, y)
+		print(clf.best_params_)
+		self.model = clf
 
 	def train(self, X, y):
-		if(self.method == 'ols'):
-			res = sm.OLS(y, X).fit()
-			self.model = res
-		elif(self.method == 'rlm'):
-			res = sm.RLM(y, X, M=sm.robust.norms.HuberT()).fit()
-			self.model = res			
-		elif(self.method == 'lstsq'):
-			W = np.linalg.lstsq(X, y, rcond = None)[0]
-			self.model = W
+		if(self.method in ['ols', 'rlm', 'lstsq']):
+			self.train_ols_rlm_lstsq(X, y)
 		elif(self.method == 'svr'):
-			model = SVR(kernel = 'linear', C = 100) # , gamma = 0.1, epsilon = 0.1
-			model = model.fit(X, y)
-			self.model = model
+			self.train_svr(X, y)
 		elif(self.method == 'dt'):
-			model = DecisionTreeRegressor(max_depth = 2)
-			model.fit(X, y)
-			self.model = model
+			self.train_dt(X, y)
 		else:
 			sys.exit('Error! Wrong model name')
 
@@ -363,6 +395,21 @@ class ProcessKinectLog:
 
 		return usa_data, vac_data
 
+	# def save_plots(self, usa_data, vac_data, title = '', usa_name = ''):
+	# 	sz = vac_data.shape[0]
+	# 	for vac_idx, vac_name in enumerate(self.vac_names):
+	# 		vac_arr = vac_data[:, vac_idx][:, np.newaxis]
+	# 		self.regress(usa_data, vac_arr, method = method)
+	# 		# plt.figure()
+	# 		plt.scatter(usa_data[:sz/2], vac_arr[:sz/2], marker = '<', color = 'red')
+	# 		plt.scatter(usa_data[sz/2:], vac_arr[sz/2:], marker = 's', color = 'green')
+	# 		print(self.model.coef_)
+	# 		plt.legend(['L2/3', 'L6/8'])
+	# 		plt.xlabel(usa_name)
+	# 		plt.ylabel('VAC ' + vac_name + ' values')
+	# 		fname = join('results', '_'.join([usa_name, vac_name, method])+'.png')
+	# 		plt.savefig(fname)
+
 	def annotation_statistics(self):
 		fs_exts = ['*annotfsa.txt', '*annotfsd.txt', '*annotfsn.txt']
 		e_exts = ['*annotea.txt', '*annoted.txt', '*annoten.txt']
@@ -378,10 +425,10 @@ class ProcessKinectLog:
 if(__name__ == '__main__'):
 	best_lex_names = ['L6', 'L8']
 	worst_lex_names = ['L2', 'L3']
-	base_path = r'G:\AHRQ\Study_IV\RealData'
+	base_path = r'H:\AHRQ\Study_IV\RealData'
 	lex_names = ['L2', 'L6', 'L8', 'L3']
 	lex_paths = [join(base_path, lex_name) for lex_name in lex_names]
-	method = 'dt'
+	method = 'svr'
 
 	## scores.npz file has 'scores_reduced' key consisting of VAC data
 	# for only 20 commands present in the reduced_commands.json file. 
@@ -399,10 +446,13 @@ if(__name__ == '__main__'):
 	print('Acutal Usability Metrics')
 	print('Gesture Time')
 	time_data, vac_data = pobj.process(ext = '*_kthreelog.txt', method = method)
+	# pobj.save_plots(time_data, vac_data, usa_name = 'gesture_time', title = '')
 	print('Focus Shifts')
 	fs_data, _ = pobj.process(ext = '*_annotfs*.txt', method = method)
+	# pobj.save_plots(fs_data, vac_data, usa_name = 'focus_shifts', title = '')
 	print('Errors')	
 	e_data, _ = pobj.process(ext = '*_annote*.txt', method = method)
+	# pobj.save_plots(e_data, vac_data, usa_name = 'error_rate', title = '')
 
 	# print(time_data.shape, vac_data.shape)
 	# print(fs_data.shape)
