@@ -22,12 +22,16 @@ from CustomSocket import Client
 ################################
 #### CHANGE THESE PARAMETERS ###
 ################################
+IP_SYNAPSE = '10.51.109.203' # IP of computer that is running Synapse  # Param for pilot
+NSUBJECT_ID = 'S91'
+TASK_ID = 'T1' # Param for pilot
+DEBUG = False # If False, no synapse. 
+################################
 
 ## Speech recognition
-GOOGLE_FIRST = False
+GOOGLE_FIRST = True
 
 ## TCP/IP of Mac Computer - Synapse
-IP_SYNAPSE = '192.168.1.6' # IP of computer that is running Synapse  # Param for pilot
 PORT_SYNAPSE = 9000  # Both server and client should have a common IP and Port  # Param for pilot
 
 ## TCP/IP of Mac Computer - Keyboard
@@ -35,17 +39,14 @@ IP_KB = IP_SYNAPSE
 PORT_KB = 6000
 
 ## Flags
-ENABLE_SYNAPSE_SOCKET = False
+ENABLE_SYNAPSE_SOCKET = (not DEBUG)
 ENABLE_KB_SOCKET = ENABLE_SYNAPSE_SOCKET
-DEBUG = True
 
-## IMPORTANT
-NSUBJECT_ID = 'S91'
+## Important
 LEXICON_ID = 'L24' # Param for pilot # Set LEXICON_ID to 24 for speech.
-TASK_ID = 'T1' # Param for pilot
 
 ## Speech Recognition
-MIC_NAME = u'Microphone (Logitech Wireless H'
+MIC_NAME = u'Microphone (2- Logitech Wireles'
 SAMPLE_RATE = 48000
 CHUNK_SIZE = 2048
 
@@ -181,6 +182,8 @@ class Realtime:
 		### INITIALIZE OTHER VARIABLES ###
 		##################################
 		self.command_to_execute = None # Updated in run()
+
+		self.play('Tap to activate speech system')
 
 	def match_word(self, pred_word, top = 5):
 		ratios = []
@@ -341,8 +344,6 @@ if(__name__ == '__main__'):
 	if(not DEBUG):
 		rt.run()
 	else:
-		# print(rt.recognize_speech())
-		# # print(rt.match_word('2 panels'))
-			while True:
-				print(rt.recognize_speech())
-				time.sleep(1)
+		while True:
+			print(rt.recognize_speech())
+			time.sleep(1)

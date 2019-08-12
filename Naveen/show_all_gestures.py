@@ -14,7 +14,7 @@ parser.add_argument("-l", "--lexicon_id",
 					default='L8',
 					help=("Lexicon ID. For example: L2"))
 parser.add_argument("-s", "--subject_id",
-					default='S2',
+					default='S3',
 					help=("Subject ID. For example: S2"))
 parser.add_argument("-p", "--data_path",
 					default=r'G:\AHRQ\Study_IV\NewData2',
@@ -42,6 +42,12 @@ cv2.namedWindow(lexicon_id)
 
 close_flag = False
 cmd_idx = 0
+
+## Ignore some commands. 
+ignore_cmds = ['5_3', '5_4', '7_0', '7_1', '7_2', '8_0', '8_1', '8_2', '10_4']
+cmds = [cmd for cmd in cmds if cmd not in ignore_cmds]
+
+print(cmds)
 
 while not close_flag:
 	cmd = cmds[cmd_idx]
