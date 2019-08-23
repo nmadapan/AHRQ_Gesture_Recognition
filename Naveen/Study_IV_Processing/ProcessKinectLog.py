@@ -11,6 +11,7 @@ import json
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.metrics import r2_score
+from sklearn.linear_model import LinearRegression
 from helpers import *
 
 import warnings
@@ -24,6 +25,8 @@ from sklearn.svm import SVR
 from sklearn.metrics import r2_score
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import KFold, GridSearchCV
+
+import seaborn as sns
 
 class ProcessKinectLog:
 	def __init__(self, lex_paths, scores_npz_path, best_lex_names, \
@@ -395,20 +398,75 @@ class ProcessKinectLog:
 
 		return usa_data, vac_data
 
-	# def save_plots(self, usa_data, vac_data, title = '', usa_name = ''):
-	# 	sz = vac_data.shape[0]
-	# 	for vac_idx, vac_name in enumerate(self.vac_names):
-	# 		vac_arr = vac_data[:, vac_idx][:, np.newaxis]
-	# 		self.regress(usa_data, vac_arr, method = method)
-	# 		# plt.figure()
-	# 		plt.scatter(usa_data[:sz/2], vac_arr[:sz/2], marker = '<', color = 'red')
-	# 		plt.scatter(usa_data[sz/2:], vac_arr[sz/2:], marker = 's', color = 'green')
-	# 		print(self.model.coef_)
-	# 		plt.legend(['L2/3', 'L6/8'])
-	# 		plt.xlabel(usa_name)
-	# 		plt.ylabel('VAC ' + vac_name + ' values')
-	# 		fname = join('results', '_'.join([usa_name, vac_name, method])+'.png')
-	# 		plt.savefig(fname)
+	def save_plots(self, usa_data, vac_data, title = '', usa_name = ''):
+		print(usa_data.shape, vac_data.shape)
+		sz = vac_data.shape[0]
+		## Overall
+		lr = LinearRegression()
+		r2_list_overall = []
+		for vac_idx, vac_name in enumerate(self.vac_names):
+			x = vac_data[:, vac_idx][:, np.newaxis]
+			y = usa_data[:, np.newaxis]
+			lr.fit(x, y)
+			y_pred = lr.predict(x)
+			r2 = lr.score(x, y)
+			r2_list_overall.append(r2)
+			plt.figure()
+			plt.scatter(x[:sz/2], y[:sz/2], marker = '<', color = 'blue')
+			plt.scatter(x[sz/2:], y[sz/2:], marker = 's', color = 'green')
+			plt.plot(x, y_pred, color = 'red')
+			plt.legend(['Bad lexicons', 'Good lexicons', 'Regression line'])
+			plt.title(vac_name + '  vs  ' + usa_name + ' -- R2 = %.02f'%r2)
+			plt.xlabel('VAC - ' + vac_name)
+			plt.ylabel('Usability - ' + usa_name)
+			fname = '_'.join([usa_name, vac_name, self.method])+'.png'
+			dir_name = join('results', 'overall')
+			try:
+				os.makedirs(dir_name)
+			except Exception as exp:
+				pass
+			fpath = join(dir_name, fname)
+			plt.savefig(fpath)
+
+		## Command wise
+		num_lexs = len(self.lex_paths)
+		num_cmds = len(self.cmd_names)
+		r2_list_cmd = []
+		for cmd_idx, cmd_name in enumerate(self.cmd_names):
+			r2_list_cmd.append([])
+			# print('\n' + cmd_name, end = ': ')
+			ids = [cmd_idx, cmd_idx + num_cmds*1, \
+			cmd_idx + num_cmds*2, cmd_idx + num_cmds*3]
+			for vac_idx, vac_name in enumerate(self.vac_names):
+				# print(vac_idx, end = ' ')
+				x = vac_data[ids, vac_idx][:, np.newaxis]
+				y = usa_data[ids][:, np.newaxis]
+				lr.fit(x, y)
+				y_pred = lr.predict(x)
+				r2 = lr.score(x, y)
+				r2_list_cmd[-1].append(r2)
+				if(r2 < 0.8): continue
+				plt.figure()
+				p1 = plt.scatter(x[:num_lexs/2], y[:num_lexs/2], marker = '<', color = 'blue')
+				p2 = plt.scatter(x[num_lexs/2:], y[num_lexs/2:], marker = 's', color = 'green')
+				p3 = plt.plot(x, y_pred, color = 'red')
+				plt.legend([p1, p2, p3], ['Bad lexicons', 'Good lexicons', 'Regression line'])
+				plt.title(cmd_name + ' - ' + vac_name + '  vs  ' + usa_name + ' -- R2 = %.02f'%r2)
+				plt.xlabel('VAC - ' + vac_name)
+				plt.ylabel('Usability - ' + usa_name)
+				fname = '_'.join([cmd_name, usa_name, vac_name, self.method, '%.02f'%r2])+'.png'
+				# dir_name = join(join('results', 'command_wise'), cmd_name)				
+				dir_name = join('results', 'command_wise')
+				fpath = join(dir_name, fname)
+				try:
+					os.makedirs(dir_name)
+				except Exception as exp:
+					pass
+				try:
+					plt.savefig(fpath)					
+				except Exception as exp:
+					pass
+		return np.array(r2_list_overall), np.array(r2_list_cmd)
 
 	def annotation_statistics(self):
 		fs_exts = ['*annotfsa.txt', '*annotfsd.txt', '*annotfsn.txt']
@@ -445,14 +503,33 @@ if(__name__ == '__main__'):
 	## Combining THREE usability metrics
 	print('Acutal Usability Metrics')
 	print('Gesture Time')
+	r_overall = np.zeros((3, 6))
+	r_cmd = np.zeros((20, 6, 3))
 	time_data, vac_data = pobj.process(ext = '*_kthreelog.txt', method = method)
-	# pobj.save_plots(time_data, vac_data, usa_name = 'gesture_time', title = '')
+	r_overall[0, :], r_cmd[:, :, 0] = pobj.save_plots(time_data, vac_data, \
+		usa_name = 'gesture_time', title = '')
 	print('Focus Shifts')
 	fs_data, _ = pobj.process(ext = '*_annotfs*.txt', method = method)
-	# pobj.save_plots(fs_data, vac_data, usa_name = 'focus_shifts', title = '')
+	r_overall[1, :], r_cmd[:, :, 1] = pobj.save_plots(fs_data, vac_data, \
+		usa_name = 'focus_shifts', title = '')
 	print('Errors')	
 	e_data, _ = pobj.process(ext = '*_annote*.txt', method = method)
-	# pobj.save_plots(e_data, vac_data, usa_name = 'error_rate', title = '')
+	r_overall[2, :], r_cmd[:, :, 2] = pobj.save_plots(e_data, vac_data, usa_name = 'error_rate', title = '')
+
+	plt.figure()
+	# plt.imshow(r_overall, cmap='hot', interpolation='nearest')
+	xticks = ['V1','V2','V3', 'V4', 'V5', 'V6']
+	yticks = ['U1','U2','U3']
+	sns.heatmap(r_overall, linewidth = 0.5, xticklabels = xticks, yticklabels = yticks)
+	plt.savefig(join('results', 'overall_'+method+'.png'))
+
+	for idx in range(3):
+		A = r_cmd[:, :, idx]
+		xticks = ['V1','V2','V3', 'V4', 'V5', 'V6']
+		yticks = [str(_idx) for _idx in range(20)]
+		plt.figure()
+		sns.heatmap(A, linewidth = 0.5, xticklabels = xticks)
+		plt.savefig(join('results', 'cmd_'+method+'_U'+str(idx+1)+'.png'))
 
 	# print(time_data.shape, vac_data.shape)
 	# print(fs_data.shape)
