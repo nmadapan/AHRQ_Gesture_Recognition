@@ -411,6 +411,7 @@ class ProcessKinectLog:
 			y_pred = lr.predict(x)
 			r2 = lr.score(x, y)
 			r2_list_overall.append(r2)
+			if(r2 < 0.2): continue
 			plt.figure()
 			plt.scatter(x[:sz/2], y[:sz/2], marker = '<', color = 'blue')
 			plt.scatter(x[sz/2:], y[sz/2:], marker = 's', color = 'green')
@@ -426,7 +427,11 @@ class ProcessKinectLog:
 			except Exception as exp:
 				pass
 			fpath = join(dir_name, fname)
-			plt.savefig(fpath)
+			try:
+				plt.savefig(fpath)					
+			except Exception as exp:
+				pass
+
 
 		## Command wise
 		num_lexs = len(self.lex_paths)
@@ -528,7 +533,9 @@ if(__name__ == '__main__'):
 		xticks = ['V1','V2','V3', 'V4', 'V5', 'V6']
 		yticks = [str(_idx) for _idx in range(20)]
 		plt.figure()
-		sns.heatmap(A, linewidth = 0.5, xticklabels = xticks)
+		sns.heatmap(A, linewidth = 0.5, xticklabels = xticks, yticklabels = False)
+		plt.ylabel('Commands', fontsize = 14)
+		plt.xlabel('VAC Values', fontsize = 14)
 		plt.savefig(join('results', 'cmd_'+method+'_U'+str(idx+1)+'.png'))
 
 	# print(time_data.shape, vac_data.shape)
