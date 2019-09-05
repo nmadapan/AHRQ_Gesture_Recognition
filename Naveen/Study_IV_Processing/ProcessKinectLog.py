@@ -79,7 +79,10 @@ class ProcessKinectLog:
 		for lex_id, lex_name in zip(self.lex_ids, self.lex_names):
 			# lex_id starts from one. so substracting one. 
 			self.vac_scores_dict[lex_name] = self.all_vac_scores[:, lex_id-1, :]
-		self.vac_names = npz_dict['vacs']
+		self.vac_names = npz_dict['vacs'] # These names are original VAC names. 
+		# Change the VAC names to new ones.
+		self.vac_names = ['Iconicity', 'Simplicity' , 'Efficiency', 'Compactness', \
+						'Salience', 'Economy of movement']
 		if(self.debug): 
 			print('Information related to npz dict')
 			print('Keys: ', npz_dict.keys())
@@ -128,6 +131,7 @@ class ProcessKinectLog:
 		kf = KFold(n_splits = num_folds, shuffle = True)
 		mse_list = []
 		model_list = []
+		res_list = []
 		for train_idx, valid_idx in kf.split(X):
 			tr_x, tr_y = X[train_idx], y[train_idx]
 			va_x, va_y = X[valid_idx], y[valid_idx]
@@ -143,18 +147,21 @@ class ProcessKinectLog:
 			va_mse, va_r2, _ = self.get_reg_scores(va_y, pred_va_y)
 			mse_list.append(va_mse)
 			model_list.append(res)
+			res_list.append(res)
 		print('MSE: ', mse_list)
+		print('Res', np.round(np.mean(res_list, axis = 0), 2))
 		min_idx = np.argmin(mse_list)
 		self.model = model_list[min_idx]
 
 	def train_svr(self, X, y, num_folds = 5):
 		## SVR hyperparameters
-		parameters = {'C': (1, 10, 100, 1000), \
-				'degree': (1, 2, 3, 4, 5)}
-		svr = SVR(kernel = 'poly', gamma = 'scale')
+		parameters = {'C': (1, 10, 100, 1000)}
+		svr = SVR(kernel = 'linear', gamma = 'scale')
 		clf = GridSearchCV(svr, parameters, cv = num_folds, refit = True)
 		clf.fit(X, y)
+
 		print(clf.best_params_)
+		print(clf.best_estimator_.coef_)
 		self.model = clf
 
 	def train_dt(self, X, y, num_folds = 5):
@@ -370,9 +377,13 @@ class ProcessKinectLog:
 		# 	print(self.vac_scores_dict[lex_name].shape)
 
 		vac_data = self.combine_lexs(self.vac_scores_dict)
+		# Inverting the scores of complexity (2nd vac) and 
+		# amount of movement (6th vac)
+		vac_data[:, 1] = 1 - vac_data[:, 1]
+		vac_data[:, -1] = 1 - vac_data[:, -1]
 		usa_data = self.combine_lexs(usa_dict)
 
-		if(flag and self.normalize): usa_data -= 1
+		if(flag and self.normalize): usa_data = 1 - usa_data
 
 		# regress(y, X) # y is 1D np.ndarray. X is 2D np.ndarray
 		# vac_data = np.random.uniform(0, 1, (80, 6))
@@ -412,11 +423,11 @@ class ProcessKinectLog:
 			r2 = lr.score(x, y)
 			r2_list_overall.append(r2)
 			if(r2 < 0.2): continue
-			plt.figure()
-			plt.scatter(x[:sz/2], y[:sz/2], marker = '<', color = 'blue')
-			plt.scatter(x[sz/2:], y[sz/2:], marker = 's', color = 'green')
-			plt.plot(x, y_pred, color = 'red')
-			plt.legend(['Bad lexicons', 'Good lexicons', 'Regression line'])
+			_, ax = plt.subplots()
+			ax.scatter(x[:sz/2], y[:sz/2], marker = '<', color = 'blue', label = 'Bad lexicon')
+			ax.scatter(x[sz/2:], y[sz/2:], marker = 's', color = 'green', label = 'Good lexicon')
+			ax.plot(x, y_pred, color = 'red', label = 'Regression line')
+			ax.legend()
 			plt.title(vac_name + '  vs  ' + usa_name + ' -- R2 = %.02f'%r2)
 			plt.xlabel('VAC - ' + vac_name)
 			plt.ylabel('Usability - ' + usa_name)
@@ -451,11 +462,11 @@ class ProcessKinectLog:
 				r2 = lr.score(x, y)
 				r2_list_cmd[-1].append(r2)
 				if(r2 < 0.8): continue
-				plt.figure()
-				p1 = plt.scatter(x[:num_lexs/2], y[:num_lexs/2], marker = '<', color = 'blue')
-				p2 = plt.scatter(x[num_lexs/2:], y[num_lexs/2:], marker = 's', color = 'green')
-				p3 = plt.plot(x, y_pred, color = 'red')
-				plt.legend([p1, p2, p3], ['Bad lexicons', 'Good lexicons', 'Regression line'])
+				_, ax = plt.subplots()
+				ax.scatter(x[:num_lexs/2], y[:num_lexs/2], marker = '<', color = 'blue', label = 'Bad lexicons')
+				ax.scatter(x[num_lexs/2:], y[num_lexs/2:], marker = 's', color = 'green', label = 'Good lexicons')
+				ax.plot(x, y_pred, color = 'red', label = 'Regression line')
+				ax.legend()
 				plt.title(cmd_name + ' - ' + vac_name + '  vs  ' + usa_name + ' -- R2 = %.02f'%r2)
 				plt.xlabel('VAC - ' + vac_name)
 				plt.ylabel('Usability - ' + usa_name)
@@ -491,7 +502,7 @@ if(__name__ == '__main__'):
 	base_path = r'H:\AHRQ\Study_IV\RealData'
 	lex_names = ['L2', 'L6', 'L8', 'L3']
 	lex_paths = [join(base_path, lex_name) for lex_name in lex_names]
-	method = 'svr'
+	method = 'svr' # 'svr', 'dt', 'lstsq'
 
 	## scores.npz file has 'scores_reduced' key consisting of VAC data
 	# for only 20 commands present in the reduced_commands.json file. 
@@ -512,14 +523,15 @@ if(__name__ == '__main__'):
 	r_cmd = np.zeros((20, 6, 3))
 	time_data, vac_data = pobj.process(ext = '*_kthreelog.txt', method = method)
 	r_overall[0, :], r_cmd[:, :, 0] = pobj.save_plots(time_data, vac_data, \
-		usa_name = 'gesture_time', title = '')
+		usa_name = 'Quickness', title = '')
 	print('Focus Shifts')
 	fs_data, _ = pobj.process(ext = '*_annotfs*.txt', method = method)
 	r_overall[1, :], r_cmd[:, :, 1] = pobj.save_plots(fs_data, vac_data, \
-		usa_name = 'focus_shifts', title = '')
+		usa_name = 'Learnability', title = '')
 	print('Errors')	
 	e_data, _ = pobj.process(ext = '*_annote*.txt', method = method)
-	r_overall[2, :], r_cmd[:, :, 2] = pobj.save_plots(e_data, vac_data, usa_name = 'error_rate', title = '')
+	r_overall[2, :], r_cmd[:, :, 2] = pobj.save_plots(e_data, vac_data, \
+		usa_name = 'Effectiveness', title = '')
 
 	plt.figure()
 	# plt.imshow(r_overall, cmap='hot', interpolation='nearest')
